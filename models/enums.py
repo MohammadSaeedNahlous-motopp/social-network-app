@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import Enum as PyEnum
 
 
-class Gender(str, Enum):
+class Gender(str, PyEnum):
     male = "male"
     female = "female"
     other = "other"

@@ -14,6 +14,7 @@ class UserBase(BaseModel):
     location: str | None = None
     gender: Gender | None = None
 
+
 # Update User Base/Type Without Password
 class UserUpdate(BaseModel):
     name: str
@@ -36,3 +37,8 @@ class UserDisplay(BaseModel):
     gender: Gender | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str

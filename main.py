@@ -6,15 +6,13 @@ from db.database import engine, Base
 app = FastAPI()
 
 
-@app.get('/')
+@app.get("/")
 def index():
-    return {'message':"Hello World"}
+    return {"message": "Hello World"}
+
 
 app.include_router(auth.router)
 app.include_router(user.router)
-
-
-
 
 
 Base.metadata.create_all(bind=engine)
