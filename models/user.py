@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, Enum as SQLEnum, DateTime
-from sqlalchemy.sql.sqltypes import String, Integer
+from sqlalchemy.sql.sqltypes import String, Integer,Boolean
 
 from db.database import Base
 from models.enums import Gender
@@ -21,6 +21,7 @@ class DBUser(Base):
     profile_img = Column(String, nullable=True)
     location = Column(String, nullable=True)
     gender = Column(SQLEnum(Gender), nullable=True)
+    is_active = Column(Boolean,default=True,nullable=False)
 
     last_login_at = Column(DateTime, nullable=True)
     created_at = Column(
