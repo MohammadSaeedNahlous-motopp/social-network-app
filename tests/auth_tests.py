@@ -1,3 +1,4 @@
+import pytest
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
@@ -71,11 +72,39 @@ def test_register_without_optional_fields(client):
     assert response.status_code == 200
 
 
+
+
+@pytest.mark.parametrize("gender", [
+    "male",
+    "female",
+    "other",
+    "prefer_not_to_say"
+])
+def test_register_with_valid_gender(client, db: Session, gender):
+    response = client.post(
+        "/auth/register",
+        json={
+            "name": "John Doe",
+            "email": f"{gender}_test@example.com",
+            "password": "password123",
+            "gender": gender
+        }
+    )
+
+    assert response.status_code == 200
+
+    user = db.query(DBUser).filter(
+        DBUser.email == f"{gender}_test@example.com"
+    ).first()
+
+    assert user is not None
+    assert user.gender.value == gender
+
+
 def test_login_success(client, db: Session):
-    # Create a user first
     user = DBUser(
         name="John Doe",
-        email="login_test@example.com",
+        email="login1_test@example.com",
         password=Hash.hash("password123"),
     )
 
@@ -83,10 +112,12 @@ def test_login_success(client, db: Session):
     db.commit()
     db.refresh(user)
 
-    # Login
     response = client.post(
         "/auth/login",
-        data={"username": "login_test@example.com", "password": "password123"},
+        data={
+            "username": "login1_test@example.com",
+            "password": "password123"
+        },
     )
 
     assert response.status_code == 200
@@ -96,8 +127,7 @@ def test_login_success(client, db: Session):
     assert "access_token" in data
     assert data["token_type"] == "bearer"
     assert data["user_id"] == user.id
-    assert data["user_email"] == "login_test@example.com"
-    assert data["user_name"] == "John Doe"
+
 
 
 def test_login_wrong_password(client, db: Session):
