@@ -55,15 +55,13 @@ def get_user_by_email(db: Session, email: str):
 
     return searched_user
 
+
 def edit_user(request: user.UserUpdate, db: Session, user_id: int):
-    searched_user = db.query(DBUser).filter(
-        DBUser.id == user_id
-    ).first()
+    searched_user = db.query(DBUser).filter(DBUser.id == user_id).first()
 
     if searched_user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found!"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found!"
         )
 
     for key, value in request.model_dump().items():
@@ -74,15 +72,13 @@ def edit_user(request: user.UserUpdate, db: Session, user_id: int):
 
     return searched_user
 
+
 def edit_user_active_state(db: Session, user_id: int):
-    searched_user = db.query(DBUser).filter(
-        DBUser.id == user_id
-    ).first()
+    searched_user = db.query(DBUser).filter(DBUser.id == user_id).first()
 
     if searched_user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found!"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found!"
         )
 
     searched_user.is_active = not searched_user.is_active
@@ -90,6 +86,4 @@ def edit_user_active_state(db: Session, user_id: int):
     db.commit()
     db.refresh(searched_user)
 
-    return {
-        "is_active":searched_user.is_active
-    }
+    return {"is_active": searched_user.is_active}

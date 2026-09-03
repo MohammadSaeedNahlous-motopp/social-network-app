@@ -72,14 +72,7 @@ def test_register_without_optional_fields(client):
     assert response.status_code == 200
 
 
-
-
-@pytest.mark.parametrize("gender", [
-    "male",
-    "female",
-    "other",
-    "prefer_not_to_say"
-])
+@pytest.mark.parametrize("gender", ["male", "female", "other", "prefer_not_to_say"])
 def test_register_with_valid_gender(client, db: Session, gender):
     response = client.post(
         "/auth/register",
@@ -87,15 +80,13 @@ def test_register_with_valid_gender(client, db: Session, gender):
             "name": "John Doe",
             "email": f"{gender}_test@example.com",
             "password": "password123",
-            "gender": gender
-        }
+            "gender": gender,
+        },
     )
 
     assert response.status_code == 200
 
-    user = db.query(DBUser).filter(
-        DBUser.email == f"{gender}_test@example.com"
-    ).first()
+    user = db.query(DBUser).filter(DBUser.email == f"{gender}_test@example.com").first()
 
     assert user is not None
     assert user.gender.value == gender
@@ -114,10 +105,7 @@ def test_login_success(client, db: Session):
 
     response = client.post(
         "/auth/login",
-        data={
-            "username": "login1_test@example.com",
-            "password": "password123"
-        },
+        data={"username": "login1_test@example.com", "password": "password123"},
     )
 
     assert response.status_code == 200
@@ -127,7 +115,6 @@ def test_login_success(client, db: Session):
     assert "access_token" in data
     assert data["token_type"] == "bearer"
     assert data["user_id"] == user.id
-
 
 
 def test_login_wrong_password(client, db: Session):
