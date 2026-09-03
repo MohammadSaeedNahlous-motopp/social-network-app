@@ -43,3 +43,13 @@ def login_user(request: user.UserLogin, db: Session):
         )
 
     return {"message": "Success!"}
+
+
+def get_user_by_email(db: Session, email: str):
+    searched_user = db.query(DBUser).filter(DBUser.email == email).first()
+    if not searched_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+    return searched_user

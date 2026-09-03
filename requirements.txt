@@ -5,5 +5,7 @@ python-multipart
 pwdlib[argon2]
 python-jose[cryptography]
 ruff
-
+python-dotenv
 pydantic
+jose
+python-jose
