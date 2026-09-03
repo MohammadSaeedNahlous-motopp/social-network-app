@@ -7,7 +7,7 @@ from models.user import DBUser
 from schemas.user import UserUpdate, UserDisplay
 from db import user
 
-router = APIRouter(prefix="/user", tags=["user"])
+router = APIRouter(prefix="/users", tags=["users"])
 
 @router.put('/edit',response_model=UserDisplay)
 def edit_user(request: UserUpdate, db:Session = Depends(get_db), current_user:DBUser = Depends(get_current_user)):
