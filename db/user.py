@@ -8,6 +8,11 @@ from schemas import user
 
 
 def register_user(request: user.UserBase, db: Session):
+    user_with_same_email = get_user_by_email(db, request.email)
+    if user_with_same_email is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
     new_user = DBUser(
         name=request.name,
         password=Hash.hash(request.password),
@@ -47,9 +52,5 @@ def login_user(request: user.UserLogin, db: Session):
 
 def get_user_by_email(db: Session, email: str):
     searched_user = db.query(DBUser).filter(DBUser.email == email).first()
-    if not searched_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found.",
-        )
+
     return searched_user
