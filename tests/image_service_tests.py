@@ -57,7 +57,7 @@ def test_create_user_with_png_image(client, db: Session):
         "/auth/register",
         data={
             "name": "John Doe",
-            "email": "png_imaagaae@example.com",
+            "email": "png_imaagaae1@example.com",
             "password": "password123",
         },
         files={"profile_img": ("profile.png", image, "image/png")},
@@ -66,7 +66,7 @@ def test_create_user_with_png_image(client, db: Session):
     print(response.json())
     assert response.status_code == 201
 
-    user = db.query(DBUser).filter(DBUser.email == "png_image@example.com").first()
+    user = db.query(DBUser).filter(DBUser.email == "png_imaagaae1@example.com").first()
 
     assert user is not None
     assert user.profile_img is not None

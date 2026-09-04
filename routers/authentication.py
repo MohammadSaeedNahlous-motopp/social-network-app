@@ -33,7 +33,8 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 def get_token(
     request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    searched_user = db.query(DBUser).filter(DBUser.email == request.username).first()
+    searched_user = db.query(DBUser).filter(DBUser.email == request.username,
+    DBUser.is_active).first()
 
     if not searched_user or not Hash.verify(searched_user.password, request.password):
         raise HTTPException(
