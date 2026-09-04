@@ -30,12 +30,7 @@ def test_create_user_with_invalid_image_type(client):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == ("Only JPG, PNG, and WEBP images are allowed.")
-
-
-# ============================================================
-# INVALID IMAGE CONTENT
-# ============================================================
+    assert response.json()["detail"] == "Only JPG, PNG, and WEBP images are allowed."
 
 
 def test_create_user_with_fake_image(client):
@@ -53,11 +48,6 @@ def test_create_user_with_fake_image(client):
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Invalid image file."
-
-
-# ============================================================
-# VALID PNG IMAGE
-# ============================================================
 
 
 def test_create_user_with_png_image(client, db: Session):
@@ -82,11 +72,6 @@ def test_create_user_with_png_image(client, db: Session):
     assert user.profile_img is not None
 
 
-# ============================================================
-# VALID WEBP IMAGE
-# ============================================================
-
-
 def test_create_user_with_webp_image(client, db: Session):
     image = create_test_image("WEBP")
 
@@ -108,11 +93,6 @@ def test_create_user_with_webp_image(client, db: Session):
     assert user.profile_img is not None
 
 
-# ============================================================
-# IMAGE SIZE
-# ============================================================
-
-
 def test_create_user_with_image_too_large(client):
     # Create a fake file larger than 5 MB
     large_file = BytesIO(b"x" * (5 * 1024 * 1024 + 1))
@@ -128,12 +108,7 @@ def test_create_user_with_image_too_large(client):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == ("Profile image must be smaller than 5 MB.")
-
-
-# ============================================================
-# UNAUTHORIZED EDIT
-# ============================================================
+    assert response.json()["detail"] == "Profile image must be smaller than 5 MB."
 
 
 def test_edit_user_profile_image_unauthorized(client):

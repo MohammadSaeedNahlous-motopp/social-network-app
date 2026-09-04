@@ -2,10 +2,8 @@ from io import BytesIO
 
 import pytest
 from PIL import Image
-from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from db.database import get_db
 from db.hash import Hash
 from models.user import DBUser
 

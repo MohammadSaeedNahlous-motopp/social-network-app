@@ -33,22 +33,22 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 def get_token(
     request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    user = db.query(DBUser).filter(DBUser.email == request.username).first()
+    searched_user = db.query(DBUser).filter(DBUser.email == request.username).first()
 
-    if not user or not Hash.verify(user.password, request.password):
+    if not searched_user or not Hash.verify(searched_user.password, request.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
 
-    access_token = oauth2.create_access_token(data={"sub": str(user.id)})
+    access_token = oauth2.create_access_token(data={"sub": str(searched_user.id)})
 
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user_id": user.id,
-        "user_email": user.email,
-        "user_name": user.name,
+        "user_id": searched_user.id,
+        "user_email": searched_user.email,
+        "user_name": searched_user.name,
     }
 
 
