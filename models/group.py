@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import String, Integer, Boolean
 
 from db.database import Base
@@ -14,6 +15,7 @@ class DBGroup(Base):
     description = Column(String, nullable=True)
 
     owner_id = Column(Integer, ForeignKey("users.id"))
+    owner = relationship("DBUser", back_populates="groups")
 
     background_img = Column(String, nullable=True)
     profile_img = Column(String, nullable=True)

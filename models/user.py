@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, Enum as SQLEnum, DateTime
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import String, Integer, Boolean
 
 from db.database import Base
@@ -36,3 +37,5 @@ class DBUser(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+    groups = relationship("DBGroup", back_populates="owner")
