@@ -3,10 +3,11 @@ from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
 from db.database import get_db
+from models.enums import ImageType
 from models.user import DBUser
 from schemas.user import UserUpdate, UserDisplay
 from db import user
-from service.image import save_profile_image
+from service.image import save_image
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -47,7 +48,7 @@ async def edit_user(
     image_path = None
 
     if profile_img is not None:
-        image_path = await save_profile_image(profile_img)
+        image_path = await save_image(profile_img, ImageType.profile_picture)
 
     return user.edit_user(
         request,

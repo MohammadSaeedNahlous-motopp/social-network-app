@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 from auth import oauth2
 from db.database import get_db
 from db.hash import Hash
+from models.enums import ImageType
 from models.user import DBUser
 from schemas.user import UserDisplay, UserBase
 from db import user
-from service.image import save_profile_image
+from service.image import save_image
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -33,8 +34,11 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 def get_token(
     request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    searched_user = db.query(DBUser).filter(DBUser.email == request.username,
-    DBUser.is_active).first()
+    searched_user = (
+        db.query(DBUser)
+        .filter(DBUser.email == request.username, DBUser.is_active)
+        .first()
+    )
 
     if not searched_user or not Hash.verify(searched_user.password, request.password):
         raise HTTPException(
@@ -88,7 +92,7 @@ async def create_user(
     image_path = None
 
     if profile_img:
-        image_path = await save_profile_image(profile_img)
+        image_path = await save_image(profile_img, ImageType.profile_picture)
 
     return user.register_user(request, db, image_path)
 

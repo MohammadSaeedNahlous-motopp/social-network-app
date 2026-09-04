@@ -6,3 +6,10 @@ class Gender(str, PyEnum):
     female = "female"
     other = "other"
     prefer_not_to_say = "prefer_not_to_say"
+
+
+class ImageType(str, PyEnum):
+    profile_picture = "profile_picture"
+    group_picture = "group_picture"
+    post_picture = "post_picture"
+    group_background_picture = "group_background_picture"

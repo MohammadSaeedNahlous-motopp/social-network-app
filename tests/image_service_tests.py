@@ -79,7 +79,7 @@ def test_create_user_with_webp_image(client, db: Session):
         "/auth/register",
         data={
             "name": "John Doe",
-            "email": "webp_imwage@example.com",
+            "email": "webp_imwagwwe@example.com",
             "password": "password123",
         },
         files={"profile_img": ("profile.webp", image, "image/webp")},
@@ -87,7 +87,7 @@ def test_create_user_with_webp_image(client, db: Session):
 
     assert response.status_code == 201
 
-    user = db.query(DBUser).filter(DBUser.email == "webp_image@example.com").first()
+    user = db.query(DBUser).filter(DBUser.email == "webp_imwagwwe@example.com").first()
 
     assert user is not None
     assert user.profile_img is not None
