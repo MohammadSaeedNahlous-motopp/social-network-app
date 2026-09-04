@@ -30,7 +30,6 @@ def create_group(db: Session, group_model: group.GroupBase, owner_id: int) -> DB
 
     return new_group
 
-
 def get_group_by_id(db: Session, group_id: int) -> DBGroup:
     searched_group = db.query(DBGroup).filter(DBGroup.id == group_id).first()
 
@@ -110,7 +109,6 @@ def delete_group(db: Session, group_id: int, user_id: int):
     :param db: database session
     :param group_id: id of a group we want to delete
     :param user_id: id of user who wants to delete an existing group
-    :return: bool indicating if group was deleted or not
     """
     searched_group = db.query(DBGroup).filter(DBGroup.id == group_id).first()
 
