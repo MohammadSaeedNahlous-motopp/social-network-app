@@ -6,8 +6,6 @@ from models.group import DBGroup
 from auth.oauth2 import get_current_user
 from db.hash import Hash
 
-import pytest
-
 
 def create_test_user(db: Session, email="group_test@example.com"):
     user = DBUser(

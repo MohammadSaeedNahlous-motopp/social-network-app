@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from main import app
 from models.enums import Gender
 from models.user import DBUser
+from models.group import DBGroup
 from auth.oauth2 import get_current_user
 from db.hash import Hash
 
