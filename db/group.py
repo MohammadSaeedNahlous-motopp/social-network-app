@@ -4,7 +4,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 
+from models.enums import GroupRole
 from models.group import DBGroup
+from models.group_member import DBGroupMember
 from schemas import group
 
 def create_group(db: Session, group_model: group.GroupBase, owner_id: int) -> DBGroup:
@@ -25,6 +27,16 @@ def create_group(db: Session, group_model: group.GroupBase, owner_id: int) -> DB
     )
 
     db.add(new_group)
+    db.flush()
+
+    owner_membership = DBGroupMember(
+        group_id=new_group.id,
+        user_id=owner_id,
+        role=GroupRole.administrator,
+    )
+
+    db.add(owner_membership)
+
     db.commit()
     db.refresh(new_group)
 
