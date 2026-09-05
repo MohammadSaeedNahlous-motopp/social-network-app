@@ -7,3 +7,5 @@ python-jose[cryptography]
 ruff
 
 pydantic
+pytest
+httpx
