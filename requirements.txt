@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+python-multipart
+pwdlib[argon2]
+python-jose[cryptography]
+ruff
+python-dotenv
+pydantic
+jose
+python-jose
+pytest
+Pillow
