@@ -9,6 +9,7 @@ from db.hash import Hash
 from main import app
 from models.user import DBUser
 from models.group import DBGroup
+from models.group_member import DBGroupMember
 
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
