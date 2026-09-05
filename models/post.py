@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, Boolean
+from sqlalchemy.orm import Mapped, mapped_column
 
 from db.database import Base
 
@@ -20,7 +21,9 @@ class DBPost(Base):
 
     content = Column(Text, nullable=False )
 
-    image_url = Column(String, nullable=True)
+    # image_url = Column(String, nullable=True)
+    # Better typing
+    image_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
     score = Column(Integer, default=0, nullable=False)
 
