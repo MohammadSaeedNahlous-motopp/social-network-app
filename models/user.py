@@ -39,3 +39,4 @@ class DBUser(Base):
     )
 
     groups = relationship("DBGroup", back_populates="owner")
+    group_memberships = relationship("DBGroupMembers", back_populates="user", cascade="all, delete-orphan")
