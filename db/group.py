@@ -50,7 +50,8 @@ def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
     """
     search_data = request_model.model_dump(exclude_unset=True)
 
-    if not search_data:
+    if (not search_data or
+            request_model.name is None and request_model.description is None):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one field must be provided for search",
