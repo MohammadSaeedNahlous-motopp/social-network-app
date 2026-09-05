@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import Column, Enum as SQLEnum, DateTime
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import String, Integer, Boolean
 
 from db.database import Base
@@ -35,4 +36,15 @@ class DBUser(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    sent_friend_requests = relationship(
+        "DBFriendRequest",
+        foreign_keys=["DBFriendRequest.sender_id"],
+        back_populates="sender",
+    )
+    received_friend_requests = relationship(
+        "DBFriendRequest",
+        foreign_keys=["DBFriendRequest.receiver_id"],
+        back_populates="receiver",
     )
