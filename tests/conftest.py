@@ -87,3 +87,27 @@ def authenticated_user(create_test_user):
     yield _authenticated_user
 
     app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
+def create_test_group(db: Session, create_test_user):
+    def _create_test_group(
+        owner,
+        name="Python Developers",
+        description="A group for Python developers",
+        is_public=True,
+    ):
+        group = DBGroup(
+            name=name,
+            description=description,
+            owner_id=owner.id,
+            is_public=is_public,
+        )
+
+        db.add(group)
+        db.commit()
+        db.refresh(group)
+
+        return group
+
+    return _create_test_group
