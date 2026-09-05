@@ -21,8 +21,6 @@ class DBPost(Base):
 
     content = Column(Text, nullable=False )
 
-    # image_url = Column(String, nullable=True)
-    # Better typing
     image_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
     score = Column(Integer, default=0, nullable=False)
