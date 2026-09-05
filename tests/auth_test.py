@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from db.hash import Hash
 from models.user import DBUser
-from models.group import DBGroup
 
 
 def create_test_image(image_format="JPEG", size=(100, 100)):
