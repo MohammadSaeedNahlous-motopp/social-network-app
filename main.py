@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from db.database import engine
 from db import database
+from models.post import DBPost
 from routers import post
 app = FastAPI()
 
