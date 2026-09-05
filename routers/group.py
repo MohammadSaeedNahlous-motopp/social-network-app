@@ -18,17 +18,17 @@ def create_group(request_model: GroupBase, current_user: DBUser = Depends(get_cu
 
     return new_group
 
-@router.get("/{group_id}", response_model=GroupView)
-def get_group_by_id(group_id: int, db: Session = Depends(get_db)):
-    searched_group = group.get_group_by_id(db, group_id)
-
-    return searched_group
-
 @router.get("/search", response_model=List[GroupView])
 def get_searched_groups(request_model: GroupSearch = Depends(), db: Session = Depends(get_db)):
     searched_groups = group.get_groups(db, request_model)
 
     return searched_groups
+
+@router.get("/{group_id}", response_model=GroupView)
+def get_group_by_id(group_id: int, db: Session = Depends(get_db)):
+    searched_group = group.get_group_by_id(db, group_id)
+
+    return searched_group
 
 @router.get("/", response_model=List[GroupView])
 def get_all_groups(db: Session = Depends(get_db)):
