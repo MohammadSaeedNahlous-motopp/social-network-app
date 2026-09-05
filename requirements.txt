@@ -10,3 +10,4 @@ pydantic
 jose
 python-jose
 pytest
+Pillow
