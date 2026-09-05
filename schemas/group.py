@@ -28,13 +28,13 @@ class GroupView(BaseModel):
 
 # Group update model - Used for updating group values
 class GroupUpdate(BaseModel):
-    name: str | None
-    description: str | None
-    background_img: str | None
-    profile_img: str | None
-    is_public: bool | None
+    name: str | None = None
+    description: str | None = None
+    background_img: str | None = None
+    profile_img: str | None = None
+    is_public: bool | None = None
 
 # Group search model - Used for searching group based on model params
 class GroupSearch(BaseModel):
-    name: str | None
-    description: str | None
+    name: str | None = None
+    description: str | None = None
