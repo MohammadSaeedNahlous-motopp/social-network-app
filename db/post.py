@@ -7,6 +7,7 @@ def create_post(db: Session, request: PostCreate, user_id: int):
         user_id=user_id,
         title=request.title,
         content=request.content,
+        image_url=request.image_url,
     )
 
     db.add(new_post)
