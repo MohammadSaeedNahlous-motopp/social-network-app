@@ -56,6 +56,12 @@ def get_user_by_email(db: Session, email: str):
     return searched_user
 
 
+def get_user_by_id(db: Session, user_id: str):
+    searched_user = db.query(DBUser).filter(DBUser.id == user_id).first()
+
+    return searched_user
+
+
 def edit_user(
     request: user.UserUpdate,
     image_path: str | None,
