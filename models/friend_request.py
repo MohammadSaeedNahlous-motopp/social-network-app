@@ -3,15 +3,15 @@ from sqlalchemy import Column, Enum as SQLEnum, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import String, Integer, Boolean
 from db.database import Base
-from enums import FriendRequestStatus
+from models.enums import FriendRequestStatus
 
 
 class DBFriendRequest(Base):
     __tablename__ = "friend_requests"
-    id: Column(Integer, unique=True, primary_key=True, index=True)
-    sender_id: Column(Integer, nullable=False, ForeignKey=["users.id"])
-    receiver_id: Column(Integer, nullable=False, ForeignKey=["users.id"])
-    gender = Column(
+    id= Column(Integer, unique=True, primary_key=True, index=True)
+    sender_id= Column(Integer,ForeignKey("users.id"), nullable=False, )
+    receiver_id= Column(Integer, ForeignKey("users.id"),nullable=False, )
+    status = Column(
         SQLEnum(FriendRequestStatus), nullable=True, default=FriendRequestStatus.pending
     )
     created_at = Column(

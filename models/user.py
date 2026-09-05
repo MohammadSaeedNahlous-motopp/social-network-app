@@ -40,11 +40,12 @@ class DBUser(Base):
 
     sent_friend_requests = relationship(
         "DBFriendRequest",
-        foreign_keys=["DBFriendRequest.sender_id"],
+        foreign_keys="DBFriendRequest.sender_id",
         back_populates="sender",
     )
+
     received_friend_requests = relationship(
         "DBFriendRequest",
-        foreign_keys=["DBFriendRequest.receiver_id"],
+        foreign_keys="DBFriendRequest.receiver_id",
         back_populates="receiver",
     )
