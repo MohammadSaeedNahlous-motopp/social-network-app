@@ -56,8 +56,7 @@ def create_friend_request(
                 (DBFriendRequest.sender_id == user_id)
                 & (DBFriendRequest.receiver_id == request.receiver_id)
             )
-            |
-            (
+            | (
                 (DBFriendRequest.sender_id == request.receiver_id)
                 & (DBFriendRequest.receiver_id == user_id)
             ),

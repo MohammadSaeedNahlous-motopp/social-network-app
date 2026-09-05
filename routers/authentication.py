@@ -34,7 +34,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 def get_token(
     request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    #TODO: Change to get_user_by_email method
+    # TODO: Change to get_user_by_email method
     searched_user = (
         db.query(DBUser)
         .filter(DBUser.email == request.username, DBUser.is_active)

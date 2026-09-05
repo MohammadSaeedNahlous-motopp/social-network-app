@@ -30,12 +30,8 @@ router = APIRouter(
     ),
     response_description="List of pending friend requests.",
     responses={
-        200: {
-            "description": "Pending friend requests retrieved successfully."
-        },
-        401: {
-            "description": "Could not authenticate the user."
-        },
+        200: {"description": "Pending friend requests retrieved successfully."},
+        401: {"description": "Could not authenticate the user."},
     },
 )
 def get_user_pending_friend_requests(
@@ -60,21 +56,15 @@ def get_user_pending_friend_requests(
     ),
     response_description="The newly created friend request.",
     responses={
-        201: {
-            "description": "Friend request created successfully."
-        },
+        201: {"description": "Friend request created successfully."},
         400: {
             "description": (
                 "The friend request could not be created due to invalid "
                 "request data or business rules."
             )
         },
-        401: {
-            "description": "Could not authenticate the user."
-        },
-        404: {
-            "description": "Receiver user was not found."
-        },
+        401: {"description": "Could not authenticate the user."},
+        404: {"description": "Receiver user was not found."},
     },
 )
 def create_friend_request(
@@ -100,15 +90,9 @@ def create_friend_request(
     ),
     response_description="The declined friend request.",
     responses={
-        200: {
-            "description": "Friend request declined successfully."
-        },
-        400: {
-            "description": "The friend request has already been processed."
-        },
-        401: {
-            "description": "Could not authenticate the user."
-        },
+        200: {"description": "Friend request declined successfully."},
+        400: {"description": "The friend request has already been processed."},
+        401: {"description": "Could not authenticate the user."},
         404: {
             "description": (
                 "Friend request was not found or does not belong to the "
@@ -141,15 +125,9 @@ def decline_friend_request(
     ),
     response_description="The accepted friend request.",
     responses={
-        200: {
-            "description": "Friend request accepted successfully."
-        },
-        400: {
-            "description": "The friend request has already been processed."
-        },
-        401: {
-            "description": "Could not authenticate the user."
-        },
+        200: {"description": "Friend request accepted successfully."},
+        400: {"description": "The friend request has already been processed."},
+        401: {"description": "Could not authenticate the user."},
         404: {
             "description": (
                 "Friend request was not found or does not belong to the "
@@ -182,15 +160,9 @@ def accept_friend_request(
     ),
     response_description="The canceled friend request.",
     responses={
-        200: {
-            "description": "Friend request canceled successfully."
-        },
-        400: {
-            "description": "The friend request has already been processed."
-        },
-        401: {
-            "description": "Could not authenticate the user."
-        },
+        200: {"description": "Friend request canceled successfully."},
+        400: {"description": "The friend request has already been processed."},
+        401: {"description": "Could not authenticate the user."},
         404: {
             "description": (
                 "Friend request was not found or does not belong to the "

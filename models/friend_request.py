@@ -8,9 +8,17 @@ from models.enums import FriendRequestStatus
 
 class DBFriendRequest(Base):
     __tablename__ = "friend_requests"
-    id= Column(Integer, unique=True, primary_key=True, index=True)
-    sender_id= Column(Integer,ForeignKey("users.id"), nullable=False, )
-    receiver_id= Column(Integer, ForeignKey("users.id"),nullable=False, )
+    id = Column(Integer, unique=True, primary_key=True, index=True)
+    sender_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
+    receiver_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+    )
     status = Column(
         SQLEnum(FriendRequestStatus), nullable=True, default=FriendRequestStatus.pending
     )
