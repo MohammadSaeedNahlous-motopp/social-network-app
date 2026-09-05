@@ -46,4 +46,4 @@ def edit_group(group_id: int, request_model: GroupUpdate, db: Session = Depends(
 def delete_group(group_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
     group.delete_group(db, group_id, current_user.id)
 
-    return {"Group deleted successfully"}
+    return {"message": "Group deleted successfully"}
