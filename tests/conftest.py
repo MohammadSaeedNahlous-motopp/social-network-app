@@ -95,12 +95,19 @@ def create_test_group(db: Session, create_test_user):
         owner,
         name="Python Developers",
         description="A group for Python developers",
+        background_img=None,
+        profile_img=None,
         is_public=True,
     ):
+        if owner is None:
+            owner = create_test_user()
+
         group = DBGroup(
             name=name,
             description=description,
             owner_id=owner.id,
+            background_img=background_img,
+            profile_img=profile_img,
             is_public=is_public,
         )
 
