@@ -19,3 +19,4 @@ class FriendRequestStatus(str, PyEnum):
     pending = "pending"
     accepted = "accepted"
     declined = "declined"
+    canceled = "canceled"

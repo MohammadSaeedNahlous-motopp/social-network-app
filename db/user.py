@@ -70,7 +70,7 @@ def edit_user(
     remove_profile_img: bool = False,
 ):
     searched_user = db.query(DBUser).filter(DBUser.id == user_id).first()
-
+    # TODO: Remove the If statement, get Current User already checked.
     if searched_user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found!"
@@ -105,7 +105,7 @@ def edit_user(
 
 def edit_user_active_state(db: Session, user_id: int):
     searched_user = db.query(DBUser).filter(DBUser.id == user_id).first()
-
+    # TODO: Remove the If statement, get Current User already checked.
     if searched_user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found!"

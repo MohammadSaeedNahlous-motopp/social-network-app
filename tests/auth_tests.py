@@ -23,7 +23,7 @@ def test_register_user(client):
         "/auth/register",
         data={
             "name": "John Doe",
-            "email": "john1@example.com",
+            "email": "john21@example.com",
             "password": "password123",
         },
     )

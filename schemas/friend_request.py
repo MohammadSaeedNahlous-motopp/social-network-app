@@ -7,7 +7,7 @@ from models.user import DBUser
 class User(BaseModel):
     id:int
     name:str
-    email:str
+    profile_img: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -15,7 +15,10 @@ class User(BaseModel):
 class FriendRequestBase(BaseModel):
     receiver_id:int
 
-class FriendRequestSDisplayBase(BaseModel):
+class FriendRequestDisplayBase(BaseModel):
+    id:int
     receiver:User
     sender:User
     status:FriendRequestStatus
+
+    model_config = ConfigDict(from_attributes=True)
