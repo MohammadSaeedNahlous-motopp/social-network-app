@@ -20,6 +20,7 @@ def test_get_group_members_permissions(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role,
     is_public,
     requester_is_member,
     expected_status,
@@ -44,14 +45,14 @@ def test_get_group_members_permissions(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     if requester_is_member:
         create_test_group_member(
             group=group,
             user=requester,
-            role=GroupRole.member,
+            role=get_test_group_role(GroupRole.member),
         )
 
     # Act
@@ -74,6 +75,7 @@ def test_get_group_members(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role
 ):
     # Arrange
     owner = create_test_user(
@@ -105,22 +107,22 @@ def test_get_group_members(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
     create_test_group_member(
         group=group,
         user=requester,
-        role=GroupRole.member,
+        role=get_test_group_role(GroupRole.member),
     )
     create_test_group_member(
         group=group,
         user=member_one,
-        role=GroupRole.member,
+        role=get_test_group_role(GroupRole.member),
     )
     create_test_group_member(
         group=group,
         user=member_two,
-        role=GroupRole.member,
+        role=get_test_group_role(GroupRole.member),
     )
 
     # Act
@@ -173,6 +175,7 @@ def test_is_member(
     authenticated_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role,
     role,
 ):
     # Arrange
@@ -189,7 +192,7 @@ def test_is_member(
     create_test_group_member(
         group=group,
         user=user,
-        role=role,
+        role=get_test_group_role(role),
     )
 
     # Act
@@ -220,6 +223,7 @@ def test_is_member_user_not_member_or_forbidden(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role,
     is_public,
     requester_is_member,
     expected_status,
@@ -245,14 +249,14 @@ def test_is_member_user_not_member_or_forbidden(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     if requester_is_member:
         create_test_group_member(
             group=group,
             user=requester,
-            role=GroupRole.member,
+            role=get_test_group_role(GroupRole.member),
         )
 
     # target_user intentionally isn't a member

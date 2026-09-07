@@ -1,11 +1,10 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, ForeignKey, Enum as SQLEnum, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import Integer
 
 from db.database import Base
-from models.enums import GroupRole
 
 class DBGroupMember(Base):
     __tablename__ = "group_members"
@@ -25,7 +24,8 @@ class DBGroupMember(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("DBUser", back_populates="group_memberships")
 
-    role = Column(SQLEnum(GroupRole), default=GroupRole.member, nullable=False)
+    role_id = Column(Integer, ForeignKey("group_roles.id"), nullable=False)
+    role = relationship("DBGroupRole")
 
     created_at = Column(
         DateTime(timezone=True),

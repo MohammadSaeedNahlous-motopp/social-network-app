@@ -5,10 +5,12 @@ from sqlalchemy import or_, exists
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 
+from db.group_role import get_role_obj
 from models.enums import GroupRole
 from models.group_member import DBGroupMember
 
 from models.group import DBGroup
+from models.group_role import DBGroupRole
 
 from models.user import DBUser
 
@@ -34,7 +36,7 @@ def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Li
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no permission to read list of group members")
 
     group_members = db.query(DBGroupMember).filter(DBGroupMember.group_id == group_id).all()
-    group_members = [(gm.user, gm.role) for gm in group_members]
+    group_members = [(gm.user, gm.role.name) for gm in group_members]
 
     return group_members
 
@@ -77,7 +79,7 @@ def get_group_member_role(db: Session, group_id: int, user_id: int) -> GroupRole
         DBGroupMember.user_id == user_id
     ).first()
 
-    result = member.role if member else None
+    result = member.role.name if member else None
 
     return result
 
@@ -96,7 +98,7 @@ def join_group(db: Session, group_id: int, user_id: int) -> DBGroupMember:
     new_membership = DBGroupMember(
         group_id=group_id,
         user_id=user_id,
-        role=GroupRole.member,
+        role=get_role_obj(db=db, role=GroupRole.member),
     )
 
     db.add(new_membership)
@@ -173,7 +175,7 @@ def change_user_role(db: Session, group_id: int, user_id: int, new_role: GroupRo
         .first()
     )
 
-    membership.role = new_role
+    membership.role = get_role_obj(db=db, role=new_role)
 
     db.add(membership)
     db.commit()

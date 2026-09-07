@@ -59,4 +59,4 @@ def leave_group(group_id: int, current_user: DBUser = Depends(get_current_user),
 def change_role(group_id: int, user_id: int, new_role: GroupRole, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     membership = group_member.change_user_role(db=db, group_id=group_id, user_id=user_id, new_role=new_role, current_user_id=current_user.id)
 
-    return {"updated_role": membership.role}
+    return {"updated_role": membership.role.name}
