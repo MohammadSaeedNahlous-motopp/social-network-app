@@ -27,7 +27,7 @@ class DBGroupMember(Base):
 
     role = Column(SQLEnum(GroupRole), default=GroupRole.member, nullable=False)
 
-    joined_at = Column(
+    created_at = Column(
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
