@@ -11,3 +11,4 @@ jose
 python-jose
 pytest
 Pillow
+httpx2
