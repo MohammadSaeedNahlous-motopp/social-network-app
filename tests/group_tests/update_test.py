@@ -205,3 +205,38 @@ def test_update_group_empty_request(
     assert test_group.name == "Original Name"
     assert test_group.description == "Original description"
     assert test_group.is_public is True
+
+
+def test_update_group_updates_updated_at(
+    client,
+    authenticated_user,
+    create_test_group,
+    db: Session,
+):
+    # Arrange
+    user = authenticated_user(email="updated_at_test@example.com")
+
+    test_group = create_test_group(
+        owner=user,
+        name="Original Name",
+        description="Original description",
+        is_public=True,
+    )
+
+    original_updated_at = test_group.updated_at
+    new_group_name = "New Name"
+
+    # Act
+    response = client.put(
+        f"/groups/edit/{test_group.id}",
+        json={"name": new_group_name},
+    )
+
+    # Assert
+    assert response.status_code == 200
+
+    db.refresh(test_group)
+
+    assert test_group.name == new_group_name
+    assert test_group.updated_at is not None
+    assert test_group.updated_at > original_updated_at
