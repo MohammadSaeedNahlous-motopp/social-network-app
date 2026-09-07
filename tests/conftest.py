@@ -7,6 +7,7 @@ from auth.oauth2 import get_current_user
 from db.database import Base, get_db
 from db.hash import Hash
 from main import app
+from models.enums import GroupRole
 from models.user import DBUser
 from models.group import DBGroup
 from models.group_member import DBGroupMember
@@ -119,3 +120,25 @@ def create_test_group(db: Session, create_test_user):
         return group
 
     return _create_test_group
+
+
+@pytest.fixture
+def create_test_group_member(db: Session):
+    def _create_test_group_member(
+        group: DBGroup,
+        user: DBUser,
+        role: GroupRole = GroupRole.member,
+    ):
+        membership = DBGroupMember(
+            group_id=group.id,
+            user_id=user.id,
+            role=role,
+        )
+
+        db.add(membership)
+        db.commit()
+        db.refresh(membership)
+
+        return membership
+
+    return _create_test_group_member
