@@ -1,7 +1,6 @@
-from models.post import DBPost
+def test_create_post(client, authenticated_user):
+    user = authenticated_user()
 
-
-def test_create_post(client):
     response = client.post(
         "/posts/",
         json={
@@ -15,17 +14,22 @@ def test_create_post(client):
     assert response.json()["title"] == "Test Post"
     assert response.json()["content"] == "This is a test post."
     assert response.json()["image_url"] is None
+    assert response.json()["user_id"] == user.id
 
 
-def test_get_post(client):
+def test_get_post(client, authenticated_user):
+    authenticated_user()
+
     create_response = client.post(
         "/posts/",
         json={
             "title": "Get Post Test",
             "content": "Testing GET.",
-            "image_url": None,
+            "image_url": "test-image.jpg",
         },
     )
+
+    assert create_response.status_code == 201
 
     post_id = create_response.json()["id"]
 
@@ -34,6 +38,8 @@ def test_get_post(client):
     assert response.status_code == 200
     assert response.json()["id"] == post_id
     assert response.json()["title"] == "Get Post Test"
+    assert response.json()["content"] == "Testing GET."
+    assert response.json()["image_url"] == "test-image.jpg"
 
 
 def test_get_post_not_found(client):
@@ -43,7 +49,9 @@ def test_get_post_not_found(client):
     assert response.json()["detail"] == "Post not found."
 
 
-def test_update_post(client):
+def test_update_post(client, authenticated_user):
+    authenticated_user()
+
     create_response = client.post(
         "/posts/",
         json={
@@ -52,6 +60,8 @@ def test_update_post(client):
             "image_url": None,
         },
     )
+
+    assert create_response.status_code == 201
 
     post_id = create_response.json()["id"]
 
@@ -65,9 +75,12 @@ def test_update_post(client):
     assert response.status_code == 200
     assert response.json()["title"] == "Updated title"
     assert response.json()["content"] == "Old content"
+    assert response.json()["image_url"] is None
 
 
-def test_delete_post(client):
+def test_delete_post(client, authenticated_user):
+    authenticated_user()
+
     create_response = client.post(
         "/posts/",
         json={
@@ -77,9 +90,11 @@ def test_delete_post(client):
         },
     )
 
+    assert create_response.status_code == 201
+
     post_id = create_response.json()["id"]
 
-    response = client.delete(f"/posts/{post_id}")
+    response = client.patch(f"/posts/{post_id}")
 
     assert response.status_code == 200
     assert response.json()["message"] == "Post deleted successfully."

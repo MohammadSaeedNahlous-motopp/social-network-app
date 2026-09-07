@@ -3,12 +3,14 @@ from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
 
 
-def create_post(db: Session, request: PostCreate, user_id: int):
+def create_post(db: Session, request: PostCreate, user_id: int, image_url: str | None = None,):
+    """Create and save a new post for a user."""
+
     new_post = DBPost(
         user_id=user_id,
         title=request.title,
         content=request.content,
-        image_url=request.image_url,
+        image_url=image_url,
     )
 
     db.add(new_post)
@@ -19,11 +21,36 @@ def create_post(db: Session, request: PostCreate, user_id: int):
 
 
 def get_post(db: Session, post_id: int) -> DBPost | None:
-    return db.query(DBPost).filter(DBPost.id == post_id).first()
+    """Return a visible post by its ID."""
+
+    result = (
+        db.query(DBPost)
+        .filter(
+            DBPost.id == post_id,
+            DBPost.is_visible.is_(True),
+        )
+        .first()
+    )
+
+    return result
 
 
-def update_post(db: Session, post_id: int, request: PostUpdate):
-    post = get_post(db, post_id)
+def update_post(
+    db: Session,
+    post_id: int,
+    request: PostUpdate,
+    user_id: int,
+):
+    """Update the title or content of a post owned by the user."""
+    post = (
+        db.query(DBPost)
+        .filter(
+            DBPost.id == post_id,
+            DBPost.user_id == user_id,
+            DBPost.is_visible.is_(True),
+        )
+        .first()
+    )
 
     if post is None:
         return None
@@ -34,8 +61,6 @@ def update_post(db: Session, post_id: int, request: PostUpdate):
     if request.content is not None:
         post.content = request.content
 
-    if request.image_url is not None:
-        post.image_url = request.image_url
 
     db.commit()
     db.refresh(post)
@@ -43,13 +68,28 @@ def update_post(db: Session, post_id: int, request: PostUpdate):
     return post
 
 
-def delete_post(db: Session, post_id: int):
-    post = get_post(db, post_id)
+def delete_post(
+    db: Session,
+    post_id: int,
+    user_id: int,
+):
+    """Soft delete a post owned by the user."""
+    post = (
+        db.query(DBPost)
+        .filter(
+            DBPost.id == post_id,
+            DBPost.user_id == user_id,
+            DBPost.is_visible.is_(True),
+        )
+        .first()
+    )
 
     if post is None:
-        return False
+        return None
 
-    db.delete(post)
+    post.is_visible = not post.is_visible
+
     db.commit()
+    db.refresh(post)
 
-    return True
+    return post
