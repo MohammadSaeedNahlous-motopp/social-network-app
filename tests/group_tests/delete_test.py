@@ -28,11 +28,7 @@ def test_delete_group(
     assert response.status_code == 200
     assert response.json() == {"message": "Group deleted successfully"}
 
-    deleted_group = (
-        db.query(DBGroup)
-        .filter(DBGroup.id == group_id)
-        .first()
-    )
+    deleted_group = db.query(DBGroup).filter(DBGroup.id == group_id).first()
 
     assert deleted_group is None
 
@@ -60,18 +56,11 @@ def test_delete_group_forbidden(
 
     # Assert
     assert response.status_code == 403
-    assert response.json()["detail"] == (
-        "User has no permission to delete group"
-    )
+    assert response.json()["detail"] == ("User has no permission to delete group")
 
     db.refresh(test_group)
 
-    assert (
-        db.query(DBGroup)
-        .filter(DBGroup.id == test_group.id)
-        .first()
-        is not None
-    )
+    assert db.query(DBGroup).filter(DBGroup.id == test_group.id).first() is not None
 
 
 def test_delete_group_not_found(

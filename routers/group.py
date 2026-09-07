@@ -12,17 +12,26 @@ from schemas.group import GroupView, GroupSearch, GroupBase, GroupUpdate
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
+
 @router.post("/", response_model=GroupView)
-def create_group(request_model: GroupBase, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_group(
+    request_model: GroupBase,
+    current_user: DBUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     new_group = group.create_group(db, request_model, current_user.id)
 
     return new_group
 
+
 @router.get("/search", response_model=List[GroupView])
-def get_searched_groups(request_model: GroupSearch = Depends(), db: Session = Depends(get_db)):
+def get_searched_groups(
+    request_model: GroupSearch = Depends(), db: Session = Depends(get_db)
+):
     searched_groups = group.get_groups(db, request_model)
 
     return searched_groups
+
 
 @router.get("/{group_id}", response_model=GroupView)
 def get_group_by_id(group_id: int, db: Session = Depends(get_db)):
@@ -30,20 +39,32 @@ def get_group_by_id(group_id: int, db: Session = Depends(get_db)):
 
     return searched_group
 
+
 @router.get("/", response_model=List[GroupView])
 def get_all_groups(db: Session = Depends(get_db)):
     all_groups = group.get_all_groups(db)
 
     return all_groups
 
+
 @router.put("/edit/{group_id}", response_model=GroupView)
-def edit_group(group_id: int, request_model: GroupUpdate, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+def edit_group(
+    group_id: int,
+    request_model: GroupUpdate,
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_user),
+):
     updated_group = group.update_group(db, request_model, group_id, current_user.id)
 
     return updated_group
 
+
 @router.delete("/{group_id}")
-def delete_group(group_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+def delete_group(
+    group_id: int,
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_user),
+):
     group.delete_group(db, group_id, current_user.id)
 
     return {"message": "Group deleted successfully"}

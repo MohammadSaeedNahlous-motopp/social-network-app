@@ -6,6 +6,7 @@ from sqlalchemy.sql.sqltypes import String, Integer, Boolean
 
 from db.database import Base
 
+
 class DBGroup(Base):
     __tablename__ = "groups"
 

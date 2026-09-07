@@ -17,7 +17,6 @@ def test_create_post(client):
     assert response.json()["image_url"] is None
 
 
-
 def test_get_post(client):
     create_response = client.post(
         "/posts/",
@@ -37,13 +36,11 @@ def test_get_post(client):
     assert response.json()["title"] == "Get Post Test"
 
 
-
 def test_get_post_not_found(client):
     response = client.get("/posts/9999")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Post not found."
-
 
 
 def test_update_post(client):
@@ -68,7 +65,6 @@ def test_update_post(client):
     assert response.status_code == 200
     assert response.json()["title"] == "Updated title"
     assert response.json()["content"] == "Old content"
-
 
 
 def test_delete_post(client):
