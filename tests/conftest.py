@@ -6,11 +6,14 @@ from sqlalchemy.orm import sessionmaker, Session
 from auth.oauth2 import get_current_user
 from db.database import Base, get_db
 from db.hash import Hash
+from db.group_role import get_role_obj
+from db.seed import seed_group_roles
 from main import app
 from models.enums import GroupRole
 from models.user import DBUser
 from models.group import DBGroup
 from models.group_member import DBGroupMember
+from models.group_role import DBGroupRole
 
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
@@ -33,6 +36,7 @@ def db():
     db: Session = TestingSessionLocal()
 
     try:
+        seed_group_roles(db)
         yield db
     finally:
         db.close()
@@ -142,3 +146,12 @@ def create_test_group_member(db: Session):
         return membership
 
     return _create_test_group_member
+
+
+@pytest.fixture
+def get_test_group_role(db: Session):
+    def _get_test_group_role(role: GroupRole):
+        return get_role_obj(db=db, role=role)
+
+
+    return _get_test_group_role

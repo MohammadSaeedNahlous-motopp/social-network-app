@@ -17,6 +17,7 @@ def test_change_user_role(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role,
     db,
     current_role,
     new_role,
@@ -38,13 +39,13 @@ def test_change_user_role(
     create_test_group_member(
         group=group,
         user=admin,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     membership = create_test_group_member(
         group=group,
         user=target_user,
-        role=current_role,
+        role=get_test_group_role(current_role),
     )
 
     # Act
@@ -61,7 +62,7 @@ def test_change_user_role(
 
     db.refresh(membership)
 
-    assert membership.role == new_role
+    assert membership.role.name == new_role
 
 
 def test_change_role_forbidden_for_non_admin(
@@ -70,6 +71,7 @@ def test_change_role_forbidden_for_non_admin(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role,
     db,
 ):
     # Arrange
@@ -92,19 +94,19 @@ def test_change_role_forbidden_for_non_admin(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     create_test_group_member(
         group=group,
         user=issuer,
-        role=GroupRole.member,
+        role=get_test_group_role(GroupRole.member),
     )
 
     target_membership = create_test_group_member(
         group=group,
         user=target,
-        role=GroupRole.member,
+        role=get_test_group_role(GroupRole.member),
     )
 
     # Act
@@ -121,7 +123,7 @@ def test_change_role_forbidden_for_non_admin(
 
     db.refresh(target_membership)
 
-    assert target_membership.role == GroupRole.member
+    assert target_membership.role.name == GroupRole.member
 
 
 def test_change_role_issuer_not_member(
@@ -130,6 +132,7 @@ def test_change_role_issuer_not_member(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role
 ):
     # Arrange
     owner = create_test_user(
@@ -151,13 +154,13 @@ def test_change_role_issuer_not_member(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     create_test_group_member(
         group=group,
         user=target,
-        role=GroupRole.member,
+        role=get_test_group_role(GroupRole.member),
     )
 
     # issuer intentionally isn't a member
@@ -181,6 +184,7 @@ def test_change_role_target_not_member(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role
 ):
     # Arrange
     admin = authenticated_user(
@@ -198,7 +202,7 @@ def test_change_role_target_not_member(
     create_test_group_member(
         group=group,
         user=admin,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     # target isn't a member
@@ -229,6 +233,7 @@ def test_change_role_same_role(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role,
     role,
 ):
     # Arrange
@@ -247,13 +252,13 @@ def test_change_role_same_role(
     create_test_group_member(
         group=group,
         user=admin,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     create_test_group_member(
         group=group,
         user=target,
-        role=role,
+        role=get_test_group_role(role),
     )
 
     # Act
@@ -274,6 +279,7 @@ def test_owner_role_cannot_be_changed(
     authenticated_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role
 ):
     # Arrange
     owner = authenticated_user(
@@ -287,7 +293,7 @@ def test_owner_role_cannot_be_changed(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     # Act
@@ -307,6 +313,7 @@ def test_owner_role_cannot_be_changed(
 def test_change_role_group_not_found(
     client,
     authenticated_user,
+    get_test_group_role
 ):
     # Arrange
     authenticated_user(

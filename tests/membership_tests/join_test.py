@@ -3,6 +3,7 @@ from fastapi import status
 
 from models.enums import GroupRole
 from models.group_member import DBGroupMember
+from tests.conftest import create_test_user
 
 
 @pytest.mark.parametrize(
@@ -15,6 +16,7 @@ from models.group_member import DBGroupMember
 def test_join_group(
     client,
     authenticated_user,
+    create_test_user,
     create_test_group,
     db,
     is_public,
@@ -26,10 +28,10 @@ def test_join_group(
         name="Joining User",
     )
 
+    owner = create_test_user(email="owner@example.com", name="Owner")
+
     group = create_test_group(
-        owner=create_test_group.__wrapped__.__defaults__[0]
-        if False
-        else user,
+        owner=owner,
         name="Python Developers",
         is_public=is_public,
     )
@@ -58,7 +60,7 @@ def test_join_group(
         )
 
         assert membership is not None
-        assert membership.role == GroupRole.member
+        assert membership.role.name == GroupRole.member
 
     elif response.status_code == status.HTTP_501_NOT_IMPLEMENTED:
         assert response.json()["detail"] == (
@@ -70,6 +72,7 @@ def test_join_group_already_member(
     client,
     authenticated_user,
     create_test_group,
+    get_test_group_role,
     create_test_group_member,
 ):
     # Arrange
@@ -85,7 +88,7 @@ def test_join_group_already_member(
     create_test_group_member(
         group=group,
         user=user,
-        role=GroupRole.member,
+        role=get_test_group_role(GroupRole.member),
     )
 
     # Act

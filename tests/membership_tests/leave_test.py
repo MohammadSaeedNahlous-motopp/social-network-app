@@ -18,6 +18,7 @@ def test_leave_group(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role,
     db,
     role,
 ):
@@ -38,13 +39,13 @@ def test_leave_group(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     membership = create_test_group_member(
         group=group,
         user=user,
-        role=role,
+        role=get_test_group_role(role),
     )
 
     membership_id = membership.id
@@ -74,6 +75,7 @@ def test_owner_cannot_leave_group(
     authenticated_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role
 ):
     # Arrange
     owner = authenticated_user(
@@ -88,7 +90,7 @@ def test_owner_cannot_leave_group(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     # Act
@@ -109,13 +111,14 @@ def test_leave_group_not_member(
     create_test_user,
     create_test_group,
     create_test_group_member,
+    get_test_group_role
 ):
     # Arrange
     owner = create_test_user(
         email="leave_owner@example.com",
     )
 
-    user = authenticated_user(
+    authenticated_user(
         email="leave_non_member@example.com",
     )
 
@@ -127,10 +130,10 @@ def test_leave_group_not_member(
     create_test_group_member(
         group=group,
         user=owner,
-        role=GroupRole.administrator,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
-    # user isn't added as a member
+    # user isn't a group member
 
     # Act
     response = client.post(
