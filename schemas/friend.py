@@ -10,6 +10,7 @@ class User(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class FriendDisplayBase(BaseModel):
     id: int
     friend: User
