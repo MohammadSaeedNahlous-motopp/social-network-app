@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from routers import authentication, user, group, group_member
-from db.database import engine, Base
 
+from db.seed import seed_group_roles
+from routers import authentication, user, group, group_member
+from db.database import engine, Base, SessionLocal
 
 app = FastAPI()
 
@@ -18,3 +19,6 @@ app.include_router(group_member.router)
 
 
 Base.metadata.create_all(bind=engine)
+
+with SessionLocal() as db:
+    seed_group_roles(db)
