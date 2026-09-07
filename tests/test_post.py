@@ -1,12 +1,15 @@
+from io import BytesIO
+
+from PIL import Image
+
 def test_create_post(client, authenticated_user):
     user = authenticated_user()
 
     response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Test Post",
             "content": "This is a test post.",
-            "image_url": None,
         },
     )
 
@@ -20,12 +23,24 @@ def test_create_post(client, authenticated_user):
 def test_get_post(client, authenticated_user):
     authenticated_user()
 
+    image_file = BytesIO()
+
+    image = Image.new("RGB", (10, 10))
+    image.save(image_file, format="PNG")
+    image_file.seek(0)
+
     create_response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Get Post Test",
             "content": "Testing GET.",
-            "image_url": "test-image.jpg",
+        },
+        files={
+            "image":(
+                "test-image.png",
+                image_file,
+                "image/png",
+            )
         },
     )
 
@@ -39,7 +54,8 @@ def test_get_post(client, authenticated_user):
     assert response.json()["id"] == post_id
     assert response.json()["title"] == "Get Post Test"
     assert response.json()["content"] == "Testing GET."
-    assert response.json()["image_url"] == "test-image.jpg"
+    assert response.json()["image_url"] is not None
+    assert response.json()["image_url"].endswith(".png")
 
 
 def test_get_post_not_found(client):
@@ -54,10 +70,9 @@ def test_update_post(client, authenticated_user):
 
     create_response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Old title",
             "content": "Old content",
-            "image_url": None,
         },
     )
 
@@ -83,10 +98,9 @@ def test_delete_post(client, authenticated_user):
 
     create_response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Delete me",
             "content": "This post will be deleted.",
-            "image_url": None,
         },
     )
 
