@@ -14,7 +14,7 @@ from schemas.user import UserDisplay
 
 router = APIRouter(prefix="/group/{group_id}", tags=["groups"])
 
-@router.get("/members", response_model=List[UserDisplay])
+@router.get("/members", response_model=List[tuple[UserDisplay, GroupRole]])
 def get_group_members(group_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     group_members = group_member.get_group_members(db=db, group_id=group_id, requesting_user_id=current_user.id)
 
@@ -42,7 +42,7 @@ def is_member(group_id: int, user_id: int, current_user: DBUser = Depends(get_cu
 
     return {"is_member": True, "role": member_role}
 
-@router.post("/join",response_model=List[UserDisplay])
+@router.post("/join",response_model=UserDisplay)
 def join_group(group_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
     member = group_member.join_group(db=db, group_id=group_id, user_id=current_user.id)
 
