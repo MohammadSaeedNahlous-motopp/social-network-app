@@ -49,3 +49,10 @@ class DBUser(Base):
         foreign_keys="DBFriendRequest.receiver_id",
         back_populates="receiver",
     )
+
+    friends = relationship(
+        "DBFriend", foreign_keys="DBFriend.user_id", back_populates="user"
+    )
+    friend_of = relationship(
+        "DBFriend", foreign_keys="DBFriend.friend_id", back_populates="friend"
+    )
