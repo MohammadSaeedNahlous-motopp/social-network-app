@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_get_group_by_id(client, create_test_user, create_test_group):
     # Arrange
     user = create_test_user(
@@ -49,25 +50,21 @@ def test_get_group_by_id_not_found(client):
             {"name": "python"},
             ["Python Developers", "Python Cooking Club"],
         ),
-
         # test_search_groups_case_insensitive
         (
             {"name": "PYTHON"},
             ["Python Developers", "Python Cooking Club"],
         ),
-
         # test_search_groups_matches_whole_search_string
         (
             {"name": "python developers"},
             ["Python Developers"],
         ),
-
         # search by description
         (
             {"description": "programming"},
             ["Python Developers", "Java Developers"],
         ),
-
         # search by both fields
         (
             {

@@ -36,7 +36,7 @@ async def save_image(file: UploadFile, image_type: ImageType) -> str:
     if file_size > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Profile image must be smaller than 5 MB.",
+            detail="Image must be smaller than 5 MB.",
         )
 
     # 3. Validate that the file is actually an image

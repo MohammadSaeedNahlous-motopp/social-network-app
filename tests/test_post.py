@@ -1,13 +1,16 @@
-from models.post import DBPost
+from io import BytesIO
+
+from PIL import Image
 
 
-def test_create_post(client):
+def test_create_post(client, authenticated_user):
+    user = authenticated_user()
+
     response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Test Post",
             "content": "This is a test post.",
-            "image_url": None,
         },
     )
 
@@ -15,18 +18,34 @@ def test_create_post(client):
     assert response.json()["title"] == "Test Post"
     assert response.json()["content"] == "This is a test post."
     assert response.json()["image_url"] is None
+    assert response.json()["user_id"] == user.id
 
 
+def test_get_post(client, authenticated_user):
+    authenticated_user()
 
-def test_get_post(client):
+    image_file = BytesIO()
+
+    image = Image.new("RGB", (10, 10))
+    image.save(image_file, format="PNG")
+    image_file.seek(0)
+
     create_response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Get Post Test",
             "content": "Testing GET.",
-            "image_url": None,
+        },
+        files={
+            "image": (
+                "test-image.png",
+                image_file,
+                "image/png",
+            )
         },
     )
+
+    assert create_response.status_code == 201
 
     post_id = create_response.json()["id"]
 
@@ -35,7 +54,9 @@ def test_get_post(client):
     assert response.status_code == 200
     assert response.json()["id"] == post_id
     assert response.json()["title"] == "Get Post Test"
-
+    assert response.json()["content"] == "Testing GET."
+    assert response.json()["image_url"] is not None
+    assert response.json()["image_url"].endswith(".png")
 
 
 def test_get_post_not_found(client):
@@ -45,16 +66,18 @@ def test_get_post_not_found(client):
     assert response.json()["detail"] == "Post not found."
 
 
+def test_update_post(client, authenticated_user):
+    authenticated_user()
 
-def test_update_post(client):
     create_response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Old title",
             "content": "Old content",
-            "image_url": None,
         },
     )
+
+    assert create_response.status_code == 201
 
     post_id = create_response.json()["id"]
 
@@ -68,18 +91,21 @@ def test_update_post(client):
     assert response.status_code == 200
     assert response.json()["title"] == "Updated title"
     assert response.json()["content"] == "Old content"
+    assert response.json()["image_url"] is None
 
 
+def test_delete_post(client, authenticated_user):
+    authenticated_user()
 
-def test_delete_post(client):
     create_response = client.post(
         "/posts/",
-        json={
+        data={
             "title": "Delete me",
             "content": "This post will be deleted.",
-            "image_url": None,
         },
     )
+
+    assert create_response.status_code == 201
 
     post_id = create_response.json()["id"]
 
