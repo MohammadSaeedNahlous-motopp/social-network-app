@@ -57,4 +57,3 @@ class DBUser(Base):
         "DBFriend", foreign_keys="DBFriend.friend_id", back_populates="friend"
     )
     groups = relationship("DBGroup", back_populates="owner")
-

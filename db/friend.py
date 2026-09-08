@@ -5,7 +5,7 @@ from models.friend import DBFriend
 
 
 def get_friends(user_id: int, db: Session):
-    friends_list = db.query(DBFriend).filter(DBFriend.user_id == user_id).all()
+    friends_list = db.query(DBFriend).filter(DBFriend.user_id == user_id)
     return friends_list
 
 

@@ -4,17 +4,14 @@ from sqlalchemy.orm import Session
 from models.enums import FriendRequestStatus
 from models.friend_request import DBFriendRequest
 from models.user import DBUser
+from models.friend import DBFriend
 from schemas.friend_request import FriendRequestBase
 
 
 def get_user_pending_friend_requests(user_id: int, db: Session):
-    pending_friend_requests = (
-        db.query(DBFriendRequest)
-        .filter(
-            DBFriendRequest.receiver_id == user_id,
-            DBFriendRequest.status == FriendRequestStatus.pending,
-        )
-        .all()
+    pending_friend_requests = db.query(DBFriendRequest).filter(
+        DBFriendRequest.receiver_id == user_id,
+        DBFriendRequest.status == FriendRequestStatus.pending,
     )
 
     return pending_friend_requests
@@ -124,6 +121,14 @@ def change_friend_request_status(
         )
 
     searched_friend_request.status = new_status
+    if new_status == FriendRequestStatus.accepted:
+        new_friendship = DBFriend(
+            user_id=searched_friend_request.sender_id,
+            friend_id=searched_friend_request.receiver_id,
+        )
+        db.add(new_friendship)
+        db.commit()
+        db.refresh(new_friendship)
 
     db.commit()
     db.refresh(searched_friend_request)

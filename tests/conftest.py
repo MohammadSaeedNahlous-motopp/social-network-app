@@ -73,12 +73,15 @@ def create_test_user(db: Session):
 
 
 @pytest.fixture
-def authenticated_user(create_test_user):
+def authenticated_user(db: Session, create_test_user):
     def _authenticated_user(
         email="test_user@example.com",
         name="John Doe",
     ):
-        user = create_test_user(email=email, name=name)
+        user = db.query(DBUser).filter(DBUser.email == email).first()
+
+        if not user:
+            user = create_test_user(email=email, name=name)
 
         app.dependency_overrides[get_current_user] = lambda: user
 
