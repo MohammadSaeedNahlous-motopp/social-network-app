@@ -25,6 +25,7 @@ def test_create_user_with_invalid_image_type(client):
             "name": "John Doe",
             "email": "invalid_image@example.com",
             "password": "password123",
+            "repeat_password":"password123"
         },
         files={"profile_img": ("profile.txt", fake_file, "text/plain")},
     )
@@ -42,6 +43,7 @@ def test_create_user_with_fake_image(client):
             "name": "John Doe",
             "email": "fake_image@example.com",
             "password": "password123",
+            "repeat_password": "password123"
         },
         files={"profile_img": ("profile.jpg", fake_file, "image/jpeg")},
     )
@@ -59,6 +61,7 @@ def test_create_user_with_png_image(client, db: Session):
             "name": "John Doe",
             "email": "png_imaagaae1@example.com",
             "password": "password123",
+            "repeat_password": "password123"
         },
         files={"profile_img": ("profile.png", image, "image/png")},
     )
@@ -81,6 +84,7 @@ def test_create_user_with_webp_image(client, db: Session):
             "name": "John Doe",
             "email": "webp_imwagwwe@example.com",
             "password": "password123",
+            "repeat_password": "password123"
         },
         files={"profile_img": ("profile.webp", image, "image/webp")},
     )
@@ -103,12 +107,13 @@ def test_create_user_with_image_too_large(client):
             "name": "John Doe",
             "email": "large_image@example.com",
             "password": "password123",
+            "repeat_password": "password123"
         },
         files={"profile_img": ("large.jpg", large_file, "image/jpeg")},
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "Profile image must be smaller than 5 MB."
+    assert response.json()["detail"] == "Image must be smaller than 5 MB."
 
 
 def test_edit_user_profile_image_unauthorized(client):
