@@ -161,3 +161,14 @@ def get_test_group_role(db: Session):
 
 
     return _get_test_group_role
+
+
+@pytest.fixture(autouse=True)
+def mock_image_path(monkeypatch, tmp_path):
+    def temp_image_path(image_type):
+        return tmp_path / f"{image_type}s"
+
+    monkeypatch.setattr(
+        "service.image.get_image_path",
+        temp_image_path,
+    )
