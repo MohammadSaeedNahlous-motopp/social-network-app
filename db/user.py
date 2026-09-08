@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import HTTPException, status
 
 from sqlalchemy.orm.session import Session
@@ -12,6 +14,10 @@ def register_user(request: user.UserBase, db: Session, image_path: str):
     if user_with_same_email is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
+    if request.password != request.repeat_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords don't match"
         )
     new_user = DBUser(
         name=request.name,
@@ -28,26 +34,6 @@ def register_user(request: user.UserBase, db: Session, image_path: str):
     db.commit()
     db.refresh(new_user)
     return new_user
-
-
-def login_user(request: user.UserLogin, db: Session):
-    searched_user = db.query(DBUser).filter(DBUser.email == request.email).first()
-
-    if not searched_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
-
-    verified_password = Hash.verify(searched_user.password, request.password)
-
-    if not verified_password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
-
-    return {"message": "Success!"}
 
 
 def get_user_by_email(db: Session, email: str):
@@ -70,11 +56,6 @@ def edit_user(
     remove_profile_img: bool = False,
 ):
     searched_user = db.query(DBUser).filter(DBUser.id == user_id).first()
-    # TODO: Remove the If statement, get Current User already checked.
-    if searched_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found!"
-        )
 
     if request.email is not None:
         user_with_same_email = (
@@ -105,11 +86,6 @@ def edit_user(
 
 def edit_user_active_state(db: Session, user_id: int):
     searched_user = db.query(DBUser).filter(DBUser.id == user_id).first()
-    # TODO: Remove the If statement, get Current User already checked.
-    if searched_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found!"
-        )
 
     searched_user.is_active = not searched_user.is_active
 
