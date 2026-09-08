@@ -1,4 +1,5 @@
 import pytest
+from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -62,6 +63,11 @@ def client(db):
 @pytest.fixture
 def create_test_user(db: Session):
     def _create_test_user(email="test_user@example.com", name="John Doe"):
+        existing_user = db.query(DBUser).filter(DBUser.email == email).first()
+
+        if existing_user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists.")
+
         user = DBUser(
             name=name,
             email=email,
