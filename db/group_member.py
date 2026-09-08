@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import HTTPException, status
 from sqlalchemy import or_, exists
 from sqlalchemy.orm import Query
@@ -17,13 +15,13 @@ from models.user import DBUser
 from db.group import get_group_by_id
 
 # Add pagination for member list
-def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> List[tuple[DBUser, GroupRole]]:
+def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Query:
     """
     Return a list of all users who are member of group, and their roles
     :param db: database session
     :param group_id: id of group
     :param requesting_user_id: id of user who requested the group member list
-    :return: a pair of user and its role
+    :return: a pair of user and its role **Query[tuple[DBUser, GroupRole]]**
     """
     searched_group = get_group_by_id(db, group_id)
 
@@ -35,8 +33,12 @@ def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Li
     if not searched_group.is_public and req_user_membership is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no permission to read list of group members")
 
-    group_members = db.query(DBGroupMember).filter(DBGroupMember.group_id == group_id).all()
-    group_members = [(gm.user, gm.role.name) for gm in group_members]
+    group_members = (
+        db.query(DBUser, DBGroupRole.name)
+        .join(DBGroupMember, DBGroupMember.user_id == DBUser.id)
+        .join(DBGroupRole, DBGroupRole.id == DBGroupMember.role_id)
+        .filter(DBGroupMember.group_id == group_id)
+    )
 
     return group_members
 
