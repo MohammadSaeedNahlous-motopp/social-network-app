@@ -13,3 +13,8 @@ class ImageType(str, PyEnum):
     group_picture = "group_picture"
     post_picture = "post_picture"
     group_background_picture = "group_background_picture"
+
+
+class GroupRole(str, PyEnum):
+    member = "member"
+    administrator = "administrator"

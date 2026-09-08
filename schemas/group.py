@@ -8,7 +8,7 @@ from schemas.user import UserDisplay
 # Group Base/Type - Used For Creating A User
 class GroupBase(BaseModel):
     name: str
-    description: str
+    description: str | None = None
     background_img: str | None = None
     profile_img: str | None = None
     is_public: bool

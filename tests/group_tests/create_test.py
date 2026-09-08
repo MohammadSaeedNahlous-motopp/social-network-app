@@ -1,3 +1,4 @@
+from fastapi import status
 from sqlalchemy.orm import Session
 
 from models.group import DBGroup
@@ -26,7 +27,7 @@ def test_create_group(client, db: Session, authenticated_user):
     )
 
     # Assert
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_201_CREATED
 
     data = response.json()
 
@@ -61,4 +62,4 @@ def test_create_group_unauthorized(client):
     )
 
     # Assert
-    assert response.status_code == 401
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
