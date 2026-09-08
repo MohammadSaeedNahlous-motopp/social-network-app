@@ -1,4 +1,5 @@
 import pytest
+from fastapi import status
 
 def test_get_group_by_id(client, create_test_user, create_test_group):
     # Arrange
@@ -17,7 +18,7 @@ def test_get_group_by_id(client, create_test_user, create_test_group):
     response = client.get(f"/groups/{group.id}")
 
     # Assert
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
 
@@ -37,7 +38,7 @@ def test_get_group_by_id_not_found(client):
     response = client.get(f"/groups/{non_existing_group_id}")
 
     # Assert
-    assert response.status_code == 404
+    assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Group not found"
 
 
@@ -105,7 +106,7 @@ def test_search_groups(
         params=search_params,
     )
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
 
@@ -118,7 +119,7 @@ def test_search_groups_without_parameters(client):
     response = client.get("/groups/search")
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == (
         "At least one field must be provided for search"
     )

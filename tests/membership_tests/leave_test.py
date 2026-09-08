@@ -56,10 +56,7 @@ def test_leave_group(
     )
 
     # Assert
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {
-        "is_member": False,
-    }
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
     deleted_membership = (
         db.query(DBGroupMember)

@@ -1,4 +1,6 @@
 import pytest
+
+from fastapi import status
 from sqlalchemy.orm import Session
 
 
@@ -100,7 +102,7 @@ def test_update_group(
     )
 
     # Assert
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
 
@@ -144,7 +146,7 @@ def test_update_group_forbidden(
     )
 
     # Assert
-    assert response.status_code == 403
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json()["detail"] == (
         "User has no permission to edit group"
     )
@@ -168,7 +170,7 @@ def test_update_group_not_found(
     )
 
     # Assert
-    assert response.status_code == 404
+    assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Group not found"
 
 
@@ -195,7 +197,7 @@ def test_update_group_empty_request(
     )
 
     # Assert
-    assert response.status_code == 400
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == (
         "At least one field must be provided for update"
     )

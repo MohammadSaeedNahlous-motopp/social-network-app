@@ -11,7 +11,7 @@ from models.enums import GroupRole
         (GroupRole.administrator, GroupRole.member),
     ],
 )
-def test_change_user_role(
+def test_change_user_role_by_owner(
     client,
     authenticated_user,
     create_test_user,
@@ -63,6 +63,80 @@ def test_change_user_role(
     db.refresh(membership)
 
     assert membership.role.name == new_role
+
+
+@pytest.mark.parametrize(
+    "current_role,new_role",
+    [
+        (GroupRole.member, GroupRole.administrator),
+        (GroupRole.administrator, GroupRole.member),
+    ],
+)
+def test_change_user_role_by_admin_not_owner(
+    client,
+    authenticated_user,
+    create_test_user,
+    create_test_group,
+    create_test_group_member,
+    get_test_group_role,
+    db,
+    current_role,
+    new_role,
+):
+    # Arrange
+    owner = create_test_user(email=f"change_role_owner_{current_role.value}@example.com")
+
+    admin = authenticated_user(
+        email=f"change_role_admin_{current_role.value}@example.com",
+    )
+
+    target_user = create_test_user(
+        email=f"change_role_target_{current_role.value}@example.com",
+    )
+
+    group = create_test_group(
+        owner=owner,
+        name="Python Developers",
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
+    )
+
+    create_test_group_member(
+        group=group,
+        user=admin,
+        role=get_test_group_role(GroupRole.administrator),
+    )
+
+    membership = create_test_group_member(
+        group=group,
+        user=target_user,
+        role=get_test_group_role(current_role),
+    )
+
+    # Act
+    response = client.put(
+        f"/group/{group.id}/change_role/"
+        f"{target_user.id}/{new_role.value}"
+    )
+
+    # Assert
+    if current_role == GroupRole.member:
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {
+            "updated_role": new_role.value,
+        }
+
+        db.refresh(membership)
+
+        assert membership.role.name == new_role
+
+    elif current_role == GroupRole.administrator:
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()["detail"] == "Only group owner can change the role."
 
 
 def test_change_role_forbidden_for_non_admin(

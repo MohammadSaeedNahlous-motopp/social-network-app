@@ -1,3 +1,4 @@
+from fastapi import status
 from sqlalchemy.orm import Session
 
 from models.group import DBGroup
@@ -25,8 +26,7 @@ def test_delete_group(
     response = client.delete(f"/groups/{group_id}")
 
     # Assert
-    assert response.status_code == 200
-    assert response.json() == {"message": "Group deleted successfully"}
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
     deleted_group = (
         db.query(DBGroup)
@@ -59,7 +59,7 @@ def test_delete_group_forbidden(
     response = client.delete(f"/groups/{test_group.id}")
 
     # Assert
-    assert response.status_code == 403
+    assert response.status_code == status.HTTP_403_FORBIDDEN
     assert response.json()["detail"] == (
         "User has no permission to delete group"
     )
@@ -85,5 +85,5 @@ def test_delete_group_not_found(
     response = client.delete("/groups/999999")
 
     # Assert
-    assert response.status_code == 404
+    assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Group not found"

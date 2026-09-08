@@ -9,7 +9,7 @@ from tests.conftest import create_test_user
 @pytest.mark.parametrize(
     "is_public, expected_status",
     [
-        (True, status.HTTP_200_OK),
+        (True, status.HTTP_201_CREATED),
         (False, status.HTTP_501_NOT_IMPLEMENTED),
     ],
 )
@@ -44,7 +44,7 @@ def test_join_group(
     # Assert
     assert response.status_code == expected_status
 
-    if expected_status == status.HTTP_200_OK:
+    if expected_status == status.HTTP_201_CREATED:
         data = response.json()
 
         assert data["email"] == user.email
