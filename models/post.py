@@ -11,11 +11,9 @@ class DBPost(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    group_id = Column(Integer, nullable=True)
-    # group_id = Column(Integer, ForeignKey('groups.id'), nullable=True)
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
 
     title = Column(String(200), nullable=False)
 
@@ -36,5 +34,6 @@ class DBPost(Base):
     updated_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
