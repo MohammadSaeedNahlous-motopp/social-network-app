@@ -3,7 +3,12 @@ from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
 
 
-def create_post(db: Session, request: PostCreate, user_id: int, image_url: str | None = None,):
+def create_post(
+    db: Session,
+    request: PostCreate,
+    user_id: int,
+    image_url: str | None = None,
+):
     """Create and save a new post for a user."""
 
     new_post = DBPost(
@@ -61,7 +66,6 @@ def update_post(
     if request.content is not None:
         post.content = request.content
 
-
     db.commit()
     db.refresh(post)
 
@@ -73,13 +77,12 @@ def delete_post(
     post_id: int,
     user_id: int,
 ):
-    """Soft delete a post owned by the user."""
+    """Delete a post owned by the user."""
     post = (
         db.query(DBPost)
         .filter(
             DBPost.id == post_id,
             DBPost.user_id == user_id,
-            DBPost.is_visible.is_(True),
         )
         .first()
     )
@@ -87,9 +90,7 @@ def delete_post(
     if post is None:
         return None
 
-    post.is_visible = not post.is_visible
-
+    db.delete(post)
     db.commit()
-    db.refresh(post)
 
     return post

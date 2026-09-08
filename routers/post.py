@@ -6,7 +6,8 @@ from db import post as db_post
 from db.database import get_db
 from models.user import DBUser
 from schemas.post import PostCreate, PostUpdate, PostResponse
-from service.post_image import save_post_image
+from service.image import save_image
+from models.enums import ImageType
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -17,11 +18,11 @@ router = APIRouter(prefix="/posts", tags=["posts"])
     status_code=status.HTTP_201_CREATED,
     summary="Create a new post",
     description=(
-            "Creates a new post for the currently authenticated user. "
-            "The post must contain a title and content and may optionally include an image. "
-            "The uploaded image must be a valid JPG, PNG, or WEBP image and must not "
-            "exceed the maximum allowed file size."
-),
+        "Creates a new post for the currently authenticated user. "
+        "The post must contain a title and content and may optionally include an image. "
+        "The uploaded image must be a valid JPG, PNG, or WEBP image and must not "
+        "exceed the maximum allowed file size."
+    ),
     response_description="The newly created post.",
     responses={
         201: {"description": "Post created successfully."},
@@ -41,7 +42,7 @@ async def create_post(
     image_url = None
 
     if image is not None:
-        image_url = await save_post_image(image)
+        image_url = await save_image(image,ImageType.post_picture)
 
     request = PostCreate(
         title=title,
@@ -79,8 +80,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
     if post is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found."
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found."
         )
 
     return post
@@ -92,9 +92,9 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
     status_code=status.HTTP_200_OK,
     summary="Update a post",
     description=(
-            "Updates the title or content of a post owned by the currently "
-            "authenticated user. The image cannot be changed or removed after "
-            "the post has been published."
+        "Updates the title or content of a post owned by the currently "
+        "authenticated user. The image cannot be changed or removed after "
+        "the post has been published."
     ),
     response_description="The updated post.",
     responses={
@@ -102,13 +102,11 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
         401: {"description": "Authentication is required to update a post."},
         404: {
             "description": (
-                    "The post was not found or does not belong to the "
-                    "authenticated user."
+                "The post was not found or does not belong to the authenticated user."
             )
         },
     },
 )
-
 def update_post(
     post_id: int,
     request: PostUpdate,
@@ -126,21 +124,19 @@ def update_post(
 
     if post is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found."
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found."
         )
 
     return post
 
 
-@router.patch(
+@router.delete(
     "/{post_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete a post",
     description=(
-            "Soft deletes a post owned by the currently authenticated user "
-            "by changing its visibility status. The post is not physically "
-            "removed from the database."
+        "Deletes a post owned by the currently authenticated user. "
+        "The post is permanently removed from the database."
     ),
     response_description="Confirmation that the post was deleted.",
     responses={
@@ -148,8 +144,7 @@ def update_post(
         401: {"description": "Authentication is required to delete a post."},
         404: {
             "description": (
-                    "The post was not found or does not belong to the "
-                    "authenticated user."
+                "The post was not found or does not belong to the authenticated user."
             )
         },
     },
@@ -159,7 +154,7 @@ def delete_post(
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
-    """Soft delete a post owned by the currently authenticated user."""
+    """Delete a post owned by the currently authenticated user."""
 
     post = db_post.delete_post(
         db=db,
@@ -169,8 +164,7 @@ def delete_post(
 
     if post is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found."
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found."
         )
 
     message = {"message": "Post deleted successfully."}

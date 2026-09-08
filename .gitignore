@@ -225,5 +225,3 @@ __marimo__/
 *.db
 *.sqlite
 *.sqlite3
-social-network.db
-test.db

@@ -10,5 +10,3 @@ async def save_post_image(file: UploadFile) -> str:
         file=file,
         image_type=ImageType.post_picture,
     )
-
-

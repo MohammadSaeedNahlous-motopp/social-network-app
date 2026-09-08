@@ -2,6 +2,7 @@ from io import BytesIO
 
 from PIL import Image
 
+
 def test_create_post(client, authenticated_user):
     user = authenticated_user()
 
@@ -36,7 +37,7 @@ def test_get_post(client, authenticated_user):
             "content": "Testing GET.",
         },
         files={
-            "image":(
+            "image": (
                 "test-image.png",
                 image_file,
                 "image/png",
@@ -108,7 +109,7 @@ def test_delete_post(client, authenticated_user):
 
     post_id = create_response.json()["id"]
 
-    response = client.patch(f"/posts/{post_id}")
+    response = client.delete(f"/posts/{post_id}")
 
     assert response.status_code == 200
     assert response.json()["message"] == "Post deleted successfully."
