@@ -166,6 +166,9 @@ def change_user_role(db: Session, group_id: int, user_id: int, new_role: GroupRo
     if user_id == searched_group.owner_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Issuer cannot change the role. Group owner role can only be '{GroupRole.administrator}'")
 
+    if user_role == GroupRole.administrator and current_user_id != searched_group.owner_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only group owner can change the role.")
+
     membership = (
         db.query(DBGroupMember)
         .filter(
