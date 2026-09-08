@@ -5,7 +5,6 @@ python-multipart
 pwdlib[argon2]
 python-jose[cryptography]
 ruff
-
 pydantic
 pytest
 httpx

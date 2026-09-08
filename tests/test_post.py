@@ -58,7 +58,6 @@ def test_get_post(client, authenticated_user):
     assert response.json()["image_url"] is not None
     assert response.json()["image_url"].endswith(".png")
 
-
 def test_get_post_not_found(client):
     response = client.get("/posts/9999")
 

@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -32,19 +34,31 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
     },
 )
 def get_token(
-    request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    request: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
 ):
     searched_user = (
         db.query(DBUser)
-        .filter(DBUser.email == request.username, DBUser.is_active)
+        .filter(
+            DBUser.email == request.username,
+            DBUser.is_active,
+        )
         .first()
     )
 
-    if not searched_user or not Hash.verify(searched_user.password, request.password):
+    if not searched_user or not Hash.verify(
+        searched_user.password,
+        request.password,
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
+
+    searched_user.last_login_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(searched_user)
 
     access_token = oauth2.create_access_token(data={"sub": str(searched_user.id)})
 

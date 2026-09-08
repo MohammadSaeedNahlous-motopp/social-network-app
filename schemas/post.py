@@ -24,6 +24,4 @@ class PostResponse(BaseModel):
     is_visible: bool
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)

@@ -1,5 +1,5 @@
 from fastapi import Form, Request
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 from models.enums import Gender
 
@@ -7,8 +7,9 @@ from models.enums import Gender
 # Full User Base/Type - Used For Creating A User
 class UserBase(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     password: str
+    repeat_password: str
     bio: str | None = None
     phone: str | None = None
     location: str | None = None
@@ -18,8 +19,9 @@ class UserBase(BaseModel):
     def as_form(
         cls,
         name: str = Form(...),
-        email: str = Form(...),
+        email: EmailStr = Form(...),
         password: str = Form(...),
+        repeat_password: str = Form(...),
         bio: str | None = Form(None),
         phone: str | None = Form(None),
         location: str | None = Form(None),
@@ -29,6 +31,7 @@ class UserBase(BaseModel):
             name=name,
             email=email,
             password=password,
+            repeat_password=repeat_password,
             bio=bio or None,
             phone=phone or None,
             location=location or None,
@@ -39,7 +42,7 @@ class UserBase(BaseModel):
 # Update User Base/Type Without Password
 class UserUpdate(BaseModel):
     name: str | None = None
-    email: str | None = None
+    email: EmailStr | None = None
     bio: str | None = None
     phone: str | None = None
     location: str | None = None
@@ -50,7 +53,7 @@ class UserUpdate(BaseModel):
         cls,
         request: Request,
         name: str | None = Form(None),
-        email: str | None = Form(None),
+        email: EmailStr | None = Form(None),
         bio: str | None = Form(None),
         phone: str | None = Form(None),
         location: str | None = Form(None),
@@ -84,7 +87,7 @@ class UserUpdate(BaseModel):
 # Display User Base/Type
 class UserDisplay(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     bio: str | None = None
     phone: str | None = None
     profile_img: str | None = None
@@ -95,5 +98,5 @@ class UserDisplay(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: str
+    email: EmailStr
     password: str
