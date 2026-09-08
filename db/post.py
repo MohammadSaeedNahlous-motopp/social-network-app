@@ -2,6 +2,7 @@ from sqlalchemy.orm.session import Session
 from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
 
+
 def create_post(db: Session, request: PostCreate, user_id: int):
     new_post = DBPost(
         user_id=user_id,
@@ -15,7 +16,6 @@ def create_post(db: Session, request: PostCreate, user_id: int):
     db.refresh(new_post)
 
     return new_post
-
 
 
 def get_post(db: Session, post_id: int) -> DBPost | None:
@@ -41,7 +41,6 @@ def update_post(db: Session, post_id: int, request: PostUpdate):
     db.refresh(post)
 
     return post
-
 
 
 def delete_post(db: Session, post_id: int):

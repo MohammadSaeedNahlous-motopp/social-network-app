@@ -13,6 +13,7 @@ class GroupBase(BaseModel):
     profile_img: str | None = None
     is_public: bool
 
+
 # Group view model - Used for displaying group data
 class GroupView(BaseModel):
     id: int
@@ -26,6 +27,7 @@ class GroupView(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 # Group update model - Used for updating group values
 class GroupUpdate(BaseModel):
     name: str | None = None
@@ -33,6 +35,7 @@ class GroupUpdate(BaseModel):
     background_img: str | None = None
     profile_img: str | None = None
     is_public: bool | None = None
+
 
 # Group search model - Used for searching group based on model params
 class GroupSearch(BaseModel):

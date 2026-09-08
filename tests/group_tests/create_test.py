@@ -36,9 +36,7 @@ def test_create_group(client, db: Session, authenticated_user):
     assert data["owner"]["name"] == test_user_name
     assert data["owner"]["email"] == test_user_email
 
-    db_group = db.query(DBGroup).filter(
-        DBGroup.name == group_data["name"]
-    ).first()
+    db_group = db.query(DBGroup).filter(DBGroup.name == group_data["name"]).first()
 
     assert db_group is not None
     assert db_group.owner_id == user.id

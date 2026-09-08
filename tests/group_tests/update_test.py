@@ -145,9 +145,7 @@ def test_update_group_forbidden(
 
     # Assert
     assert response.status_code == 403
-    assert response.json()["detail"] == (
-        "User has no permission to edit group"
-    )
+    assert response.json()["detail"] == ("User has no permission to edit group")
 
     db.refresh(test_group)
 

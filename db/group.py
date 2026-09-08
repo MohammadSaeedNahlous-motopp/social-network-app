@@ -7,6 +7,7 @@ from sqlalchemy.orm.session import Session
 from models.group import DBGroup
 from schemas import group
 
+
 def create_group(db: Session, group_model: group.GroupBase, owner_id: int) -> DBGroup:
     """
     Create a new group
@@ -30,16 +31,21 @@ def create_group(db: Session, group_model: group.GroupBase, owner_id: int) -> DB
 
     return new_group
 
+
 def get_group_by_id(db: Session, group_id: int) -> DBGroup:
     searched_group = db.query(DBGroup).filter(DBGroup.id == group_id).first()
 
     if searched_group is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
+        )
 
     return searched_group
 
+
 def get_all_groups(db: Session) -> Query[DBGroup]:
     return db.query(DBGroup)
+
 
 def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
     """
@@ -50,8 +56,11 @@ def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
     """
     search_data = request_model.model_dump(exclude_unset=True)
 
-    if (not search_data or
-            request_model.name is None and request_model.description is None):
+    if (
+        not search_data
+        or request_model.name is None
+        and request_model.description is None
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one field must be provided for search",
@@ -69,7 +78,10 @@ def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
 
     return query
 
-def update_group(db: Session, request_model: group.GroupUpdate, group_id: int, user_id: int) -> DBGroup:
+
+def update_group(
+    db: Session, request_model: group.GroupUpdate, group_id: int, user_id: int
+) -> DBGroup:
     """
     Update an existing group
     :param db: database session
@@ -82,11 +94,16 @@ def update_group(db: Session, request_model: group.GroupUpdate, group_id: int, u
     searched_group = db.query(DBGroup).filter(DBGroup.id == group_id).first()
 
     if searched_group is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
+        )
 
     # Needs an extend to support of admins in future
     if searched_group.owner_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no permission to edit group")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User has no permission to edit group",
+        )
 
     update_data = request_model.model_dump(exclude_unset=True)
 
@@ -104,6 +121,7 @@ def update_group(db: Session, request_model: group.GroupUpdate, group_id: int, u
 
     return searched_group
 
+
 def delete_group(db: Session, group_id: int, user_id: int):
     """
     Delete an existing group
@@ -114,10 +132,15 @@ def delete_group(db: Session, group_id: int, user_id: int):
     searched_group = db.query(DBGroup).filter(DBGroup.id == group_id).first()
 
     if not searched_group:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
+        )
 
     if searched_group.owner_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no permission to delete group")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User has no permission to delete group",
+        )
 
     db.delete(searched_group)
     db.commit()
