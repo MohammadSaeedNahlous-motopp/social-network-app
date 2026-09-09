@@ -23,9 +23,9 @@ def unique_email(prefix="test"):
     return f"{prefix}_{uuid4().hex}@example.com"
 
 
-# =========================
+# ============================================================
 # REGISTER TESTS
-# =========================
+# ============================================================
 
 
 def test_register_user(client):
@@ -79,11 +79,9 @@ def test_create_user_with_profile_image(client, db: Session):
     assert user.phone == "0612345678"
     assert user.location == "Rotterdam"
 
-    # Works whether gender is stored as an enum or string
-    assert (
-        str(user.gender.value if hasattr(user.gender, "value") else user.gender)
-        == "male"
-    )
+    stored_gender = user.gender.value if hasattr(user.gender, "value") else user.gender
+
+    assert stored_gender == "male"
 
 
 def test_create_user_without_profile_image(client, db: Session):
@@ -107,18 +105,17 @@ def test_create_user_without_profile_image(client, db: Session):
     assert user.profile_img is None
 
 
-def test_create_user_with_existing_email(client, db: Session):
+def test_create_user_with_existing_email(
+    client,
+    db: Session,
+    create_test_user,
+):
     email = unique_email("existing_user")
 
-    existing_user = DBUser(
-        name="Existing User",
+    create_test_user(
         email=email,
-        password=Hash.hash("password123"),
-        is_active=True,
+        name="Existing User",
     )
-
-    db.add(existing_user)
-    db.commit()
 
     image = create_test_image()
 
@@ -190,7 +187,11 @@ def test_register_without_optional_fields(client):
         "prefer_not_to_say",
     ],
 )
-def test_register_with_valid_gender(client, db: Session, gender):
+def test_register_with_valid_gender(
+    client,
+    db: Session,
+    gender,
+):
     email = unique_email(f"{gender}_registration")
 
     response = client.post(
@@ -261,99 +262,3 @@ def test_register_passwords_do_not_match(client):
     )
 
     assert response.status_code == 400
-
-
-# =========================
-# LOGIN TESTS
-# =========================
-
-
-def test_login_success(client, db: Session):
-    email = unique_email("login_success")
-
-    user = DBUser(
-        name="John Doe",
-        email=email,
-        password=Hash.hash("password123"),
-    )
-
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    response = client.post(
-        "/auth/login",
-        data={
-            "username": email,
-            "password": "password123",
-        },
-    )
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert "access_token" in data
-    assert data["token_type"] == "bearer"
-    assert data["user_id"] == user.id
-
-
-def test_login_wrong_password(client, db: Session):
-    email = unique_email("wrong_password")
-
-    user = DBUser(
-        name="John Doe",
-        email=email,
-        password=Hash.hash("password123"),
-    )
-
-    db.add(user)
-    db.commit()
-
-    response = client.post(
-        "/auth/login",
-        data={
-            "username": email,
-            "password": "wrongpassword",
-        },
-    )
-
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect email or password"
-
-
-def test_login_user_not_found(client):
-    email = unique_email("does_not_exist")
-
-    response = client.post(
-        "/auth/login",
-        data={
-            "username": email,
-            "password": "password123",
-        },
-    )
-
-    assert response.status_code == 401
-    assert response.json()["detail"] == "Incorrect email or password"
-
-
-def test_login_missing_password(client):
-    response = client.post(
-        "/auth/login",
-        data={
-            "username": unique_email("login_test"),
-        },
-    )
-
-    assert response.status_code == 422
-
-
-def test_login_missing_username(client):
-    response = client.post(
-        "/auth/login",
-        data={
-            "password": "password123",
-        },
-    )
-
-    assert response.status_code == 422

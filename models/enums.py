@@ -13,3 +13,10 @@ class ImageType(str, PyEnum):
     group_picture = "group_picture"
     post_picture = "post_picture"
     group_background_picture = "group_background_picture"
+
+
+class FriendRequestStatus(str, PyEnum):
+    pending = "pending"
+    accepted = "accepted"
+    declined = "declined"
+    canceled = "canceled"

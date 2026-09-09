@@ -38,4 +38,22 @@ class DBUser(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
+    sent_friend_requests = relationship(
+        "DBFriendRequest",
+        foreign_keys="DBFriendRequest.sender_id",
+        back_populates="sender",
+    )
+
+    received_friend_requests = relationship(
+        "DBFriendRequest",
+        foreign_keys="DBFriendRequest.receiver_id",
+        back_populates="receiver",
+    )
+
+    friends = relationship(
+        "DBFriend", foreign_keys="DBFriend.user_id", back_populates="user"
+    )
+    friend_of = relationship(
+        "DBFriend", foreign_keys="DBFriend.friend_id", back_populates="friend"
+    )
     groups = relationship("DBGroup", back_populates="owner")
