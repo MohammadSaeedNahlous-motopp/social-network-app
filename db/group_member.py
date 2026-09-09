@@ -134,7 +134,7 @@ def leave_group(db: Session, group_id: int, user_id: int) -> None:
     db.commit()
 
 
-def change_user_role(db: Session, group_id: int, user_id: int, new_role: GroupRole, current_user_id: int) -> DBGroupMember | None:
+def change_user_role(db: Session, group_id: int, user_id: int, new_role: GroupRole, current_user_id: int) -> DBGroupMember:
     """
     Change the role of a user in a group
     :param db: database session
