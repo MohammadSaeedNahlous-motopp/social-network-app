@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from db.seed import seed_group_roles
-from routers import authentication, user, group, group_member, post
+from routers import authentication, user, group, group_member, post, friend_request, friend
 from db.database import engine, Base, SessionLocal
 
 app = FastAPI()
@@ -13,9 +13,10 @@ def index():
 
 
 app.include_router(post.router)
-
 app.include_router(authentication.router)
 app.include_router(user.router)
+app.include_router(friend_request.router)
+app.include_router(friend.router)
 app.include_router(group.router)
 app.include_router(group_member.router)
 

@@ -37,38 +37,7 @@ def get_token(
     request: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
-    searched_user = (
-        db.query(DBUser)
-        .filter(
-            DBUser.email == request.username,
-            DBUser.is_active,
-        )
-        .first()
-    )
-
-    if not searched_user or not Hash.verify(
-        searched_user.password,
-        request.password,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-        )
-
-    searched_user.last_login_at = datetime.now(timezone.utc)
-
-    db.commit()
-    db.refresh(searched_user)
-
-    access_token = oauth2.create_access_token(data={"sub": str(searched_user.id)})
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": searched_user.id,
-        "user_email": searched_user.email,
-        "user_name": searched_user.name,
-    }
+    return user.get_token(db, request)
 
 
 @router.post(

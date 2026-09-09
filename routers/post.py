@@ -42,7 +42,7 @@ async def create_post(
     image_url = None
 
     if image is not None:
-        image_url = await save_image(image,ImageType.post_picture)
+        image_url = await save_image(image, ImageType.post_picture)
 
     request = PostCreate(
         title=title,
