@@ -141,7 +141,7 @@ def test_get_user_posts(client, authenticated_user):
     assert first_post.status_code == 201
     assert second_post.status_code == 201
 
-    response = client.get(f"/users/{user.id}/posts")
+    response = client.get(f"/posts/{user.id}/all")
 
     assert response.status_code == 200
 
@@ -153,3 +153,10 @@ def test_get_user_posts(client, authenticated_user):
         post["user_id"] == user.id
         for post in posts
     )
+
+    returned_titles = {post["title"] for post in posts}
+
+    assert returned_titles == {
+        first_post.json()["title"],
+        second_post.json()["title"],
+    }
