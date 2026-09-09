@@ -15,6 +15,10 @@ class ImageType(str, PyEnum):
     group_background_picture = "group_background_picture"
 
 
+class GroupRole(str, PyEnum):
+    member = "member"
+    administrator = "administrator"
+
 class FriendRequestStatus(str, PyEnum):
     pending = "pending"
     accepted = "accepted"

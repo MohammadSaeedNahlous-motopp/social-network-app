@@ -57,3 +57,4 @@ class DBUser(Base):
         "DBFriend", foreign_keys="DBFriend.friend_id", back_populates="friend"
     )
     groups = relationship("DBGroup", back_populates="owner")
+    group_memberships = relationship("DBGroupMember", back_populates="user", cascade="all, delete-orphan")

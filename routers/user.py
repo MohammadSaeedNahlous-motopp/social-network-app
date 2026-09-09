@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
@@ -5,8 +7,9 @@ from auth.oauth2 import get_current_user
 from db.database import get_db
 from models.enums import ImageType
 from models.user import DBUser
+from schemas.group import GroupView
 from schemas.user import UserUpdate, UserDisplay
-from db import user
+from db import user, group_member
 from service.image import save_image
 
 
@@ -79,3 +82,10 @@ def edit_user_active_state(
     db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)
 ):
     return user.edit_user_active_state(db, current_user.id)
+
+
+@router.get("/{user_id}/membership", response_model=List[GroupView])
+def get_user_groups(user_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
+    group_list = group_member.get_user_membership(db=db, user_id=user_id, current_user_id=current_user.id)
+
+    return group_list
