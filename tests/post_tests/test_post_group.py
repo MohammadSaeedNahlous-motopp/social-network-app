@@ -6,20 +6,32 @@ from models.enums import GroupRole
 def test_group_member_can_delete_own_post(
     client,
     authenticated_user,
+    create_test_user,
     create_test_group,
     create_test_group_member,
     get_test_group_role,
 ):
     # Arrange
+    owner = create_test_user(
+        email="group_owner@example.com",
+        name="Group Owner",
+    )
+
     member = authenticated_user(
         email="group_post_owner@example.com",
         name="Post Owner",
     )
 
     group = create_test_group(
-        owner=member,
+        owner=owner,
         name="Own Post Delete Group",
         is_public=True,
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     create_test_group_member(
@@ -29,7 +41,7 @@ def test_group_member_can_delete_own_post(
     )
 
     create_response = client.post(
-        f"/groups/{group.id}/posts",
+        f"/group_posts/{group.id}/posts",
         data={
             "title": "My group post",
             "content": "My content",
@@ -42,7 +54,7 @@ def test_group_member_can_delete_own_post(
 
     # Act
     delete_response = client.delete(
-        f"/groups/{group.id}/posts/{post_id}"
+        f"/group_posts/{group.id}/posts/{post_id}"
     )
 
     # Assert
@@ -61,14 +73,14 @@ def test_group_admin_can_delete_another_members_post(
     get_test_group_role,
 ):
     # Arrange
-    member = authenticated_user(
-        email="member_post@example.com",
-        name="Member",
-    )
-
     admin = create_test_user(
         email="group_admin@example.com",
         name="Admin",
+    )
+
+    member = authenticated_user(
+        email="member_post@example.com",
+        name="Member",
     )
 
     group = create_test_group(
@@ -79,18 +91,18 @@ def test_group_admin_can_delete_another_members_post(
 
     create_test_group_member(
         group=group,
-        user=member,
-        role=get_test_group_role(GroupRole.member),
-    )
-
-    create_test_group_member(
-        group=group,
         user=admin,
         role=get_test_group_role(GroupRole.administrator),
     )
 
+    create_test_group_member(
+        group=group,
+        user=member,
+        role=get_test_group_role(GroupRole.member),
+    )
+
     create_response = client.post(
-        f"/groups/{group.id}/posts",
+        f"/group_posts/{group.id}/posts",
         data={
             "title": "Member post",
             "content": "Member content",
@@ -101,7 +113,7 @@ def test_group_admin_can_delete_another_members_post(
 
     post_id = create_response.json()["id"]
 
-    # Switch authentication from member to admin
+    # Switch authentication from member to group admin
     authenticated_user(
         email=admin.email,
         name=admin.name,
@@ -109,7 +121,7 @@ def test_group_admin_can_delete_another_members_post(
 
     # Act
     delete_response = client.delete(
-        f"/groups/{group.id}/posts/{post_id}"
+        f"/group_posts/{group.id}/posts/{post_id}"
     )
 
     # Assert
@@ -128,6 +140,11 @@ def test_normal_member_cannot_delete_another_members_post(
     get_test_group_role,
 ):
     # Arrange
+    owner = create_test_user(
+        email="permission_group_owner@example.com",
+        name="Group Owner",
+    )
+
     post_owner = authenticated_user(
         email="post_owner@example.com",
         name="Post Owner",
@@ -139,9 +156,15 @@ def test_normal_member_cannot_delete_another_members_post(
     )
 
     group = create_test_group(
-        owner=post_owner,
+        owner=owner,
         name="Member Permission Group",
         is_public=True,
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
     )
 
     create_test_group_member(
@@ -157,7 +180,7 @@ def test_normal_member_cannot_delete_another_members_post(
     )
 
     create_response = client.post(
-        f"/groups/{group.id}/posts",
+        f"/group_posts/{group.id}/posts",
         data={
             "title": "Owner post",
             "content": "Owner content",
@@ -176,11 +199,11 @@ def test_normal_member_cannot_delete_another_members_post(
 
     # Act
     delete_response = client.delete(
-        f"/groups/{group.id}/posts/{post_id}"
+        f"/group_posts/{group.id}/posts/{post_id}"
     )
 
     # Assert
     assert delete_response.status_code == status.HTTP_403_FORBIDDEN
     assert delete_response.json()["detail"] == (
-        "You do not have permission to delete this post."
+        "Only a group administrator or the post owner can delete this post."
     )

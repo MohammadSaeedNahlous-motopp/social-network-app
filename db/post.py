@@ -95,7 +95,7 @@ def delete_post(
 
     return post
 
-def get_posts_by_user(db: Session, user_id: int,):
+def get_posts_by_user(db: Session, user_id: int):
     """Return all posts published by a specific user."""
 
     posts = (
@@ -105,7 +105,6 @@ def get_posts_by_user(db: Session, user_id: int,):
             DBPost.is_visible.is_(True),
         )
         .order_by(DBPost.created_at.desc())
-        .all()
     )
 
     return posts

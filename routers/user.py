@@ -92,27 +92,4 @@ def get_user_groups(user_id: int, current_user: DBUser = Depends(get_current_use
 
     return group_list
 
-@router.get(
-    "/{user_id}/posts",
-    response_model=list[PostResponse],
-    status_code=status.HTTP_200_OK,
-    summary="View a user's personal wall",
-    description=(
-        "Retrieves the published posts of a specific user. "
-        "The personal wall contains only posts created by that user."
-    ),
-    response_description="The user's published posts.",
-    responses={
-        200: {"description": "User posts retrieved successfully."},
-    },
-)
-def get_user_posts(
-    user_id: int,
-    db: Session = Depends(get_db),
-):
-    """Return the published posts belonging to a specific user."""
 
-    return db_post.get_posts_by_user(
-        db=db,
-        user_id=user_id,
-    )

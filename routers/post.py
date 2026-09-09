@@ -172,7 +172,7 @@ def delete_post(
 
 
 @router.get(
-    "/{user_id}/posts",
+    "/{user_id}/all",
     response_model=list[PostResponse],
     status_code=status.HTTP_200_OK,
     summary="View a user's personal wall",

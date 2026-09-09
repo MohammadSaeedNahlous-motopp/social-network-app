@@ -1,33 +1,14 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from models.group import DBGroup
-from models.group_member import DBGroupMember
+from db.group import get_group_by_id
 from models.post import DBPost
 from db.group_member import get_group_member_role
+from db.post import get_post
 from models.enums import GroupRole
 
 from schemas.post import PostCreate, PostUpdate
 
-def check_group_member(
-    db: Session,
-    group_id: int,
-    user_id: int,
-) -> None:
-    membership = (
-        db.query(DBGroupMember)
-        .filter(
-            DBGroupMember.group_id == group_id,
-            DBGroupMember.user_id == user_id,
-        )
-        .first()
-    )
-
-    if membership is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be a group member.",
-        )
 
 
 def create_group_post(
@@ -37,23 +18,22 @@ def create_group_post(
     user_id: int,
     image_url: str | None = None,
 ):
-    group = (
-        db.query(DBGroup)
-        .filter(DBGroup.id == group_id)
-        .first()
+    get_group_by_id(
+        db=db,
+        group_id=group_id,
     )
 
-    if group is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Group not found.",
-        )
-
-    check_group_member(
+    user_role = get_group_member_role(
         db=db,
         group_id=group_id,
         user_id=user_id,
     )
+
+    if user_role is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a group member.",
+        )
 
     new_post = DBPost(
         user_id=user_id,
@@ -77,23 +57,28 @@ def update_group_post(
     request: PostUpdate,
     user_id: int,
 ):
-    check_group_member(
+    user_role = get_group_member_role(
         db=db,
         group_id=group_id,
         user_id=user_id,
     )
 
-    post = (
-        db.query(DBPost)
-        .filter(
-            DBPost.id == post_id,
-            DBPost.group_id == group_id,
-            DBPost.user_id == user_id,
+    if user_role is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a group member.",
         )
-        .first()
+
+    post = get_post(
+        db=db,
+        post_id=post_id,
     )
 
-    if post is None:
+    if (
+        post is None
+        or post.group_id != group_id
+        or post.user_id != user_id
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Group post not found.",
@@ -126,19 +111,15 @@ def delete_group_post(
     if user_role is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be a group member to delete a post.",
+            detail="You must be a group administrator or the owner of the post to delete this post.",
         )
 
-    post = (
-        db.query(DBPost)
-        .filter(
-            DBPost.id == post_id,
-            DBPost.group_id == group_id,
-        )
-        .first()
+    post = get_post(
+        db=db,
+        post_id=post_id,
     )
 
-    if post is None:
+    if post is None or post.group_id != group_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Group post not found.",
@@ -150,13 +131,12 @@ def delete_group_post(
     if not is_post_owner and not is_group_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to delete this post.",
+            detail=(
+                "Only a group administrator or the post owner can delete this post."
+            ),
         )
 
     db.delete(post)
     db.commit()
 
     return post
-
-
-
