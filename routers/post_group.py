@@ -5,7 +5,7 @@ from auth.oauth2 import get_current_user
 from db.database import get_db
 from db import post_group as db_group_post
 from models.user import DBUser
-from schemas.post import PostCreate, PostResponse, PostUpdate
+from schemas.post import PostCreate, PostResponse, GroupPostUpdate
 from service.post_image import save_post_image
 
 router = APIRouter(
@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/{group_id}/posts",
+      "/create",
     response_model=PostResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a post inside a group",
@@ -34,7 +34,7 @@ router = APIRouter(
     },
 )
 async def create_group_post(
-    group_id: int,
+    group_id: int = Form(...),
     title: str = Form(...),
     content: str = Form(...),
     image: UploadFile | None = File(None),
@@ -63,7 +63,7 @@ async def create_group_post(
 
 
 @router.put(
-    "/{group_id}/posts/{post_id}",
+    "/{post_id}/edit",
     response_model=PostResponse,
     status_code=status.HTTP_200_OK,
     summary="Update a post inside a group",
@@ -81,9 +81,8 @@ async def create_group_post(
     },
 )
 def update_group_post(
-    group_id: int,
     post_id: int,
-    request: PostUpdate,
+    request: GroupPostUpdate,
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
@@ -91,7 +90,7 @@ def update_group_post(
 
     return db_group_post.update_group_post(
         db=db,
-        group_id=group_id,
+        group_id=request.group_id,
         post_id=post_id,
         request=request,
         user_id=current_user.id,

@@ -41,8 +41,9 @@ def test_group_member_can_delete_own_post(
     )
 
     create_response = client.post(
-        f"/group_posts/{group.id}/posts",
+        "/group_posts/create",
         data={
+            "group_id": group.id,
             "title": "My group post",
             "content": "My content",
         },
@@ -102,8 +103,9 @@ def test_group_admin_can_delete_another_members_post(
     )
 
     create_response = client.post(
-        f"/group_posts/{group.id}/posts",
+        "/group_posts/create",
         data={
+            "group_id": group.id,
             "title": "Member post",
             "content": "Member content",
         },
@@ -180,8 +182,9 @@ def test_normal_member_cannot_delete_another_members_post(
     )
 
     create_response = client.post(
-        f"/group_posts/{group.id}/posts",
+        "/group_posts/create",
         data={
+            "group_id": group.id,
             "title": "Owner post",
             "content": "Owner content",
         },
@@ -207,3 +210,69 @@ def test_normal_member_cannot_delete_another_members_post(
     assert delete_response.json()["detail"] == (
         "Only a group administrator or the post owner can delete this post."
     )
+
+
+def test_group_member_can_update_own_post(
+    client,
+    authenticated_user,
+    create_test_user,
+    create_test_group,
+    create_test_group_member,
+    get_test_group_role,
+):
+    # Arrange
+    owner = create_test_user(
+        email="update_group_owner@example.com",
+        name="Group Owner",
+    )
+
+    member = authenticated_user(
+        email="update_post_owner@example.com",
+        name="Post Owner",
+    )
+
+    group = create_test_group(
+        owner=owner,
+        name="Update Post Group",
+        is_public=True,
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
+    )
+
+    create_test_group_member(
+        group=group,
+        user=member,
+        role=get_test_group_role(GroupRole.member),
+    )
+
+    create_response = client.post(
+        "/group_posts/create",
+        data={
+            "group_id": group.id,
+            "title": "Old title",
+            "content": "Old content",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    post_id = create_response.json()["id"]
+
+    # Act
+    response = client.put(
+        f"/group_posts/{post_id}/edit",
+        json={
+            "group_id": group.id,
+            "title": "Updated title",
+            "content": "Updated content",
+        },
+    )
+
+    # Assert
+    assert response.status_code == 200
+    assert response.json()["title"] == "Updated title"
+    assert response.json()["content"] == "Updated content"

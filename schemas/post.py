@@ -25,3 +25,7 @@ class PostResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class GroupPostUpdate(PostUpdate):
+    group_id: int
