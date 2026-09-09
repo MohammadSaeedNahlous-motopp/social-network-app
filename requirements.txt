@@ -10,6 +10,7 @@ python-dotenv
 pydantic[email]
 jose
 python-jose
-pytest[cov]
+pytest
+pytest-cov
 Pillow
 httpx2
