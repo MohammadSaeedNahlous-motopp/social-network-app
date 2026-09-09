@@ -32,3 +32,11 @@ class DBGroupMember(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
     )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+    
