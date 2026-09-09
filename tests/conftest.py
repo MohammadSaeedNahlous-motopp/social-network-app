@@ -1,4 +1,5 @@
 import pytest
+from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -6,9 +7,14 @@ from sqlalchemy.orm import sessionmaker, Session
 from auth.oauth2 import get_current_user
 from db.database import Base, get_db
 from db.hash import Hash
+from db.group_role import get_role_obj
+from db.seed import seed_group_roles
 from main import app
+from models.enums import GroupRole
 from models.user import DBUser
 from models.group import DBGroup
+from models.group_member import DBGroupMember
+from models.group_role import DBGroupRole
 
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
@@ -31,6 +37,7 @@ def db():
     db: Session = TestingSessionLocal()
 
     try:
+        seed_group_roles(db)
         yield db
     finally:
         db.close()
@@ -56,6 +63,11 @@ def client(db):
 @pytest.fixture
 def create_test_user(db: Session):
     def _create_test_user(email="test_user@example.com", name="John Doe"):
+        existing_user = db.query(DBUser).filter(DBUser.email == email).first()
+
+        if existing_user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists.")
+
         user = DBUser(
             name=name,
             email=email,
@@ -121,3 +133,45 @@ def create_test_group(db: Session, create_test_user):
         return group
 
     return _create_test_group
+
+
+@pytest.fixture
+def create_test_group_member(db: Session):
+    def _create_test_group_member(
+        group: DBGroup,
+        user: DBUser,
+        role: GroupRole = GroupRole.member,
+    ):
+        membership = DBGroupMember(
+            group_id=group.id,
+            user_id=user.id,
+            role=role,
+        )
+
+        db.add(membership)
+        db.commit()
+        db.refresh(membership)
+
+        return membership
+
+    return _create_test_group_member
+
+
+@pytest.fixture
+def get_test_group_role(db: Session):
+    def _get_test_group_role(role: GroupRole):
+        return get_role_obj(db=db, role=role)
+
+
+    return _get_test_group_role
+
+
+@pytest.fixture(autouse=True)
+def mock_image_path(monkeypatch, tmp_path):
+    def temp_image_path(image_type):
+        return tmp_path / f"{image_type}s"
+
+    monkeypatch.setattr(
+        "service.image.get_image_path",
+        temp_image_path,
+    )
