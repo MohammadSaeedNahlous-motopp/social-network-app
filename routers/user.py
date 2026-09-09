@@ -9,6 +9,8 @@ from models.enums import ImageType
 from models.user import DBUser
 from schemas.group import GroupView
 from schemas.user import UserUpdate, UserDisplay
+from schemas.post import PostResponse
+from db import post as db_post
 from db import user, group_member
 from service.image import save_image
 
@@ -89,3 +91,28 @@ def get_user_groups(user_id: int, current_user: DBUser = Depends(get_current_use
     group_list = group_member.get_user_membership(db=db, user_id=user_id, current_user_id=current_user.id)
 
     return group_list
+
+@router.get(
+    "/{user_id}/posts",
+    response_model=list[PostResponse],
+    status_code=status.HTTP_200_OK,
+    summary="View a user's personal wall",
+    description=(
+        "Retrieves the published posts of a specific user. "
+        "The personal wall contains only posts created by that user."
+    ),
+    response_description="The user's published posts.",
+    responses={
+        200: {"description": "User posts retrieved successfully."},
+    },
+)
+def get_user_posts(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    """Return the published posts belonging to a specific user."""
+
+    return db_post.get_posts_by_user(
+        db=db,
+        user_id=user_id,
+    )
