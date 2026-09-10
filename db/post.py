@@ -94,3 +94,18 @@ def delete_post(
     db.commit()
 
     return post
+
+def get_posts_by_user(db: Session, user_id: int):
+    """Return all posts published by a specific user."""
+
+    posts = (
+        db.query(DBPost)
+        .filter(
+            DBPost.user_id == user_id,
+            DBPost.is_visible.is_(True),
+        )
+        .order_by(DBPost.created_at.desc())
+    )
+
+    return posts
+

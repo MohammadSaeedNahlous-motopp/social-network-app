@@ -117,3 +117,46 @@ def test_delete_post(client, authenticated_user):
     get_response = client.get(f"/posts/{post_id}")
 
     assert get_response.status_code == 404
+
+
+def test_get_user_posts(client, authenticated_user):
+    user = authenticated_user()
+
+    first_post = client.post(
+        "/posts/",
+        data={
+            "title": "First Post",
+            "content": "My first wall post.",
+        },
+    )
+
+    second_post = client.post(
+        "/posts/",
+        data={
+            "title": "Second Post",
+            "content": "My second wall post.",
+        },
+    )
+
+    assert first_post.status_code == 201
+    assert second_post.status_code == 201
+
+    response = client.get(f"/posts/{user.id}/all")
+
+    assert response.status_code == 200
+
+    posts = response.json()
+
+    assert len(posts) == 2
+
+    assert all(
+        post["user_id"] == user.id
+        for post in posts
+    )
+
+    returned_titles = {post["title"] for post in posts}
+
+    assert returned_titles == {
+        first_post.json()["title"],
+        second_post.json()["title"],
+    }

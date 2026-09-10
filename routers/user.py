@@ -9,6 +9,8 @@ from models.enums import ImageType
 from models.user import DBUser
 from schemas.group import GroupView
 from schemas.user import UserUpdate, UserDisplay
+from schemas.post import PostResponse
+from db import post as db_post
 from db import user, group_member
 from service.image import save_image
 
@@ -89,3 +91,5 @@ def get_user_groups(user_id: int, current_user: DBUser = Depends(get_current_use
     group_list = group_member.get_user_membership(db=db, user_id=user_id, current_user_id=current_user.id)
 
     return group_list
+
+

@@ -169,3 +169,30 @@ def delete_post(
 
     message = {"message": "Post deleted successfully."}
     return message
+
+
+@router.get(
+    "/{user_id}/all",
+    response_model=list[PostResponse],
+    status_code=status.HTTP_200_OK,
+    summary="View a user's personal wall",
+    description=(
+        "Retrieves the published posts of a specific user. "
+        "The personal wall contains only posts created by that user."
+    ),
+    response_description="The user's published posts.",
+    responses={
+        200: {"description": "User posts retrieved successfully."},
+    },
+)
+def get_user_posts(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    """Return the published posts belonging to a specific user."""
+
+    result = db_post.get_posts_by_user(
+        db=db,
+        user_id=user_id,
+    )
+    return result
