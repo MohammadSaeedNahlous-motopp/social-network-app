@@ -49,6 +49,21 @@ def create_group_post(
 
     return new_post
 
+def get_group_posts(
+    db: Session,
+    group_id: int,
+):
+    get_group_by_id(db, group_id)
+
+    return (
+        db.query(DBPost)
+        .filter(
+            DBPost.group_id == group_id,
+            DBPost.is_visible.is_(True),
+        )
+        .order_by(DBPost.created_at.desc())
+    )
+
 
 def update_group_post(
     db: Session,

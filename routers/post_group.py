@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -8,6 +8,7 @@ from models.enums import ImageType
 from models.user import DBUser
 from schemas.post import PostCreate, PostResponse, GroupPostUpdate
 from service.image import save_image
+from service.pagination import PaginatedResponse, calculate_total_pages, paginate
 
 router = APIRouter(
     prefix="/group_posts",
@@ -64,6 +65,54 @@ async def create_group_post(
         user_id=current_user.id,
         image_url=image_url,
     )
+
+
+@router.get(
+    "/{group_id}/posts",
+    response_model=PaginatedResponse[PostResponse],
+    status_code=status.HTTP_200_OK,
+    summary="View posts inside a group",
+    description=(
+        "Retrieves the published posts inside a specific group "
+        "with pagination."
+    ),
+    response_description="The paginated posts inside the group.",
+    responses={
+        200: {"description": "Group posts retrieved successfully."},
+        404: {"description": "The group was not found."},
+    },
+)
+def get_group_posts(
+    group_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    query = db_group_post.get_group_posts(
+        db=db,
+        group_id=group_id,
+    )
+
+    total = query.count()
+
+    paginated_query = paginate(
+        query=query,
+        page=page,
+        page_size=page_size,
+    )
+
+    items = paginated_query.all()
+
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": calculate_total_pages(
+            total=total,
+            page_size=page_size,
+        ),
+    }
 
 
 @router.put(

@@ -344,3 +344,109 @@ def test_group_member_can_create_post_with_image(
     assert response.json()["title"] == "Group post with image"
     assert response.json()["image_url"] is not None
     assert response.json()["image_url"].endswith(".png")
+
+
+def test_get_group_posts_with_pagination(
+    client,
+    authenticated_user,
+    create_test_user,
+    create_test_group,
+    create_test_group_member,
+    get_test_group_role,
+):
+    # Arrange
+    owner = create_test_user(
+        email="pagination_group_owner@example.com",
+        name="Group Owner",
+    )
+
+    member = authenticated_user(
+        email="pagination_group_member@example.com",
+        name="Group Member",
+    )
+
+    group = create_test_group(
+        owner=owner,
+        name="Pagination Group",
+        is_public=True,
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
+    )
+
+    create_test_group_member(
+        group=group,
+        user=member,
+        role=get_test_group_role(GroupRole.member),
+    )
+
+    first_post = client.post(
+        "/group_posts/create",
+        data={
+            "group_id": group.id,
+            "title": "First Group Post",
+            "content": "First content",
+        },
+    )
+
+    second_post = client.post(
+        "/group_posts/create",
+        data={
+            "group_id": group.id,
+            "title": "Second Group Post",
+            "content": "Second content",
+        },
+    )
+
+    assert first_post.status_code == status.HTTP_201_CREATED
+    assert second_post.status_code == status.HTTP_201_CREATED
+
+    # Act
+    response = client.get(
+        f"/group_posts/{group.id}/posts",
+        params={
+            "page": 1,
+            "page_size": 10,
+        },
+    )
+
+    # Assert
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+    posts = data["items"]
+
+    assert len(posts) == 2
+
+    assert all(
+        post["group_id"] == group.id
+        for post in posts
+    )
+
+    returned_titles = {post["title"] for post in posts}
+
+    assert returned_titles == {
+        "First Group Post",
+        "Second Group Post",
+    }
+
+    assert data["page"] == 1
+    assert data["page_size"] == 10
+    assert data["total"] == 2
+    assert data["total_pages"] == 1
+
+
+def test_get_group_posts_group_not_found(client):
+    response = client.get(
+        "/group_posts/9999/posts",
+        params={
+            "page": 1,
+            "page_size": 10,
+        },
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Group not found"
