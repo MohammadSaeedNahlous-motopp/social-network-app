@@ -62,6 +62,6 @@ class DBUser(Base):
     )
 
     chat_memberships = relationship(
-        "ChatMember",
+        "DBChatMember",
         back_populates="user",
     )

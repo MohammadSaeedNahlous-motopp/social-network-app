@@ -28,11 +28,11 @@ class DBChatMember(Base):
     )
 
     user = relationship(
-        "User",
+        "DBUser",
         back_populates="chat_memberships",
     )
 
     chat = relationship(
-        "Chat",
+        "DBChat",
         back_populates="members",
     )

@@ -1,15 +1,20 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from db.chat_member import create_chat_member
+from db.user import get_user_by_id
 from models.chat import DBChat
 from models.chat_member import DBChatMember
+from models.enums import ChatType
 from models.message import DBMessage
 from schemas.chat import ChatCreate
 from schemas.chat_member import ChatMemberCreate
+from sqlalchemy import and_, func
 
 
 def create_chat(request: ChatCreate, db: Session):
-    new_chat = DBChat(name=request.name, description=request.description)
+    new_chat = DBChat(
+        name=request.name, description=request.description, type=request.type
+    )
 
     db.add(new_chat)
     db.commit()
@@ -43,6 +48,30 @@ def get_chat_by_id(chat_id: int, user_id: int, db: Session):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to view this chat!",
         )
+
+    return searched_chat
+
+
+def get_private_chat(user_id: int, recipient_id: int, db: Session):
+    searched_user = get_user_by_id(db, user_id)
+
+    if not searched_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found!",
+        )
+
+    searched_chat = (
+        db.query(DBChat)
+        .join(DBChatMember)
+        .filter(
+            DBChat.type == ChatType.private,
+            DBChatMember.user_id.in_([user_id, recipient_id]),
+        )
+        .group_by(DBChat.id)
+        .having(func.count(DBChatMember.user_id) == 2)
+        .first()
+    )
 
     return searched_chat
 

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+
+<body>
+
+<h2>WebSocket Chat Test</h2>
+
+<input id="token" placeholder="JWT token">
+<button onclick="connect()">Connect</button>
+
+<br><br>
+
+<input id="recipientId" type="number" placeholder="Recipient ID">
+<input id="content" placeholder="Message">
+<button onclick="sendMessage()">Send</button>
+
+<br><br>
+
+<div id="messages"></div>
+
+<script>
+    let ws = null;
+
+function connect() {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        console.log("Already connected");
+        return;
+    }
+
+    const token = document.getElementById("token").value;
+
+    console.log("CREATING NEW WEBSOCKET");
+
+    ws = new WebSocket(
+        `ws://localhost:8000/ws?token=${token}`
+    );
+
+    ws.onopen = () => {
+        console.log("WebSocket connected");
+    };
+
+    ws.onmessage = (event) => {
+        console.log("ONMESSAGE FIRED");
+        console.log("RAW:", event.data);
+
+        const data = JSON.parse(event.data);
+
+        const message = document.createElement("p");
+        message.textContent =
+            `${data.sender_id}: ${data.content}`;
+
+        document.getElementById("messages").appendChild(message);
+    };
+
+    ws.onclose = () => {
+        console.log("WebSocket disconnected");
+        ws = null;
+    };
+
+    ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+    };
+}
+function sendMessage() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        console.log("WebSocket is not connected");
+        return;
+    }
+
+    const recipientId = Number(
+        document.getElementById("recipientId").value
+    );
+
+    const content =
+        document.getElementById("content").value;
+
+    ws.send(JSON.stringify({
+        type: "message",
+        recipient_id: recipientId,
+        content: content
+    }));
+}
+</script>
+
+</body>
+</html>

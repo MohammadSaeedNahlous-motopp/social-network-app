@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from models.enums import ChatType
+
 
 class User(BaseModel):
     id: int
@@ -15,6 +17,7 @@ class ChatCreate(BaseModel):
     user_ids: list[int]
     name: str
     description: str
+    type: ChatType
 
 
 class ChatResponse(BaseModel):
@@ -22,6 +25,7 @@ class ChatResponse(BaseModel):
     created_at: datetime
     name: str
     description: str
-    members: [User]
+    type: ChatType
+    members: list[User]
 
     model_config = ConfigDict(from_attributes=True)
