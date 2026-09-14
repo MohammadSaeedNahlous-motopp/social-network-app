@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -8,6 +8,7 @@ from models.user import DBUser
 from schemas.post import PostCreate, PostUpdate, PostResponse
 from service.image import save_image
 from models.enums import ImageType
+from service.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -173,7 +174,7 @@ def delete_post(
 
 @router.get(
     "/{user_id}/all",
-    response_model=list[PostResponse],
+    response_model=PaginatedResponse[PostResponse],
     status_code=status.HTTP_200_OK,
     summary="View a user's personal wall",
     description=(
@@ -187,12 +188,16 @@ def delete_post(
 )
 def get_user_posts(
     user_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    """Return the published posts belonging to a specific user."""
+    """Return paginated posts belonging to a specific user."""
 
     result = db_post.get_posts_by_user(
         db=db,
         user_id=user_id,
+        page=page,
+        page_size=page_size
     )
     return result
