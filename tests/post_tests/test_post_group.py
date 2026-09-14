@@ -1,5 +1,6 @@
 from fastapi import status
-
+from io import BytesIO
+from PIL import Image
 from models.enums import GroupRole
 
 
@@ -276,3 +277,70 @@ def test_group_member_can_update_own_post(
     assert response.status_code == 200
     assert response.json()["title"] == "Updated title"
     assert response.json()["content"] == "Updated content"
+
+
+def test_group_member_can_create_post_with_image(
+    client,
+    authenticated_user,
+    create_test_user,
+    create_test_group,
+    create_test_group_member,
+    get_test_group_role,
+):
+    # Arrange
+    owner = create_test_user(
+        email="image_group_owner@example.com",
+        name="Group Owner",
+    )
+
+    member = authenticated_user(
+        email="image_group_member@example.com",
+        name="Group Member",
+    )
+
+    group = create_test_group(
+        owner=owner,
+        name="Image Post Group",
+        is_public=True,
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
+    )
+
+    create_test_group_member(
+        group=group,
+        user=member,
+        role=get_test_group_role(GroupRole.member),
+    )
+
+    image_file = BytesIO()
+
+    image = Image.new("RGB", (10, 10))
+    image.save(image_file, format="PNG")
+    image_file.seek(0)
+
+    # Act
+    response = client.post(
+        "/group_posts/create",
+        data={
+            "group_id": group.id,
+            "title": "Group post with image",
+            "content": "Testing image upload.",
+        },
+        files={
+            "image": (
+                "test-image.png",
+                image_file,
+                "image/png",
+            )
+        },
+    )
+
+    # Assert
+    assert response.status_code == status.HTTP_201_CREATED
+    assert response.json()["title"] == "Group post with image"
+    assert response.json()["image_url"] is not None
+    assert response.json()["image_url"].endswith(".png")

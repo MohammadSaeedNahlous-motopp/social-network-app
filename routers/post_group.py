@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 from auth.oauth2 import get_current_user
 from db.database import get_db
 from db import post_group as db_group_post
+from models.enums import ImageType
 from models.user import DBUser
 from schemas.post import PostCreate, PostResponse, GroupPostUpdate
-from service.post_image import save_post_image
+from service.image import save_image
 
 router = APIRouter(
     prefix="/group_posts",
@@ -46,7 +47,10 @@ async def create_group_post(
     image_url = None
 
     if image is not None:
-        image_url = await save_post_image(image)
+        image_url = await save_image(
+            file=image,
+            image_type=ImageType.post_picture,
+        )
 
     request = PostCreate(
         title=title,
