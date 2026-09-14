@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime
+from sqlalchemy import Column, DateTime, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import Integer
 
@@ -11,7 +11,8 @@ class DBChat(Base):
     __tablename__ = "chats"
 
     id = Column(Integer, primary_key=True, index=True)
-
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
