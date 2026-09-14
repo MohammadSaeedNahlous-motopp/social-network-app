@@ -66,7 +66,9 @@ def create_test_user(db: Session):
         existing_user = db.query(DBUser).filter(DBUser.email == email).first()
 
         if existing_user:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists."
+            )
 
         user = DBUser(
             name=name,
@@ -161,7 +163,6 @@ def create_test_group_member(db: Session):
 def get_test_group_role(db: Session):
     def _get_test_group_role(role: GroupRole):
         return get_role_obj(db=db, role=role)
-
 
     return _get_test_group_role
 

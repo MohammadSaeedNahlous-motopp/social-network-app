@@ -149,10 +149,7 @@ def test_get_user_posts(client, authenticated_user):
 
     assert len(posts) == 2
 
-    assert all(
-        post["user_id"] == user.id
-        for post in posts
-    )
+    assert all(post["user_id"] == user.id for post in posts)
 
     returned_titles = {post["title"] for post in posts}
 

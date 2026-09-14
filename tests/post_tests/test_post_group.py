@@ -54,15 +54,11 @@ def test_group_member_can_delete_own_post(
     post_id = create_response.json()["id"]
 
     # Act
-    delete_response = client.delete(
-        f"/group_posts/{group.id}/posts/{post_id}"
-    )
+    delete_response = client.delete(f"/group_posts/{group.id}/posts/{post_id}")
 
     # Assert
     assert delete_response.status_code == status.HTTP_200_OK
-    assert delete_response.json()["message"] == (
-        "Group post deleted successfully."
-    )
+    assert delete_response.json()["message"] == ("Group post deleted successfully.")
 
 
 def test_group_admin_can_delete_another_members_post(
@@ -122,15 +118,11 @@ def test_group_admin_can_delete_another_members_post(
     )
 
     # Act
-    delete_response = client.delete(
-        f"/group_posts/{group.id}/posts/{post_id}"
-    )
+    delete_response = client.delete(f"/group_posts/{group.id}/posts/{post_id}")
 
     # Assert
     assert delete_response.status_code == status.HTTP_200_OK
-    assert delete_response.json()["message"] == (
-        "Group post deleted successfully."
-    )
+    assert delete_response.json()["message"] == ("Group post deleted successfully.")
 
 
 def test_normal_member_cannot_delete_another_members_post(
@@ -201,9 +193,7 @@ def test_normal_member_cannot_delete_another_members_post(
     )
 
     # Act
-    delete_response = client.delete(
-        f"/group_posts/{group.id}/posts/{post_id}"
-    )
+    delete_response = client.delete(f"/group_posts/{group.id}/posts/{post_id}")
 
     # Assert
     assert delete_response.status_code == status.HTTP_403_FORBIDDEN

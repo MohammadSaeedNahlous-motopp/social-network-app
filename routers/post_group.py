@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.post(
-      "/create",
+    "/create",
     response_model=PostResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create a post inside a group",
@@ -128,6 +128,4 @@ def delete_group_post(
         user_id=current_user.id,
     )
 
-    return {
-        "message": "Group post deleted successfully."
-    }
+    return {"message": "Group post deleted successfully."}

@@ -23,7 +23,9 @@ class DBGroup(Base):
 
     is_public = Column(Boolean, nullable=False, default=True)
 
-    members = relationship("DBGroupMember", back_populates="group", cascade="all, delete-orphan")
+    members = relationship(
+        "DBGroupMember", back_populates="group", cascade="all, delete-orphan"
+    )
 
     created_at = Column(
         DateTime(timezone=True),

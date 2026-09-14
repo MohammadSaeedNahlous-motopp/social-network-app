@@ -6,6 +6,7 @@ from sqlalchemy.sql.sqltypes import Integer
 
 from db.database import Base
 
+
 class DBGroupMember(Base):
     __tablename__ = "group_members"
     __table_args__ = (
@@ -39,4 +40,3 @@ class DBGroupMember(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
-    

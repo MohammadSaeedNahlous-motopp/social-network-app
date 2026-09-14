@@ -47,7 +47,9 @@ def get_all_groups(db: Session = Depends(get_db)):
     return all_groups
 
 
-@router.put("/edit/{group_id}", status_code=status.HTTP_200_OK, response_model=GroupView)
+@router.put(
+    "/edit/{group_id}", status_code=status.HTTP_200_OK, response_model=GroupView
+)
 def edit_group(
     group_id: int,
     request_model: GroupUpdate,
@@ -57,6 +59,7 @@ def edit_group(
     updated_group = group.update_group(db, request_model, group_id, current_user.id)
 
     return updated_group
+
 
 @router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_group(

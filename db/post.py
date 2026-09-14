@@ -95,6 +95,7 @@ def delete_post(
 
     return post
 
+
 def get_posts_by_user(db: Session, user_id: int):
     """Return all posts published by a specific user."""
 
@@ -108,4 +109,3 @@ def get_posts_by_user(db: Session, user_id: int):
     )
 
     return posts
-
