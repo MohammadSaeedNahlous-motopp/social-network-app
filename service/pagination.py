@@ -1,7 +1,5 @@
 from math import ceil
 from typing import Generic, TypeVar
-from unittest import result
-
 from pydantic import BaseModel
 from sqlalchemy.orm import Query
 

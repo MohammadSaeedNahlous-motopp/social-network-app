@@ -1,8 +1,6 @@
 from sqlalchemy.orm.session import Session
 from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
-from service.pagination import paginate, calculate_total_pages
-
 
 def create_post(
     db: Session,
@@ -98,11 +96,9 @@ def delete_post(
 
 def get_posts_by_user(
     db: Session,
-    user_id: int,
-    page: int,
-    page_size: int,
+    user_id: int
 ):
-    """Return paginated visible posts published by a specific user."""
+    """Return a query for visible posts published by a specific user."""
     query = (
         db.query(DBPost)
         .filter(
@@ -112,27 +108,5 @@ def get_posts_by_user(
         .order_by(DBPost.created_at.desc())
     )
 
-    total = query.count()
-
-    paginated_query = paginate(
-        query=query,
-        page=page,
-        page_size=page_size,
-    )
-
-    items = paginated_query.all()
-
-    result = {
-        "items": items,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": calculate_total_pages(
-            total=total,
-            page_size=page_size,
-        ),
-    }
-
-    return result
-
+    return query
 
