@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from fastapi import status
@@ -79,12 +81,16 @@ def test_update_group(
     client,
     authenticated_user,
     create_test_group,
+    generate_test_image,
     db: Session,
     update_data,
     expected_data,
 ):
     # Arrange
     user = authenticated_user(email="update_test@example.com")
+
+    group_image = generate_test_image()
+    group_background_image = generate_test_image()
 
     test_group = create_test_group(
         owner=user,
@@ -94,11 +100,28 @@ def test_update_group(
         background_img="background.jpg",
         is_public=True,
     )
+    group_image = generate_test_image()
+    group_background_image = generate_test_image()
 
+    original_background_img = test_group.background_img
+    original_profile_img = test_group.profile_img
     # Act
+    files = {}
+    form_data = update_data.copy()
+
+    if form_data.get("profile_img", " ").startswith("new"):
+        files["group_img"] = (form_data.pop("profile_img"),
+                              group_image,
+                              "image/jpeg")
+
+    if form_data.get("background_img", " ").startswith("new"):
+        files["group_background_img"] = (form_data.pop("background_img"),
+                              group_background_image,
+                              "image/jpeg")
     response = client.put(
         f"/groups/edit/{test_group.id}",
-        json=update_data,
+        data=form_data,
+        files=files
     )
 
     # Assert
@@ -109,16 +132,36 @@ def test_update_group(
     assert data["name"] == expected_data["name"]
     assert data["description"] == expected_data["description"]
     assert data["is_public"] is expected_data["is_public"]
-    assert data["background_img"] == expected_data["background_img"]
-    assert data["profile_img"] == expected_data["profile_img"]
+
+    if "profile_img" in update_data:
+        assert data["profile_img"] != "profile.jpg"
+        assert Path(data["profile_img"]).exists()
+    else:
+        assert data["profile_img"] == "profile.jpg"
+
+    if "background_img" in update_data:
+        assert data["background_img"] != "background.jpg"
+        assert Path(data["background_img"]).exists()
+    else:
+        assert data["background_img"] == "background.jpg"
 
     db.refresh(test_group)
 
     assert test_group.name == expected_data["name"]
     assert test_group.description == expected_data["description"]
     assert test_group.is_public is expected_data["is_public"]
-    assert test_group.background_img == expected_data["background_img"]
-    assert test_group.profile_img == expected_data["profile_img"]
+
+    if "background_img" in update_data:
+        assert test_group.background_img != original_background_img
+        assert Path(test_group.background_img).exists()
+    else:
+        assert test_group.background_img == original_background_img
+
+    if "profile_img" in update_data:
+        assert test_group.profile_img != original_profile_img
+        assert Path(test_group.profile_img).exists()
+    else:
+        assert test_group.profile_img == original_profile_img
 
 
 def test_update_group_forbidden(
@@ -142,7 +185,7 @@ def test_update_group_forbidden(
     # Act
     response = client.put(
         f"/groups/edit/{test_group.id}",
-        json={"name": "Hacked Name"},
+        data={"name": "Hacked Name"},
     )
 
     # Assert
@@ -164,7 +207,7 @@ def test_update_group_not_found(
     # Act
     response = client.put(
         "/groups/edit/999999",
-        json={"name": "New Name"},
+        data={"name": "New Name"},
     )
 
     # Assert
@@ -191,7 +234,7 @@ def test_update_group_empty_request(
     # Act
     response = client.put(
         f"/groups/edit/{test_group.id}",
-        json={},
+        data={},
     )
 
     # Assert
@@ -229,7 +272,7 @@ def test_update_group_updates_updated_at(
     # Act
     response = client.put(
         f"/groups/edit/{test_group.id}",
-        json={"name": new_group_name},
+        data={"name": new_group_name},
     )
 
     # Assert
