@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from db.user import get_user_by_id
 from models.friend import DBFriend
 
 
@@ -46,3 +47,24 @@ def delete_friend(
     db.commit()
 
     return {"message": "Friendship was deleted!"}
+
+
+def is_friend_with(user_id: int, current_user_id: int, db: Session):
+    searched_user = get_user_by_id(db, user_id)
+
+    if not searched_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found!",
+        )
+
+    list_of_friends = get_friends(user_id, db)
+
+    are_friends = list_of_friends.filter(DBFriend.friend_id == current_user_id).first()
+
+    if are_friends is None:
+        list_of_friends = get_friends(current_user_id, db)
+
+        are_friends = list_of_friends.filter(DBFriend.friend_id == user_id).first()
+
+    return are_friends is not None

@@ -1,21 +1,20 @@
 from datetime import datetime, timezone
-
-from sqlalchemy import Column, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, Enum as SQLEnum
+from sqlalchemy import Column, DateTime, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import Integer
 
 from db.database import Base
-from models.enums import GroupRole
+from models.enums import ChatType
 
 
-class DBGroupRole(Base):
-    __tablename__ = "group_roles"
+class DBChat(Base):
+    __tablename__ = "chats"
 
     id = Column(Integer, primary_key=True, index=True)
-
-    name = Column(
-        SQLEnum(GroupRole), default=GroupRole.member, nullable=False, unique=True
-    )
-
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    type = Column(SQLEnum(ChatType), nullable=False, default=ChatType.private)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
@@ -27,4 +26,9 @@ class DBGroupRole(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    members = relationship(
+        "DBChatMember",
+        back_populates="chat",
     )

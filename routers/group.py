@@ -1,6 +1,14 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status, responses, UploadFile, File
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    responses,
+    UploadFile,
+    File,
+)
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -31,9 +39,13 @@ async def create_group(
     group_background_img_path = None
 
     if group_background_img is not None:
-        group_background_img_path = await save_image(group_background_img, ImageType.group_background_picture)
+        group_background_img_path = await save_image(
+            group_background_img, ImageType.group_background_picture
+        )
 
-    new_group = group.create_group(db, request_model, current_user.id, group_img_path, group_background_img_path)
+    new_group = group.create_group(
+        db, request_model, current_user.id, group_img_path, group_background_img_path
+    )
 
     return new_group
 
@@ -61,7 +73,9 @@ def get_all_groups(db: Session = Depends(get_db)):
     return all_groups
 
 
-@router.put("/edit/{group_id}", status_code=status.HTTP_200_OK, response_model=GroupView)
+@router.put(
+    "/edit/{group_id}", status_code=status.HTTP_200_OK, response_model=GroupView
+)
 async def edit_group(
     group_id: int,
     request_model: GroupUpdate = Depends(GroupUpdate.as_form),
@@ -78,11 +92,21 @@ async def edit_group(
     group_background_img_path = None
 
     if group_background_img is not None:
-        group_background_img_path = await save_image(group_background_img, ImageType.group_background_picture)
+        group_background_img_path = await save_image(
+            group_background_img, ImageType.group_background_picture
+        )
 
-    updated_group = group.update_group(db=db, request_model= request_model, group_id= group_id, user_id= current_user.id, group_picture_path= group_img_path, group_background_picture_path= group_background_img_path)
+    updated_group = group.update_group(
+        db=db,
+        request_model=request_model,
+        group_id=group_id,
+        user_id=current_user.id,
+        group_picture_path=group_img_path,
+        group_background_picture_path=group_background_img_path,
+    )
 
     return updated_group
+
 
 @router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_group(

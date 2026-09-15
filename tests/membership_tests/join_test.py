@@ -37,9 +37,7 @@ def test_join_group(
     )
 
     # Act
-    response = client.post(
-        f"/group/{group.id}/join"
-    )
+    response = client.post(f"/group/{group.id}/join")
 
     # Assert
     assert response.status_code == expected_status
@@ -92,15 +90,11 @@ def test_join_group_already_member(
     )
 
     # Act
-    response = client.post(
-        f"/group/{group.id}/join"
-    )
+    response = client.post(f"/group/{group.id}/join")
 
     # Assert
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json()["detail"] == (
-        "User already has joined a group."
-    )
+    assert response.json()["detail"] == ("User already has joined a group.")
 
 
 def test_join_group_not_found(
@@ -113,9 +107,7 @@ def test_join_group_not_found(
     )
 
     # Act
-    response = client.post(
-        "/group/999999/join"
-    )
+    response = client.post("/group/999999/join")
 
     # Assert
     assert response.status_code == status.HTTP_404_NOT_FOUND

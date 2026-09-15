@@ -14,3 +14,5 @@ pytest
 pytest-cov
 Pillow
 httpx2
+pytest-asyncio
+pytest-timeout

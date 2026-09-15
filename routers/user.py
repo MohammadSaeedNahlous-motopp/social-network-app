@@ -87,9 +87,13 @@ def edit_user_active_state(
 
 
 @router.get("/{user_id}/membership", response_model=List[GroupView])
-def get_user_groups(user_id: int, current_user: DBUser = Depends(get_current_user), db: Session = Depends(get_db)):
-    group_list = group_member.get_user_membership(db=db, user_id=user_id, current_user_id=current_user.id)
+def get_user_groups(
+    user_id: int,
+    current_user: DBUser = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    group_list = group_member.get_user_membership(
+        db=db, user_id=user_id, current_user_id=current_user.id
+    )
 
     return group_list
-
-

@@ -1,10 +1,23 @@
 from fastapi import FastAPI
-
+from websocket.chat import router as websocket_router
 from db.seed import seed_group_roles
-from routers import authentication, user, group, group_member, post, friend_request, friend, post_group
+from routers import (
+    authentication,
+    user,
+    group,
+    group_member,
+    post,
+    friend_request,
+    friend,
+    post_group,
+)
 from db.database import engine, Base, SessionLocal
+from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI()
+
+app.mount("/test", StaticFiles(directory="static", html=True), name="test")
 
 
 @app.get("/")
@@ -20,9 +33,9 @@ app.include_router(friend.router)
 app.include_router(group.router)
 app.include_router(group_member.router)
 app.include_router(post_group.router)
+app.include_router(websocket_router)
 
 
 Base.metadata.create_all(bind=engine)
-
 with SessionLocal() as db:
     seed_group_roles(db)

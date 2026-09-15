@@ -14,6 +14,7 @@ from models.user import DBUser
 
 from db.group import get_group_by_id
 
+
 # Add pagination for member list
 def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Query:
     """
@@ -25,13 +26,20 @@ def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Qu
     """
     searched_group = get_group_by_id(db, group_id)
 
-    req_user_membership = (db.query(DBGroupMember).filter(
-        DBGroupMember.group_id == group_id,
-        DBGroupMember.user_id == requesting_user_id)
-                           .first())
+    req_user_membership = (
+        db.query(DBGroupMember)
+        .filter(
+            DBGroupMember.group_id == group_id,
+            DBGroupMember.user_id == requesting_user_id,
+        )
+        .first()
+    )
 
     if not searched_group.is_public and req_user_membership is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no permission to read list of group members")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User has no permission to read list of group members",
+        )
 
     group_members = (
         db.query(DBUser, DBGroupRole.name)
@@ -43,7 +51,9 @@ def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Qu
     return group_members
 
 
-def get_user_membership(db: Session, user_id: int, current_user_id: int) -> Query[DBGroup]:
+def get_user_membership(
+    db: Session, user_id: int, current_user_id: int
+) -> Query[DBGroup]:
     """
     Return a list of groups a user is member of
     :param db: database session
@@ -52,8 +62,11 @@ def get_user_membership(db: Session, user_id: int, current_user_id: int) -> Quer
     :return: a query of groups that the user is member of
     """
 
-
-    received_groups = db.query(DBGroup).join(DBGroupMember, DBGroupMember.group_id == DBGroup.id).filter(DBGroupMember.user_id == user_id)
+    received_groups = (
+        db.query(DBGroup)
+        .join(DBGroupMember, DBGroupMember.group_id == DBGroup.id)
+        .filter(DBGroupMember.user_id == user_id)
+    )
     if current_user_id != user_id:
         received_groups = received_groups.filter(
             or_(
@@ -76,10 +89,11 @@ def get_group_member_role(db: Session, group_id: int, user_id: int) -> GroupRole
     :param user_id: id of a user
     :return: GroupRole | None - if user is a group member returns its role, otherwise *None*
     """
-    member = db.query(DBGroupMember).filter(
-        DBGroupMember.group_id == group_id,
-        DBGroupMember.user_id == user_id
-    ).first()
+    member = (
+        db.query(DBGroupMember)
+        .filter(DBGroupMember.group_id == group_id, DBGroupMember.user_id == user_id)
+        .first()
+    )
 
     result = member.role.name if member else None
 
@@ -90,12 +104,22 @@ def join_group(db: Session, group_id: int, user_id: int) -> DBGroupMember:
     searched_group = get_group_by_id(db, group_id)
 
     if not searched_group.is_public:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Join request for private groups is not implemented")
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Join request for private groups is not implemented",
+        )
 
     # Check if user is already a member
-    existing_membership = db.query(DBGroupMember).filter(DBGroupMember.group_id == group_id, DBGroupMember.user_id == user_id).first()
+    existing_membership = (
+        db.query(DBGroupMember)
+        .filter(DBGroupMember.group_id == group_id, DBGroupMember.user_id == user_id)
+        .first()
+    )
     if existing_membership:
-       raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already has joined a group.")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already has joined a group.",
+        )
 
     new_membership = DBGroupMember(
         group_id=group_id,
@@ -114,7 +138,10 @@ def leave_group(db: Session, group_id: int, user_id: int) -> None:
     searched_group = get_group_by_id(db, group_id)
 
     if searched_group.owner_id == user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User cannot leave group he owns.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User cannot leave group he owns.",
+        )
 
     deleted_count = (
         db.query(DBGroupMember)
@@ -134,7 +161,9 @@ def leave_group(db: Session, group_id: int, user_id: int) -> None:
     db.commit()
 
 
-def change_user_role(db: Session, group_id: int, user_id: int, new_role: GroupRole, current_user_id: int) -> DBGroupMember:
+def change_user_role(
+    db: Session, group_id: int, user_id: int, new_role: GroupRole, current_user_id: int
+) -> DBGroupMember:
     """
     Change the role of a user in a group
     :param db: database session
@@ -147,29 +176,51 @@ def change_user_role(db: Session, group_id: int, user_id: int, new_role: GroupRo
     searched_group = get_group_by_id(db, group_id)
 
     if not searched_group:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Group not found."
+        )
 
     user_role = get_group_member_role(db, group_id, user_id)
 
     if not user_role:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is not a group member.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not a group member.",
+        )
 
     current_user_membership = get_group_member_role(db, group_id, current_user_id)
 
     if not current_user_membership:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Issuer is not a group member.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Issuer is not a group member.",
+        )
 
     if current_user_membership != GroupRole.administrator:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Issuer does not have permission to change the role.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Issuer does not have permission to change the role.",
+        )
 
     if user_role == new_role:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User already has the role.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already has the role."
+        )
 
     if user_id == searched_group.owner_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Issuer cannot change the role. Group owner role can only be '{GroupRole.administrator}'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Issuer cannot change the role. Group owner role can only be '{GroupRole.administrator}'",
+        )
 
-    if user_role == GroupRole.administrator and current_user_id != searched_group.owner_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only group owner can change the role.")
+    if (
+        user_role == GroupRole.administrator
+        and current_user_id != searched_group.owner_id
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only group owner can change the role.",
+        )
 
     membership = (
         db.query(DBGroupMember)
