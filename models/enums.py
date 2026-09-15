@@ -19,8 +19,14 @@ class GroupRole(str, PyEnum):
     member = "member"
     administrator = "administrator"
 
+
 class FriendRequestStatus(str, PyEnum):
     pending = "pending"
     accepted = "accepted"
     declined = "declined"
     canceled = "canceled"
+
+
+class ChatType(str, PyEnum):
+    private = "private"
+    group = "group"

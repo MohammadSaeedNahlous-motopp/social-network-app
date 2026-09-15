@@ -50,8 +50,7 @@ def test_change_user_role_by_owner(
 
     # Act
     response = client.put(
-        f"/group/{group.id}/change_role/"
-        f"{target_user.id}/{new_role.value}"
+        f"/group/{group.id}/change_role/{target_user.id}/{new_role.value}"
     )
 
     # Assert
@@ -84,7 +83,9 @@ def test_change_user_role_by_admin_not_owner(
     new_role,
 ):
     # Arrange
-    owner = create_test_user(email=f"change_role_owner_{current_role.value}@example.com")
+    owner = create_test_user(
+        email=f"change_role_owner_{current_role.value}@example.com"
+    )
 
     admin = authenticated_user(
         email=f"change_role_admin_{current_role.value}@example.com",
@@ -119,8 +120,7 @@ def test_change_user_role_by_admin_not_owner(
 
     # Act
     response = client.put(
-        f"/group/{group.id}/change_role/"
-        f"{target_user.id}/{new_role.value}"
+        f"/group/{group.id}/change_role/{target_user.id}/{new_role.value}"
     )
 
     # Assert
@@ -185,8 +185,7 @@ def test_change_role_forbidden_for_non_admin(
 
     # Act
     response = client.put(
-        f"/group/{group.id}/change_role/"
-        f"{target.id}/{GroupRole.administrator.value}"
+        f"/group/{group.id}/change_role/{target.id}/{GroupRole.administrator.value}"
     )
 
     # Assert
@@ -206,7 +205,7 @@ def test_change_role_issuer_not_member(
     create_test_user,
     create_test_group,
     create_test_group_member,
-    get_test_group_role
+    get_test_group_role,
 ):
     # Arrange
     owner = create_test_user(
@@ -241,15 +240,12 @@ def test_change_role_issuer_not_member(
 
     # Act
     response = client.put(
-        f"/group/{group.id}/change_role/"
-        f"{target.id}/{GroupRole.administrator.value}"
+        f"/group/{group.id}/change_role/{target.id}/{GroupRole.administrator.value}"
     )
 
     # Assert
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()["detail"] == (
-        "Issuer is not a group member."
-    )
+    assert response.json()["detail"] == ("Issuer is not a group member.")
 
 
 def test_change_role_target_not_member(
@@ -258,7 +254,7 @@ def test_change_role_target_not_member(
     create_test_user,
     create_test_group,
     create_test_group_member,
-    get_test_group_role
+    get_test_group_role,
 ):
     # Arrange
     admin = authenticated_user(
@@ -283,15 +279,12 @@ def test_change_role_target_not_member(
 
     # Act
     response = client.put(
-        f"/group/{group.id}/change_role/"
-        f"{target.id}/{GroupRole.administrator.value}"
+        f"/group/{group.id}/change_role/{target.id}/{GroupRole.administrator.value}"
     )
 
     # Assert
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()["detail"] == (
-        "User is not a group member."
-    )
+    assert response.json()["detail"] == ("User is not a group member.")
 
 
 @pytest.mark.parametrize(
@@ -336,16 +329,11 @@ def test_change_role_same_role(
     )
 
     # Act
-    response = client.put(
-        f"/group/{group.id}/change_role/"
-        f"{target.id}/{role.value}"
-    )
+    response = client.put(f"/group/{group.id}/change_role/{target.id}/{role.value}")
 
     # Assert
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json()["detail"] == (
-        "User already has the role."
-    )
+    assert response.json()["detail"] == ("User already has the role.")
 
 
 def test_owner_role_cannot_be_changed(
@@ -353,7 +341,7 @@ def test_owner_role_cannot_be_changed(
     authenticated_user,
     create_test_group,
     create_test_group_member,
-    get_test_group_role
+    get_test_group_role,
 ):
     # Arrange
     owner = authenticated_user(
@@ -372,8 +360,7 @@ def test_owner_role_cannot_be_changed(
 
     # Act
     response = client.put(
-        f"/group/{group.id}/change_role/"
-        f"{owner.id}/{GroupRole.member.value}"
+        f"/group/{group.id}/change_role/{owner.id}/{GroupRole.member.value}"
     )
 
     # Assert
@@ -384,21 +371,14 @@ def test_owner_role_cannot_be_changed(
     )
 
 
-def test_change_role_group_not_found(
-    client,
-    authenticated_user,
-    get_test_group_role
-):
+def test_change_role_group_not_found(client, authenticated_user, get_test_group_role):
     # Arrange
     authenticated_user(
         email="change_role_not_found@example.com",
     )
 
     # Act
-    response = client.put(
-        f"/group/999999/change_role/"
-        f"1/{GroupRole.member.value}"
-    )
+    response = client.put(f"/group/999999/change_role/1/{GroupRole.member.value}")
 
     # Assert
     assert response.status_code == status.HTTP_404_NOT_FOUND

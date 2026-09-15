@@ -56,9 +56,7 @@ def test_get_group_members_permissions(
         )
 
     # Act
-    response = client.get(
-        f"/group/{group.id}/members"
-    )
+    response = client.get(f"/group/{group.id}/members")
 
     # Assert
     assert response.status_code == expected_status
@@ -75,7 +73,7 @@ def test_get_group_members(
     create_test_user,
     create_test_group,
     create_test_group_member,
-    get_test_group_role
+    get_test_group_role,
 ):
     # Arrange
     owner = create_test_user(
@@ -126,9 +124,7 @@ def test_get_group_members(
     )
 
     # Act
-    response = client.get(
-        f"/group/{group.id}/members"
-    )
+    response = client.get(f"/group/{group.id}/members")
 
     # Assert
     assert response.status_code == status.HTTP_200_OK
@@ -196,9 +192,7 @@ def test_is_member(
     )
 
     # Act
-    response = client.get(
-        f"/group/{group.id}/is_member/{user.id}"
-    )
+    response = client.get(f"/group/{group.id}/is_member/{user.id}")
 
     # Assert
     assert response.status_code == status.HTTP_200_OK
@@ -262,9 +256,7 @@ def test_is_member_user_not_member_or_forbidden(
     # target_user intentionally isn't a member
 
     # Act
-    response = client.get(
-        f"/group/{group.id}/is_member/{target_user.id}"
-    )
+    response = client.get(f"/group/{group.id}/is_member/{target_user.id}")
 
     # Assert
     assert response.status_code == expected_status
@@ -283,9 +275,7 @@ def test_is_member_group_not_found(
     authenticated_user(email="is_member_not_found@example.com")
 
     # Act
-    response = client.get(
-        "/group/999999/is_member/1"
-    )
+    response = client.get("/group/999999/is_member/1")
 
     # Assert
     assert response.status_code == status.HTTP_404_NOT_FOUND

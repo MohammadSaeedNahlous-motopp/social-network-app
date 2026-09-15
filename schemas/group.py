@@ -59,11 +59,11 @@ class GroupUpdate(BaseModel):
 
     @classmethod
     async def as_form(
-            cls,
-            request: Request,
-            name: str | None = Form(None),
-            is_public: bool | None = Form(None),
-            description: str | None = Form(None),
+        cls,
+        request: Request,
+        name: str | None = Form(None),
+        is_public: bool | None = Form(None),
+        description: str | None = Form(None),
     ):
         form = await request.form()
 

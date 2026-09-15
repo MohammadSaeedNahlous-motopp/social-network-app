@@ -11,7 +11,13 @@ from models.group_member import DBGroupMember
 from schemas import group
 
 
-def create_group(db: Session, group_model: group.GroupBase, owner_id: int, group_picture_path: str | None = None, group_background_picture_path: str | None = None) -> DBGroup:
+def create_group(
+    db: Session,
+    group_model: group.GroupBase,
+    owner_id: int,
+    group_picture_path: str | None = None,
+    group_background_picture_path: str | None = None,
+) -> DBGroup:
     """
     Create a new group
     :param db: database session
@@ -95,7 +101,12 @@ def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
 
 
 def update_group(
-    db: Session, request_model: group.GroupUpdate, group_id: int, user_id: int, group_picture_path: str | None = None, group_background_picture_path: str | None = None
+    db: Session,
+    request_model: group.GroupUpdate,
+    group_id: int,
+    user_id: int,
+    group_picture_path: str | None = None,
+    group_background_picture_path: str | None = None,
 ) -> DBGroup:
     """
     Update an existing group
