@@ -30,14 +30,6 @@ def get_message_by_id(message_id: int, user_id: int, db: Session):
             detail="Message not found!",
         )
 
-    # searched_chat = get_chat_by_id(searched_message.chat_id, user_id,db)
-    #
-    # if searched_chat is None:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_404_NOT_FOUND,
-    #         detail="Chat not found!",
-    #     )
-
     is_member = is_chat_member(searched_message.chat_id)
 
     if is_member is None:
