@@ -106,7 +106,7 @@ def get_chat_messages(chat_id: int, user_id: int, db: Session):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to view these messages!",
         )
-    chat =  get_chat_by_id(chat_id,user_id,db)
+    chat = get_chat_by_id(chat_id, user_id, db)
     if chat is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
