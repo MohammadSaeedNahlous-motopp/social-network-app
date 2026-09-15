@@ -439,7 +439,10 @@ def test_get_group_posts_with_pagination(
     assert data["total_pages"] == 1
 
 
-def test_get_group_posts_group_not_found(client):
+def test_get_group_posts_group_not_found(client, authenticated_user):
+    # Arrange
+    authenticated_user()
+
     response = client.get(
         "/group_posts/9999/posts",
         params={
@@ -447,6 +450,158 @@ def test_get_group_posts_group_not_found(client):
             "page_size": 10,
         },
     )
-
+    #Assert
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Group not found"
+
+def test_non_member_can_view_posts_in_public_group(
+    client,
+    authenticated_user,
+    create_test_user,
+    create_test_group,
+    create_test_group_member,
+    get_test_group_role,
+):
+    # Arrange
+    owner = create_test_user(
+        email="public_group_owner@example.com",
+        name="Public Group Owner",
+    )
+
+    member = authenticated_user(
+        email="public_group_member@example.com",
+        name="Public Group Member",
+    )
+
+    group = create_test_group(
+        owner=owner,
+        name="Public Visibility Group",
+        is_public=True,
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
+    )
+
+    create_test_group_member(
+        group=group,
+        user=member,
+        role=get_test_group_role(GroupRole.member),
+    )
+
+    create_response = client.post(
+        "/group_posts/create",
+        data={
+            "group_id": group.id,
+            "title": "Public Group Post",
+            "content": "This post is inside a public group.",
+        },
+    )
+
+    assert create_response.status_code == status.HTTP_201_CREATED
+
+    # Switch authentication to a user who is NOT a group member
+    non_member = create_test_user(
+        email="public_group_non_member@example.com",
+        name="Public Group Non Member",
+    )
+
+    authenticated_user(
+        email=non_member.email,
+        name=non_member.name,
+    )
+
+    # Act
+    response = client.get(
+        f"/group_posts/{group.id}/posts",
+        params={
+            "page": 1,
+            "page_size": 10,
+        },
+    )
+
+    # Assert
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    assert len(data["items"]) == 1
+    assert data["items"][0]["title"] == "Public Group Post"
+    assert data["total"] == 1
+
+def test_non_member_cannot_view_posts_in_private_group(
+    client,
+    authenticated_user,
+    create_test_user,
+    create_test_group,
+    create_test_group_member,
+    get_test_group_role,
+):
+    # Arrange
+    owner = create_test_user(
+        email="private_group_owner@example.com",
+        name="Private Group Owner",
+    )
+
+    member = authenticated_user(
+        email="private_group_member@example.com",
+        name="Private Group Member",
+    )
+
+    group = create_test_group(
+        owner=owner,
+        name="Private Visibility Group",
+        is_public=False,
+    )
+
+    create_test_group_member(
+        group=group,
+        user=owner,
+        role=get_test_group_role(GroupRole.administrator),
+    )
+
+    create_test_group_member(
+        group=group,
+        user=member,
+        role=get_test_group_role(GroupRole.member),
+    )
+
+    create_response = client.post(
+        "/group_posts/create",
+        data={
+            "group_id": group.id,
+            "title": "Private Group Post",
+            "content": "Only group members should see this.",
+        },
+    )
+
+    assert create_response.status_code == status.HTTP_201_CREATED
+
+    # Switch authentication to a user who is NOT a group member
+    non_member = create_test_user(
+        email="private_group_non_member@example.com",
+        name="Private Group Non Member",
+    )
+
+    authenticated_user(
+        email=non_member.email,
+        name=non_member.name,
+    )
+
+    # Act
+    response = client.get(
+        f"/group_posts/{group.id}/posts",
+        params={
+            "page": 1,
+            "page_size": 10,
+        },
+    )
+
+    # Assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["detail"] == (
+        "You must be a group member to view posts in this private group."
+    )
+
