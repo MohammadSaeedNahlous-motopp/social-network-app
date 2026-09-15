@@ -1,4 +1,3 @@
-import query
 from sqlalchemy.orm.session import Session
 from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
@@ -79,7 +78,7 @@ def update_post(
 def delete_post(
     db: Session,
     post_id: int,
-    user_id: int,
+    user_id: int
 ):
     """Delete a post owned by the user."""
     post = (
@@ -101,9 +100,11 @@ def delete_post(
 
 def get_posts_by_user(
     db: Session,
-    user_id: int
+    user_id: int,
+    current_user_id: int,
 ):
-    """Return a query for visible posts published by a specific user."""
+    """Return posts the current user is allowed to see on a user's wall."""
+
     query = (
         db.query(DBPost)
         .filter(

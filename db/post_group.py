@@ -15,7 +15,6 @@ def create_group_post(
     request: PostCreate,
     user_id: int,
     image_url: str | None = None,
-    visibility: PostVisibility = PostVisibility.public
 ):
     get_group_by_id(
         db=db,
@@ -40,6 +39,7 @@ def create_group_post(
         title=request.title,
         content=request.content,
         image_url=image_url,
+        visibility=PostVisibility.public
     )
 
     db.add(new_post)
