@@ -12,11 +12,5 @@ class ConnectionManager:
     async def send_to_user(self, user_id: int, message: dict):
         websocket = self.active_connections.get(user_id)
 
-        print("Sending to:", user_id)
-        print("Connected users:", self.active_connections.keys())
-
         if websocket:
             await websocket.send_json(message)
-            print("Message sent!")
-        else:
-            print("User is not connected!")

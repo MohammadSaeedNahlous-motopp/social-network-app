@@ -110,19 +110,15 @@ def test_update_group(
     form_data = update_data.copy()
 
     if form_data.get("profile_img", " ").startswith("new"):
-        files["group_img"] = (form_data.pop("profile_img"),
-                              group_image,
-                              "image/jpeg")
+        files["group_img"] = (form_data.pop("profile_img"), group_image, "image/jpeg")
 
     if form_data.get("background_img", " ").startswith("new"):
-        files["group_background_img"] = (form_data.pop("background_img"),
-                              group_background_image,
-                              "image/jpeg")
-    response = client.put(
-        f"/groups/edit/{test_group.id}",
-        data=form_data,
-        files=files
-    )
+        files["group_background_img"] = (
+            form_data.pop("background_img"),
+            group_background_image,
+            "image/jpeg",
+        )
+    response = client.put(f"/groups/edit/{test_group.id}", data=form_data, files=files)
 
     # Assert
     assert response.status_code == status.HTTP_200_OK

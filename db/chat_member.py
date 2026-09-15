@@ -50,8 +50,6 @@ def get_chat_members_by_chat_id(chat_id: int, db: Session):
             detail="Chat not found!",
         )
 
-    chat_memberships = (
-        db.query(DBChatMember).filter(DBChatMember.chat_id == chat_id).all()
-    )
+    chat_memberships = db.query(DBChatMember).filter(DBChatMember.chat_id == chat_id)
 
     return chat_memberships

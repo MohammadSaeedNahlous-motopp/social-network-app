@@ -24,9 +24,6 @@ async def websocket_endpoint(
 
     await manager.connect(user.id, websocket)
 
-    print("CONNECTED USER:", user.id)
-    print("ACTIVE CONNECTIONS:", manager.active_connections.keys())
-
     try:
         while True:
             data = await websocket.receive_json()

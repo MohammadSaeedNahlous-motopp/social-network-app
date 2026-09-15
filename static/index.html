@@ -1,88 +1,771 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WebSocket Test</title>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>WebSocket Chat Tester</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* Header */
+
+        .header {
+            padding: 24px 28px;
+            background: #1f2937;
+            color: white;
+        }
+
+        .header h1 {
+            margin: 0 0 6px;
+            font-size: 24px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        /* Connection */
+
+        .connection {
+            padding: 24px 28px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #2563eb;
+        }
+
+        .connection-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .connection-row input {
+            flex: 1;
+        }
+
+        /* Buttons */
+
+        button {
+            border: none;
+            border-radius: 9px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .connect-button {
+            background: #16a34a;
+            color: white;
+        }
+
+        .connect-button:hover {
+            background: #15803d;
+        }
+
+        .disconnect-button {
+            background: #dc2626;
+            color: white;
+        }
+
+        .disconnect-button:hover {
+            background: #b91c1c;
+        }
+
+        .send-button {
+            background: #2563eb;
+            color: white;
+        }
+
+        .send-button:hover {
+            background: #1d4ed8;
+        }
+
+        .send-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Status */
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #9ca3af;
+        }
+
+        .status.connected {
+            color: #15803d;
+        }
+
+        .status.connected .status-dot {
+            background: #16a34a;
+        }
+
+        .status.disconnected {
+            color: #dc2626;
+        }
+
+        .status.disconnected .status-dot {
+            background: #dc2626;
+        }
+
+        /* Chat */
+
+        .chat {
+            padding: 24px 28px;
+        }
+
+        .chat h2 {
+            margin: 0 0 16px;
+            font-size: 18px;
+            color: #1f2937;
+        }
+
+        .message-area {
+            height: 320px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message-info {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 4px;
+        }
+
+        .message.received .message-content {
+            align-self: flex-start;
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .message.sent .message-content {
+            align-self: flex-end;
+            background: #2563eb;
+            color: white;
+        }
+
+        .message.sent .message-info {
+            align-self: flex-end;
+        }
+
+        .error-message {
+            padding: 10px 14px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border-radius: 9px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        /* Send */
+
+        .send-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .send-row input {
+            flex: 1;
+        }
+
+        /* Mobile */
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .connection-row,
+            .send-row {
+                flex-direction: column;
+            }
+
+            .connection-row input,
+            .send-row input,
+            .connection-row button,
+            .send-row button {
+                width: 100%;
+            }
+
+            .message-area {
+                height: 280px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<h2>WebSocket Chat Test</h2>
+<div class="container">
 
-<input id="token" placeholder="JWT token">
-<button onclick="connect()">Connect</button>
+    <!-- Header -->
 
-<br><br>
+    <div class="header">
+        <h1>WebSocket Chat Tester</h1>
+        <p>Test your FastAPI WebSocket connection and messaging.</p>
+    </div>
 
-<input id="recipientId" type="number" placeholder="Recipient ID">
-<input id="content" placeholder="Message">
-<button onclick="sendMessage()">Send</button>
 
-<br><br>
+    <!-- Connection -->
 
-<div id="messages"></div>
+    <div class="connection">
+
+        <div class="field">
+            <label for="url">WebSocket URL</label>
+
+            <input
+                id="url"
+                type="text"
+                placeholder="ws://192.168.1.21:8000/ws"
+                value="ws://192.168.1.21:8000/ws"
+            >
+        </div>
+
+        <div class="field">
+            <label for="token">JWT Token</label>
+
+            <input
+                id="token"
+                type="password"
+                placeholder="Enter your JWT token"
+            >
+        </div>
+
+        <div class="connection-row">
+
+            <button
+                id="connectButton"
+                class="connect-button"
+                onclick="toggleConnection()"
+            >
+                Connect
+            </button>
+
+        </div>
+
+        <div
+            id="status"
+            class="status disconnected"
+        >
+            <span class="status-dot"></span>
+            <span id="statusText">Disconnected</span>
+        </div>
+
+    </div>
+
+
+    <!-- Chat -->
+
+    <div class="chat">
+
+        <h2>Messages</h2>
+
+        <div
+            id="messages"
+            class="message-area"
+        ></div>
+
+
+        <div class="field">
+
+            <label for="recipientId">
+                Recipient ID
+            </label>
+
+            <input
+                id="recipientId"
+                type="number"
+                placeholder="Enter recipient user ID"
+            >
+
+        </div>
+
+
+        <div class="send-row">
+
+            <input
+                id="content"
+                type="text"
+                placeholder="Type a message..."
+                disabled
+            >
+
+            <button
+                id="sendButton"
+                class="send-button"
+                onclick="sendMessage()"
+                disabled
+            >
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
 
 <script>
+
     let ws = null;
 
-function connect() {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        console.log("Already connected");
-        return;
+
+    // =====================================================
+    // Connection
+    // =====================================================
+
+    function toggleConnection() {
+
+        if (
+            ws &&
+            ws.readyState === WebSocket.OPEN
+        ) {
+            disconnect();
+
+        } else {
+            connect();
+        }
     }
 
-    const token = document.getElementById("token").value;
 
-    console.log("CREATING NEW WEBSOCKET");
+    function connect() {
 
-    ws = new WebSocket(
-        `ws://localhost:8000/ws?token=${token}`
-    );
+        if (
+            ws &&
+            ws.readyState === WebSocket.OPEN
+        ) {
+            return;
+        }
 
-    ws.onopen = () => {
-        console.log("WebSocket connected");
-    };
+        const url =
+            document.getElementById("url").value.trim();
 
-    ws.onmessage = (event) => {
-        console.log("ONMESSAGE FIRED");
-        console.log("RAW:", event.data);
+        const token =
+            document.getElementById("token").value.trim();
 
-        const data = JSON.parse(event.data);
 
-        const message = document.createElement("p");
-        message.textContent =
-            `${data.sender_id}: ${data.content}`;
+        if (!url) {
+            alert("Please enter a WebSocket URL.");
+            return;
+        }
 
-        document.getElementById("messages").appendChild(message);
-    };
 
-    ws.onclose = () => {
-        console.log("WebSocket disconnected");
+        if (!token) {
+            alert("Please enter your JWT token.");
+            return;
+        }
+
+
+        const separator =
+            url.includes("?") ? "&" : "?";
+
+
+        const websocketUrl =
+            `${url}${separator}token=${encodeURIComponent(token)}`;
+
+
+        console.log(
+            "Connecting to:",
+            websocketUrl
+        );
+
+
+        ws = new WebSocket(websocketUrl);
+
+
+        ws.onopen = () => {
+
+            console.log(
+                "WebSocket connected"
+            );
+
+            setConnectedState(true);
+        };
+
+
+        ws.onmessage = (event) => {
+
+            console.log(
+                "Message received:",
+                event.data
+            );
+
+
+            const data =
+                JSON.parse(event.data);
+
+
+            // Backend error
+
+            if (data.error) {
+
+                displayError(data.error);
+
+                return;
+            }
+
+
+            // Normal message
+
+            displayMessage(data);
+        };
+
+
+        ws.onclose = () => {
+
+            console.log(
+                "WebSocket disconnected"
+            );
+
+            ws = null;
+
+            setConnectedState(false);
+        };
+
+
+        ws.onerror = (error) => {
+
+            console.error(
+                "WebSocket error:",
+                error
+            );
+        };
+    }
+
+
+    function disconnect() {
+
+        if (!ws) {
+            return;
+        }
+
+
+        console.log(
+            "Disconnecting..."
+        );
+
+
+        ws.close();
+
         ws = null;
-    };
 
-    ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-    };
-}
-function sendMessage() {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-        console.log("WebSocket is not connected");
-        return;
+        setConnectedState(false);
     }
 
-    const recipientId = Number(
-        document.getElementById("recipientId").value
-    );
 
-    const content =
-        document.getElementById("content").value;
+    // =====================================================
+    // UI State
+    // =====================================================
 
-    ws.send(JSON.stringify({
-        type: "message",
-        recipient_id: recipientId,
-        content: content
-    }));
-}
+    function setConnectedState(connected) {
+
+        const button =
+            document.getElementById("connectButton");
+
+        const status =
+            document.getElementById("status");
+
+        const statusText =
+            document.getElementById("statusText");
+
+        const content =
+            document.getElementById("content");
+
+        const sendButton =
+            document.getElementById("sendButton");
+
+
+        if (connected) {
+
+            button.textContent =
+                "Disconnect";
+
+            button.className =
+                "disconnect-button";
+
+
+            status.className =
+                "status connected";
+
+            statusText.textContent =
+                "Connected";
+
+
+            content.disabled = false;
+            sendButton.disabled = false;
+
+        } else {
+
+            button.textContent =
+                "Connect";
+
+            button.className =
+                "connect-button";
+
+
+            status.className =
+                "status disconnected";
+
+            statusText.textContent =
+                "Disconnected";
+
+
+            content.disabled = true;
+            sendButton.disabled = true;
+        }
+    }
+
+
+    // =====================================================
+    // Sending Messages
+    // =====================================================
+
+    function sendMessage() {
+
+        if (
+            !ws ||
+            ws.readyState !== WebSocket.OPEN
+        ) {
+
+            console.log(
+                "WebSocket is not connected"
+            );
+
+            return;
+        }
+
+
+        const recipientId =
+            Number(
+                document.getElementById(
+                    "recipientId"
+                ).value
+            );
+
+
+        const content =
+            document.getElementById(
+                "content"
+            ).value;
+
+
+        if (!recipientId) {
+
+            alert(
+                "Please enter a recipient ID."
+            );
+
+            return;
+        }
+
+
+        if (!content.trim()) {
+
+            alert(
+                "Please enter a message."
+            );
+
+            return;
+        }
+
+
+        ws.send(
+            JSON.stringify({
+                type: "message",
+                recipient_id: recipientId,
+                content: content
+            })
+        );
+
+
+        document.getElementById(
+            "content"
+        ).value = "";
+    }
+
+
+    // =====================================================
+    // Display Messages
+    // =====================================================
+
+    function displayMessage(data) {
+
+        const messages =
+            document.getElementById(
+                "messages"
+            );
+
+
+        const message =
+            document.createElement("div");
+
+
+        message.className =
+            "message";
+
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "message-info";
+
+        info.textContent =
+            `User ${data.sender_id}`;
+
+
+        const content =
+            document.createElement("div");
+
+        content.className =
+            "message-content";
+
+        content.textContent =
+            data.content;
+
+
+        message.appendChild(info);
+        message.appendChild(content);
+
+        messages.appendChild(message);
+
+
+        messages.scrollTop =
+            messages.scrollHeight;
+    }
+
+
+    function displayError(error) {
+
+        const messages =
+            document.getElementById(
+                "messages"
+            );
+
+
+        const errorElement =
+            document.createElement("div");
+
+        errorElement.className =
+            "error-message";
+
+        errorElement.textContent =
+            error;
+
+
+        messages.appendChild(
+            errorElement
+        );
+
+
+        messages.scrollTop =
+            messages.scrollHeight;
+    }
+
+
+    // =====================================================
+    // Enter key
+    // =====================================================
+
+    document
+        .getElementById("content")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.key === "Enter"
+                ) {
+                    sendMessage();
+                }
+
+            }
+        );
+
 </script>
 
 </body>

@@ -58,23 +58,13 @@ def is_friend_with(user_id: int, current_user_id: int, db: Session):
             detail="User not found!",
         )
 
-    are_friends = (
-        db.query(DBFriend)
-        .filter(
-            DBFriend.user_id == current_user_id,
-            DBFriend.friend_id == user_id,
-        )
-        .first()
-    )
+    list_of_friends = get_friends(user_id, db)
+
+    are_friends = list_of_friends.filter(DBFriend.friend_id == current_user_id).first()
 
     if are_friends is None:
-        are_friends = (
-            db.query(DBFriend)
-            .filter(
-                DBFriend.user_id == user_id,
-                DBFriend.friend_id == current_user_id,
-            )
-            .first()
-        )
+        list_of_friends = get_friends(current_user_id, db)
+
+        are_friends = list_of_friends.filter(DBFriend.friend_id == user_id).first()
 
     return are_friends is not None

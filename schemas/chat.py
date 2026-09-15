@@ -15,16 +15,16 @@ class User(BaseModel):
 
 class ChatCreate(BaseModel):
     user_ids: list[int]
-    name: str
-    description: str
+    name: str | None = None
+    description: str | None = None
     type: ChatType
 
 
 class ChatResponse(BaseModel):
     id: int
     created_at: datetime
-    name: str
-    description: str
+    name: str | None = None
+    description: str | None = None
     type: ChatType
     members: list[User]
 

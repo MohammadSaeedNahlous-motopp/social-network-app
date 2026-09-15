@@ -17,8 +17,16 @@ def test_create_group(client, db: Session, authenticated_user, generate_test_ima
         "name": "Python Developers",
         "description": "A group for Python developers",
         "is_public": True,
-        "group_image": {"filename": "group_image.jpeg", "bytes": group_image, "data_type": "image/jpeg"},
-        "group_background_image": {"filename": "group_background_image.jpeg", "bytes": group_background_image, "data_type": "image/jpeg"},
+        "group_image": {
+            "filename": "group_image.jpeg",
+            "bytes": group_image,
+            "data_type": "image/jpeg",
+        },
+        "group_background_image": {
+            "filename": "group_background_image.jpeg",
+            "bytes": group_background_image,
+            "data_type": "image/jpeg",
+        },
     }
 
     # Act
@@ -30,13 +38,16 @@ def test_create_group(client, db: Session, authenticated_user, generate_test_ima
             "is_public": group_data["is_public"],
         },
         files={
-            "group_img": (group_data["group_image"]["filename"],
-                          group_data["group_image"]["bytes"],
-                          group_data["group_image"]["data_type"]),
-
-            "group_background_img": (group_data["group_background_image"]["filename"],
-                        group_data["group_background_image"]["bytes"],
-                        group_data["group_background_image"]["data_type"]),
+            "group_img": (
+                group_data["group_image"]["filename"],
+                group_data["group_image"]["bytes"],
+                group_data["group_image"]["data_type"],
+            ),
+            "group_background_img": (
+                group_data["group_background_image"]["filename"],
+                group_data["group_background_image"]["bytes"],
+                group_data["group_background_image"]["data_type"],
+            ),
         },
     )
 

@@ -70,7 +70,3 @@ async def handle_message(data, user_id, websocket, manager: ConnectionManager, d
 
     for member in members:
         await manager.send_to_user(member.user_id, message_data)
-
-    print("CHAT MEMBERS:")
-    for member in members:
-        print(member.chat_id, member.user_id)

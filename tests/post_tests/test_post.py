@@ -146,7 +146,8 @@ def test_get_user_posts(client, authenticated_user):
         params={
             "page": 1,
             "page_size": 10,
-        })
+        },
+    )
 
     assert response.status_code == 200
 

@@ -194,4 +194,3 @@ def generate_test_image():
         return image_bytes
 
     return _generate_test_image
-

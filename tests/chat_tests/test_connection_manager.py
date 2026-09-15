@@ -84,6 +84,26 @@ async def test_send_message_to_disconnected_user():
     assert manager.active_connections == {}
 
 
+@pytest.mark.timeout(10)
+@pytest.mark.asyncio
+async def test_send_message_to_connected_user():
+    manager = ConnectionManager()
+    websocket = FakeWebSocket()
+
+    await manager.connect(1, websocket)
+
+    message = {
+        "id": 1,
+        "chat_id": 10,
+        "sender_id": 2,
+        "content": "Hello!",
+    }
+
+    await manager.send_to_user(1, message)
+
+    assert websocket.sent_messages == [message]
+
+
 @pytest.mark.asyncio
 async def test_multiple_users_can_connect():
     manager = ConnectionManager()
