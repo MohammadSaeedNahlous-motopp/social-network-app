@@ -19,7 +19,7 @@ class DBPost(Base):
 
     content = Column(Text, nullable=False)
 
-    image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String, nullable=True, info={"file_field": True})
 
     score = Column(Integer, default=0, nullable=False)
 

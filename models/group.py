@@ -18,8 +18,8 @@ class DBGroup(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     owner = relationship("DBUser", back_populates="groups")
 
-    background_img = Column(String, nullable=True)
-    profile_img = Column(String, nullable=True)
+    background_img = Column(String, nullable=True, info={"file_field": True})
+    profile_img = Column(String, nullable=True, info={"file_field": True})
 
     is_public = Column(Boolean, nullable=False, default=True)
 
