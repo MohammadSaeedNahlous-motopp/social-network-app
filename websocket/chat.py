@@ -3,13 +3,10 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from websocket.auth import authenticate_websocket
-from websocket.connection_manager import ConnectionManager
+from websocket.connection_manager import manager
 from websocket.message import handle_message
 
-
 router = APIRouter()
-
-manager = ConnectionManager()
 
 
 @router.websocket("/ws")
@@ -30,12 +27,6 @@ async def websocket_endpoint(
 
             if data["type"] == "message":
                 await handle_message(data, user.id, websocket, manager, db)
-
-            # elif data["type"] == "typing":
-            #     pass
-            #
-            # elif data["type"] == "read":
-            #     pass
 
     except WebSocketDisconnect:
         manager.disconnect(user.id)

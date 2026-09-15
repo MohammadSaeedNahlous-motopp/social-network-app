@@ -1,11 +1,14 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from models.enums import FriendRequestStatus
+from db.notification import create_notification
+from models.enums import FriendRequestStatus, NotificationType
 from models.friend_request import DBFriendRequest
 from models.user import DBUser
 from models.friend import DBFriend
 from schemas.friend_request import FriendRequestBase
+from schemas.notification import NotificationCreate
+from websocket.connection_manager import manager
 
 
 def get_user_pending_friend_requests(user_id: int, db: Session):
@@ -17,7 +20,7 @@ def get_user_pending_friend_requests(user_id: int, db: Session):
     return pending_friend_requests
 
 
-def create_friend_request(
+async def create_friend_request(
     request: FriendRequestBase,
     user_id: int,
     db: Session,
@@ -76,6 +79,25 @@ def create_friend_request(
     db.add(new_friend_request)
     db.commit()
     db.refresh(new_friend_request)
+
+    notification = create_notification(
+        NotificationCreate(
+            user_id=request.receiver_id,
+            type=NotificationType.new_friend_request,
+            message="",
+        ),
+        db,
+    )
+
+    await manager.send_to_user(
+        request.receiver_id,
+        {
+            "type": "notification",
+            "id": notification.id,
+            "notification_type": notification.type,
+            "message": notification.message,
+        },
+    )
 
     return new_friend_request
 
