@@ -122,7 +122,7 @@ def update_group(
             detail="User has no permission to edit group",
         )
 
-    update_data = request_model.model_dump(exclude_unset=True)
+    update_data = request_model.model_dump(exclude_unset=True, exclude_none=True)
 
     if not update_data and not group_background_picture_path and not group_picture_path:
         raise HTTPException(
