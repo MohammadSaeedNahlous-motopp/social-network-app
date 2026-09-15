@@ -10,6 +10,7 @@ from routers import (
     friend_request,
     friend,
     post_group,
+    chat,
 )
 from db.database import engine, Base, SessionLocal
 from fastapi.staticfiles import StaticFiles
@@ -34,6 +35,7 @@ app.include_router(group.router)
 app.include_router(group_member.router)
 app.include_router(post_group.router)
 app.include_router(websocket_router)
+app.include_router(chat.router)
 
 
 Base.metadata.create_all(bind=engine)
