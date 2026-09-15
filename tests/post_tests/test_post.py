@@ -19,6 +19,7 @@ def test_create_post(client, authenticated_user):
     assert response.json()["content"] == "This is a test post."
     assert response.json()["image_url"] is None
     assert response.json()["user_id"] == user.id
+    assert response.json()["visibility"] == "public"
 
 
 def test_get_post(client, authenticated_user):
@@ -135,6 +136,7 @@ def test_get_user_posts(client, authenticated_user):
         data={
             "title": "Second Post",
             "content": "My second wall post.",
+            "visibility": "friends_only"
         },
     )
 
@@ -170,4 +172,87 @@ def test_get_user_posts(client, authenticated_user):
     assert data["page"] == 1
     assert data["page_size"] == 10
     assert data["total"] == 2
+    assert data["total_pages"] == 1
+
+
+def test_create_friends_only_post(client, authenticated_user):
+    user = authenticated_user()
+
+    response = client.post(
+        "/posts/",
+        data={
+            "title": "Friends Only Post",
+            "content": "Only my friends should see this.",
+            "visibility": "friends_only",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["user_id"] == user.id
+    assert response.json()["visibility"] == "friends_only"
+
+
+def test_non_friend_can_only_see_public_posts(
+    client,
+    authenticated_user,
+    create_test_user,
+):
+    # Arrange
+    post_owner = authenticated_user(
+        email="visibility_owner@example.com",
+        name="Visibility Owner",
+    )
+
+    public_post = client.post(
+        "/posts/",
+        data={
+            "title": "Public Post",
+            "content": "Everyone can see this.",
+            "visibility": "public",
+        },
+    )
+
+    friends_only_post = client.post(
+        "/posts/",
+        data={
+            "title": "Friends Only Post",
+            "content": "Friends should see this.",
+            "visibility": "friends_only",
+        },
+    )
+
+    assert public_post.status_code == 201
+    assert friends_only_post.status_code == 201
+
+    non_friend = create_test_user(
+        email="visibility_non_friend@example.com",
+        name="Non Friend",
+    )
+
+    # Switch authentication to the non-friend
+    authenticated_user(
+        email=non_friend.email,
+        name=non_friend.name,
+    )
+
+    # Act
+    response = client.get(
+        f"/posts/{post_owner.id}/all",
+        params={
+            "page": 1,
+            "page_size": 10,
+        },
+    )
+
+    # Assert
+    assert response.status_code == 200
+
+    data = response.json()
+    posts = data["items"]
+
+    assert len(posts) == 1
+    assert posts[0]["title"] == "Public Post"
+    assert posts[0]["visibility"] == "public"
+
+    assert data["total"] == 1
     assert data["total_pages"] == 1
