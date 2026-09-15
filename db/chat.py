@@ -12,6 +12,14 @@ from sqlalchemy import and_, func
 
 
 def create_chat(request: ChatCreate, db: Session):
+
+    for user_id in request.user_ids:
+        searched_user = get_user_by_id(db, user_id)
+        if not searched_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found!",
+            )
     new_chat = DBChat(
         name=request.name, description=request.description, type=request.type
     )
@@ -21,12 +29,6 @@ def create_chat(request: ChatCreate, db: Session):
     db.refresh(new_chat)
 
     for user_id in request.user_ids:
-        searched_user = get_user_by_id(db, user_id)
-        if not searched_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found!",
-            )
         create_chat_member(ChatMemberCreate(user_id=user_id), new_chat.id, db, False)
 
     db.commit()
@@ -104,7 +106,12 @@ def get_chat_messages(chat_id: int, user_id: int, db: Session):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to view these messages!",
         )
-
+    chat =  get_chat_by_id(chat_id,user_id,db)
+    if chat is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat Not Found!",
+        )
     messages = db.query(DBMessage).filter(DBMessage.chat_id == chat_id)
 
     return messages
