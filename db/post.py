@@ -2,7 +2,6 @@ from sqlalchemy.orm.session import Session
 from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
 
-
 def create_post(
     db: Session,
     request: PostCreate,
@@ -95,11 +94,12 @@ def delete_post(
 
     return post
 
-
-def get_posts_by_user(db: Session, user_id: int):
-    """Return all posts published by a specific user."""
-
-    posts = (
+def get_posts_by_user(
+    db: Session,
+    user_id: int
+):
+    """Return a query for visible posts published by a specific user."""
+    query = (
         db.query(DBPost)
         .filter(
             DBPost.user_id == user_id,
@@ -108,4 +108,5 @@ def get_posts_by_user(db: Session, user_id: int):
         .order_by(DBPost.created_at.desc())
     )
 
-    return posts
+    return query
+

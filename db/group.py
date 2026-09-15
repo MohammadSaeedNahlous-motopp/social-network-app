@@ -11,20 +11,22 @@ from models.group_member import DBGroupMember
 from schemas import group
 
 
-def create_group(db: Session, group_model: group.GroupBase, owner_id: int) -> DBGroup:
+def create_group(db: Session, group_model: group.GroupBase, owner_id: int, group_picture_path: str | None = None, group_background_picture_path: str | None = None) -> DBGroup:
     """
     Create a new group
     :param db: database session
     :param group_model: group model
     :param owner_id: id of a user who creates a new group
+    :param group_background_picture_path: path to picture for background on local storage
+    :param group_picture_path: path to picture for group icon on local storage
     :return: newly created group
     """
     new_group = DBGroup(
         name=group_model.name,
         description=group_model.description,
         owner_id=owner_id,
-        background_img=group_model.background_img,
-        profile_img=group_model.profile_img,
+        background_img=group_background_picture_path,
+        profile_img=group_picture_path,
         is_public=group_model.is_public,
     )
 
@@ -93,7 +95,7 @@ def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
 
 
 def update_group(
-    db: Session, request_model: group.GroupUpdate, group_id: int, user_id: int
+    db: Session, request_model: group.GroupUpdate, group_id: int, user_id: int, group_picture_path: str | None = None, group_background_picture_path: str | None = None
 ) -> DBGroup:
     """
     Update an existing group
@@ -101,6 +103,8 @@ def update_group(
     :param request_model: group model with updated data
     :param group_id: id of a group we want to update
     :param user_id: id of user who updates an existing group
+    :param group_background_picture_path: path to picture for background on local storage
+    :param group_picture_path: path to picture for group icon on local storage
     :return: if update was successful return updated group otherwise return original group
     """
 
@@ -120,7 +124,7 @@ def update_group(
 
     update_data = request_model.model_dump(exclude_unset=True)
 
-    if not update_data:
+    if not update_data and not group_background_picture_path and not group_picture_path:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one field must be provided for update",
@@ -128,6 +132,12 @@ def update_group(
 
     for key, value in update_data.items():
         setattr(searched_group, key, value)
+
+    if group_background_picture_path:
+        searched_group.background_img = group_background_picture_path
+
+    if group_picture_path:
+        searched_group.profile_img = group_picture_path
 
     db.commit()
     db.refresh(searched_group)

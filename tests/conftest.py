@@ -16,6 +16,10 @@ from models.group import DBGroup
 from models.group_member import DBGroupMember
 from models.group_role import DBGroupRole
 
+from io import BytesIO
+
+from PIL import Image
+
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
@@ -176,3 +180,18 @@ def mock_image_path(monkeypatch, tmp_path):
         "service.image.get_image_path",
         temp_image_path,
     )
+
+
+@pytest.fixture
+def generate_test_image():
+    def _generate_test_image(image_format="JPEG", size=(100, 100)):
+        image = Image.new("RGB", size)
+        image_bytes = BytesIO()
+
+        image.save(image_bytes, format=image_format)
+        image_bytes.seek(0)
+
+        return image_bytes
+
+    return _generate_test_image
+

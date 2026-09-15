@@ -141,11 +141,17 @@ def test_get_user_posts(client, authenticated_user):
     assert first_post.status_code == 201
     assert second_post.status_code == 201
 
-    response = client.get(f"/posts/{user.id}/all")
+    response = client.get(
+        f"/posts/{user.id}/all",
+        params={
+            "page": 1,
+            "page_size": 10,
+        })
 
     assert response.status_code == 200
 
-    posts = response.json()
+    data = response.json()
+    posts = data["items"]
 
     assert len(posts) == 2
 
@@ -157,3 +163,8 @@ def test_get_user_posts(client, authenticated_user):
         first_post.json()["title"],
         second_post.json()["title"],
     }
+
+    assert data["page"] == 1
+    assert data["page_size"] == 10
+    assert data["total"] == 2
+    assert data["total_pages"] == 1
