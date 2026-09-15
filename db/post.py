@@ -5,6 +5,7 @@ from schemas.post import PostCreate, PostUpdate
 from models.enums import PostVisibility
 from models.friend import DBFriend
 
+
 def create_post(
     db: Session,
     request: PostCreate,
@@ -100,11 +101,9 @@ def delete_post(
 
 def get_posts_by_user(
     db: Session,
-    user_id: int,
-    current_user_id: int,
+    user_id: int
 ):
-    """Return posts the current user is allowed to see on a user's wall."""
-
+    """Return a query for visible posts published by a specific user."""
     query = (
         db.query(DBPost)
         .filter(
@@ -138,4 +137,3 @@ def get_posts_by_user(
     )
 
     return query
-

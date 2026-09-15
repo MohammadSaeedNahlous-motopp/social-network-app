@@ -25,8 +25,3 @@ class FriendRequestStatus(str, PyEnum):
     accepted = "accepted"
     declined = "declined"
     canceled = "canceled"
-
-
-class PostVisibility(str, PyEnum):
-    public = "public"
-    friends_only = "friends_only"

@@ -1,20 +1,14 @@
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from datetime import datetime, timezone
-
-from sqlalchemy import Column, DateTime, Enum as SQLEnum
-from sqlalchemy.sql.sqltypes import Integer
-
 from db.database import Base
-from models.enums import GroupRole
 
 
-class DBGroupRole(Base):
-    __tablename__ = "group_roles"
-
+class DBMessage(Base):
+    __tablename__ = "messages"
     id = Column(Integer, primary_key=True, index=True)
-
-    name = Column(
-        SQLEnum(GroupRole), default=GroupRole.member, nullable=False, unique=True
-    )
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    chat_id = Column(Integer, ForeignKey("chats.id"))
+    content = Column(String, nullable=False)
 
     created_at = Column(
         DateTime(timezone=True),

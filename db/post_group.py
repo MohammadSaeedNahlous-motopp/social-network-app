@@ -10,7 +10,6 @@ from models.enums import GroupRole
 from schemas.post import PostCreate, PostUpdate
 
 
-
 def create_group_post(
     db: Session,
     group_id: int,
@@ -89,11 +88,7 @@ def update_group_post(
         post_id=post_id,
     )
 
-    if (
-        post is None
-        or post.group_id != group_id
-        or post.user_id != user_id
-    ):
+    if post is None or post.group_id != group_id or post.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Group post not found.",

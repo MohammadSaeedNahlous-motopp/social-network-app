@@ -19,7 +19,7 @@ class DBUser(Base):
 
     bio = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-    profile_img = Column(String, nullable=True)
+    profile_img = Column(String, nullable=True, info={"file_field": True})
     location = Column(String, nullable=True)
     gender = Column(SQLEnum(Gender), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
@@ -57,4 +57,11 @@ class DBUser(Base):
         "DBFriend", foreign_keys="DBFriend.friend_id", back_populates="friend"
     )
     groups = relationship("DBGroup", back_populates="owner")
-    group_memberships = relationship("DBGroupMember", back_populates="user", cascade="all, delete-orphan")
+    group_memberships = relationship(
+        "DBGroupMember", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    chat_memberships = relationship(
+        "DBChatMember",
+        back_populates="user",
+    )

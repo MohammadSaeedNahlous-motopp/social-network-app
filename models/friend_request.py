@@ -20,7 +20,9 @@ class DBFriendRequest(Base):
         nullable=False,
     )
     status = Column(
-        SQLEnum(FriendRequestStatus), nullable=False, default=FriendRequestStatus.pending
+        SQLEnum(FriendRequestStatus),
+        nullable=False,
+        default=FriendRequestStatus.pending,
     )
     created_at = Column(
         DateTime(timezone=True),
