@@ -54,3 +54,4 @@ class DBSession(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    revoked_at = Column(DateTime(timezone=True), nullable=True, default=None)

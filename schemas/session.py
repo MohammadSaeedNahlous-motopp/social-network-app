@@ -18,3 +18,8 @@ class SessionResponse(BaseModel):
     refresh_expires_at: datetime
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class TokenResponse(BaseModel):
+    session_token: str
+    refresh_token: str
