@@ -14,9 +14,9 @@ load_dotenv()
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
+# ALGORITHM = "HS256"
+# ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 # def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
