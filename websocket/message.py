@@ -12,6 +12,7 @@ from service.encryption_methods import (
     generate_aes_key,
     encrypt_message,
     encrypt_aes_key,
+    decrypt_chat_message,
 )
 from websocket.connection_manager import ConnectionManager
 import base64
@@ -103,33 +104,42 @@ async def handle_message(
         "content": content.strip(),
     }
 
-    message_data = {
-        "type": "message",
-        "id": message.id,
-        "chat_id": message.chat_id,
-        "sender_id": message.sender_id,
-        "ciphertext": ciphertext,
-        "nonce": nonce,
-        "encrypted_aes_key": encrypted_aes_message_key,
-    }
-
     members = get_chat_members_by_chat_id(
         chat.id,
         db,
     )
 
     for member in members:
-        # Send the chat message to everyone
+        if member.user_id == user_id:
+            await manager.send_to_user(
+                member.user_id,
+                message_data_for_sender,
+            )
+            continue
+
+        member_user = get_user_by_id(
+            db,
+            member.user_id,
+        )
+
+        decrypted_chat_message = decrypt_chat_message(
+            message,
+            member_user,
+        )
+
+        message_data = {
+            "type": "message",
+            "id": message.id,
+            "chat_id": message.chat_id,
+            "sender_id": message.sender_id,
+            "content": decrypted_chat_message,
+        }
+
         await manager.send_to_user(
             member.user_id,
             message_data,
         )
 
-        # Don't create a notification for the sender
-        if member.user_id == user_id:
-            continue
-
-        # Create notification for the recipient
         notification = create_notification(
             NotificationCreate(
                 user_id=member.user_id,
@@ -139,7 +149,6 @@ async def handle_message(
             db,
         )
 
-        # Send notification to the recipient
         await manager.send_to_user(
             member.user_id,
             {

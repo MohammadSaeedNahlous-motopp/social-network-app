@@ -1,3 +1,4 @@
+import base64
 import os
 
 from cryptography.fernet import Fernet
@@ -110,3 +111,24 @@ def decrypt_message(
     )
 
     return plaintext.decode("utf-8")
+
+
+def decrypt_chat_message(message, user):
+    private_key = decrypt_private_key(user.encrypted_private_key)
+
+    encrypted_aes_key = base64.b64decode(message.encrypted_aes_key)
+
+    nonce = base64.b64decode(message.nonce)
+
+    ciphertext = base64.b64decode(message.ciphertext)
+
+    aes_key = decrypt_aes_key(
+        encrypted_aes_key,
+        private_key,
+    )
+
+    return decrypt_message(
+        ciphertext,
+        aes_key,
+        nonce,
+    )
