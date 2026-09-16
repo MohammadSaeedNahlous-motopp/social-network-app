@@ -34,14 +34,10 @@ def encrypt_private_key(private_key: str) -> str:
     master_key = os.getenv("MASTER_KEY")
 
     if not master_key:
-        raise RuntimeError(
-            "MASTER_KEY is not configured."
-        )
+        raise RuntimeError("MASTER_KEY is not configured.")
 
     fernet = Fernet(master_key)
 
-    encrypted_private_key = fernet.encrypt(
-        private_key.encode("utf-8")
-    )
+    encrypted_private_key = fernet.encrypt(private_key.encode("utf-8"))
 
     return encrypted_private_key.decode("utf-8")

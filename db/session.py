@@ -40,36 +40,12 @@ def create_session(user_id: int, db: Session):
 
 
 def get_session_by_token(session_token: str, db: Session):
+
     session_hash = hash_token(session_token)
 
     searched_session = (
         db.query(DBSession).filter(DBSession.session_hash == session_hash).first()
     )
-
-    if searched_session is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found",
-        )
-
-    if searched_session.revoked_at is not None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Session has been revoked",
-        )
-
-    now = datetime.now(timezone.utc)
-
-    session_expires_at = ensure_utc(searched_session.session_expires_at)
-
-    if session_expires_at <= now:
-        searched_session.revoked_at = now
-        db.commit()
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Session expired",
-        )
 
     return searched_session
 

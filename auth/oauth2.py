@@ -42,6 +42,7 @@ def get_current_user(
 ):
 
     session = get_session_by_token(session_token, db)
+    print(session)
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

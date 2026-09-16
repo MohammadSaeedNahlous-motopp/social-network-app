@@ -8,7 +8,13 @@ from models.enums import ChatType, NotificationType
 from schemas.chat import ChatCreate
 from schemas.message import MessageCreate
 from schemas.notification import NotificationCreate
+from service.encryption_methods import (
+    generate_aes_key,
+    encrypt_message,
+    encrypt_aes_key,
+)
 from websocket.connection_manager import ConnectionManager
+import base64
 
 
 async def handle_message(
@@ -45,6 +51,22 @@ async def handle_message(
 
     # Get the authenticated sender
     sender = get_user_by_id(db, user_id)
+    aes_message_key = generate_aes_key()
+    ciphertext, nonce = encrypt_message(
+        content.strip(),
+        aes_message_key,
+    )
+
+    encrypted_aes_message_key = encrypt_aes_key(
+        aes_message_key,
+        recipient.public_key,
+    )
+
+    ciphertext = base64.b64encode(ciphertext).decode("utf-8")
+    nonce = base64.b64encode(nonce).decode("utf-8")
+    encrypted_aes_message_key = base64.b64encode(encrypted_aes_message_key).decode(
+        "utf-8"
+    )
 
     chat = get_private_chat(
         user_id,
@@ -66,18 +88,29 @@ async def handle_message(
     message = create_message(
         MessageCreate(
             chat_id=chat.id,
-            content=content.strip(),
+            ciphertext=ciphertext,
+            nonce=nonce,
+            encrypted_aes_key=encrypted_aes_message_key,
         ),
         user_id,
         db,
     )
+    message_data_for_sender = {
+        "type": "message",
+        "id": message.id,
+        "chat_id": message.chat_id,
+        "sender_id": message.sender_id,
+        "content": content.strip(),
+    }
 
     message_data = {
         "type": "message",
         "id": message.id,
         "chat_id": message.chat_id,
         "sender_id": message.sender_id,
-        "content": message.content,
+        "ciphertext": ciphertext,
+        "nonce": nonce,
+        "encrypted_aes_key": encrypted_aes_message_key,
     }
 
     members = get_chat_members_by_chat_id(
