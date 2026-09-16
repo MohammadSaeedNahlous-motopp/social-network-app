@@ -5,8 +5,7 @@ from db.group import get_group_by_id
 from models.post import DBPost
 from db.group_member import get_group_member_role
 from db.post import get_post
-from models.enums import GroupRole
-
+from models.enums import GroupRole, PostVisibility
 from schemas.post import PostCreate, PostUpdate
 
 
@@ -40,6 +39,7 @@ def create_group_post(
         title=request.title,
         content=request.content,
         image_url=image_url,
+        visibility=PostVisibility.public,
     )
 
     db.add(new_post)
@@ -47,6 +47,41 @@ def create_group_post(
     db.refresh(new_post)
 
     return new_post
+
+
+def get_group_posts(
+    db: Session,
+    group_id: int,
+    current_user_id: int,
+):
+    """Return posts the current user is allowed to see inside a group."""
+
+    group = get_group_by_id(
+        db=db,
+        group_id=group_id,
+    )
+
+    if not group.is_public:
+        user_role = get_group_member_role(
+            db=db,
+            group_id=group_id,
+            user_id=current_user_id,
+        )
+
+        if user_role is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must be a group member to view posts in this private group.",
+            )
+
+    return (
+        db.query(DBPost)
+        .filter(
+            DBPost.group_id == group_id,
+            DBPost.is_visible.is_(True),
+        )
+        .order_by(DBPost.created_at.desc())
+    )
 
 
 def update_group_post(

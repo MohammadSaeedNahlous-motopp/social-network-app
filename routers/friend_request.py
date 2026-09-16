@@ -67,16 +67,19 @@ def get_user_pending_friend_requests(
         404: {"description": "Receiver user was not found."},
     },
 )
-def create_friend_request(
+async def create_friend_request(
     request: FriendRequestBase,
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
-    return friend_request.create_friend_request(
+    friend_request_obj = await friend_request.create_friend_request(
         request,
         current_user.id,
+        current_user.name,
         db,
     )
+
+    return friend_request_obj
 
 
 @router.patch(

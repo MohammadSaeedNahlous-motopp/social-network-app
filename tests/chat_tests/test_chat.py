@@ -1,14 +1,7 @@
 import pytest
 
-from db.chat import create_chat, get_private_chat
-from models.enums import ChatType
-from schemas.chat import ChatCreate
+from models.enums import NotificationType
 from websocket.message import handle_message
-
-
-# =========================================================
-# Fake WebSocket / Connection Manager
-# =========================================================
 
 
 class FakeWebSocket:
@@ -32,24 +25,39 @@ class FakeConnectionManager:
         )
 
 
-# =========================================================
-# Private Chat Tests
-# =========================================================
+# ============================================================
+# EXISTING PRIVATE CHAT
+# ============================================================
 
 
-def test_get_private_chat_returns_existing_chat(
+@pytest.mark.asyncio
+async def test_send_message_to_existing_private_chat(
     db,
     create_test_user,
 ):
     user1 = create_test_user(
-        email="chat_user1@example.com",
-        name="User One",
+        email="existing_sender@example.com",
+        name="Sender",
     )
 
     user2 = create_test_user(
-        email="chat_user2@example.com",
-        name="User Two",
+        email="existing_recipient@example.com",
+        name="Recipient",
     )
+
+    from models.friend import DBFriend
+
+    friendship = DBFriend(
+        user_id=user1.id,
+        friend_id=user2.id,
+    )
+
+    db.add(friendship)
+    db.commit()
+
+    from db.chat import create_chat
+    from schemas.chat import ChatCreate
+    from models.enums import ChatType
 
     chat = create_chat(
         ChatCreate(
@@ -61,93 +69,64 @@ def test_get_private_chat_returns_existing_chat(
         db,
     )
 
-    result = get_private_chat(
+    websocket = FakeWebSocket()
+    manager = FakeConnectionManager()
+
+    data = {
+        "type": "message",
+        "recipient_id": user2.id,
+        "content": "Hello!",
+    }
+
+    await handle_message(
+        data,
         user1.id,
-        user2.id,
+        websocket,
+        manager,
         db,
     )
 
-    assert result is not None
-    assert result.id == chat.id
-    assert result.type == ChatType.private
+    assert len(manager.sent_messages) == 3
+
+    assert manager.sent_messages[0]["user_id"] == user1.id
+    assert manager.sent_messages[0]["message"]["type"] == "message"
+
+    assert manager.sent_messages[1]["user_id"] == user2.id
+    assert manager.sent_messages[1]["message"]["type"] == "message"
+
+    assert manager.sent_messages[2]["user_id"] == user2.id
+    assert manager.sent_messages[2]["message"]["type"] == "notification"
 
 
-def test_get_private_chat_returns_none_when_chat_does_not_exist(
-    db,
-    create_test_user,
-):
-    user1 = create_test_user(
-        email="chat_user3@example.com",
-        name="User Three",
-    )
-
-    user2 = create_test_user(
-        email="chat_user4@example.com",
-        name="User Four",
-    )
-
-    result = get_private_chat(
-        user1.id,
-        user2.id,
-        db,
-    )
-
-    assert result is None
-
-
-def test_get_private_chat_works_in_reverse_order(
-    db,
-    create_test_user,
-):
-    user1 = create_test_user(
-        email="chat_user5@example.com",
-        name="User Five",
-    )
-
-    user2 = create_test_user(
-        email="chat_user6@example.com",
-        name="User Six",
-    )
-
-    chat = create_chat(
-        ChatCreate(
-            user_ids=[user1.id, user2.id],
-            name="Private Chat",
-            description="",
-            type=ChatType.private,
-        ),
-        db,
-    )
-
-    result = get_private_chat(
-        user2.id,
-        user1.id,
-        db,
-    )
-
-    assert result is not None
-    assert result.id == chat.id
-
-
-# =========================================================
-# WebSocket Message Validation Tests
-# =========================================================
+# ============================================================
+# NO PRIVATE CHAT
+# ============================================================
 
 
 @pytest.mark.asyncio
-async def test_send_message_to_non_friend(
+async def test_send_message_creates_private_chat(
     db,
     create_test_user,
 ):
     user1 = create_test_user(
-        email="sender_nonfriend@example.com",
+        email="new_chat_sender@example.com",
         name="Sender",
     )
 
     user2 = create_test_user(
-        email="nonfriend@example.com",
-        name="Non Friend",
+        email="new_chat_recipient@example.com",
+        name="Recipient",
     )
+
+    from models.friend import DBFriend
+
+    friendship = DBFriend(
+        user_id=user1.id,
+        friend_id=user2.id,
+    )
+
+    db.add(friendship)
+    db.commit()
 
     websocket = FakeWebSocket()
     manager = FakeConnectionManager()
@@ -166,222 +145,21 @@ async def test_send_message_to_non_friend(
         db,
     )
 
-    assert websocket.sent_messages == [{"error": "You can only message your friends."}]
+    assert len(manager.sent_messages) == 3
 
-    assert manager.sent_messages == []
+    assert manager.sent_messages[0]["user_id"] == user1.id
+    assert manager.sent_messages[0]["message"]["type"] == "message"
 
+    assert manager.sent_messages[1]["user_id"] == user2.id
+    assert manager.sent_messages[1]["message"]["type"] == "message"
 
-@pytest.mark.asyncio
-async def test_send_message_to_self(
-    db,
-    create_test_user,
-):
-    user = create_test_user(
-        email="self_message@example.com",
-        name="Self User",
-    )
-
-    websocket = FakeWebSocket()
-    manager = FakeConnectionManager()
-
-    data = {
-        "type": "message",
-        "recipient_id": user.id,
-        "content": "Hello myself!",
-    }
-
-    await handle_message(
-        data,
-        user.id,
-        websocket,
-        manager,
-        db,
-    )
-
-    assert websocket.sent_messages == [
-        {"error": "You cannot send a message to yourself."}
-    ]
-
-    assert manager.sent_messages == []
+    assert manager.sent_messages[2]["user_id"] == user2.id
+    assert manager.sent_messages[2]["message"]["type"] == "notification"
 
 
-@pytest.mark.asyncio
-async def test_send_message_to_non_existing_user(
-    db,
-    create_test_user,
-):
-    user = create_test_user(
-        email="invalid_recipient@example.com",
-        name="Sender",
-    )
-
-    websocket = FakeWebSocket()
-    manager = FakeConnectionManager()
-
-    data = {
-        "type": "message",
-        "recipient_id": 999999,
-        "content": "Hello!",
-    }
-
-    await handle_message(
-        data,
-        user.id,
-        websocket,
-        manager,
-        db,
-    )
-
-    assert websocket.sent_messages == [{"error": "Recipient not found."}]
-
-    assert manager.sent_messages == []
-
-
-@pytest.mark.asyncio
-async def test_send_empty_message(
-    db,
-    create_test_user,
-):
-    user1 = create_test_user(
-        email="empty_sender@example.com",
-        name="Sender",
-    )
-
-    user2 = create_test_user(
-        email="empty_recipient@example.com",
-        name="Recipient",
-    )
-
-    websocket = FakeWebSocket()
-    manager = FakeConnectionManager()
-
-    data = {
-        "type": "message",
-        "recipient_id": user2.id,
-        "content": "",
-    }
-
-    await handle_message(
-        data,
-        user1.id,
-        websocket,
-        manager,
-        db,
-    )
-
-    assert websocket.sent_messages == [{"error": "Message cannot be empty."}]
-
-    assert manager.sent_messages == []
-
-
-@pytest.mark.asyncio
-async def test_send_whitespace_message(
-    db,
-    create_test_user,
-):
-    user1 = create_test_user(
-        email="whitespace_sender@example.com",
-        name="Sender",
-    )
-
-    user2 = create_test_user(
-        email="whitespace_recipient@example.com",
-        name="Recipient",
-    )
-
-    websocket = FakeWebSocket()
-    manager = FakeConnectionManager()
-
-    data = {
-        "type": "message",
-        "recipient_id": user2.id,
-        "content": "     ",
-    }
-
-    await handle_message(
-        data,
-        user1.id,
-        websocket,
-        manager,
-        db,
-    )
-
-    assert websocket.sent_messages == [{"error": "Message cannot be empty."}]
-
-    assert manager.sent_messages == []
-
-
-@pytest.mark.asyncio
-async def test_send_none_message(
-    db,
-    create_test_user,
-):
-    user1 = create_test_user(
-        email="none_sender@example.com",
-        name="Sender",
-    )
-
-    user2 = create_test_user(
-        email="none_recipient@example.com",
-        name="Recipient",
-    )
-
-    websocket = FakeWebSocket()
-    manager = FakeConnectionManager()
-
-    data = {
-        "type": "message",
-        "recipient_id": user2.id,
-        "content": None,
-    }
-
-    await handle_message(
-        data,
-        user1.id,
-        websocket,
-        manager,
-        db,
-    )
-
-    assert websocket.sent_messages == [{"error": "Message cannot be empty."}]
-
-    assert manager.sent_messages == []
-
-
-@pytest.mark.asyncio
-async def test_send_message_without_recipient(
-    db,
-    create_test_user,
-):
-    user = create_test_user(
-        email="missing_recipient@example.com",
-        name="Sender",
-    )
-
-    websocket = FakeWebSocket()
-    manager = FakeConnectionManager()
-
-    data = {
-        "type": "message",
-        "content": "Hello!",
-    }
-
-    await handle_message(
-        data,
-        user.id,
-        websocket,
-        manager,
-        db,
-    )
-
-    assert websocket.sent_messages == [{"error": "Recipient is required."}]
-
-    assert manager.sent_messages == []
-
-
-# =========================================================
-# Successful Message Tests
-# =========================================================
+# ============================================================
+# SEND MESSAGE TO FRIEND
+# ============================================================
 
 
 @pytest.mark.asyncio
@@ -426,105 +204,59 @@ async def test_send_message_to_friend(
         db,
     )
 
-    assert len(manager.sent_messages) == 2
+    # Sender receives the message
+    sender_message = manager.sent_messages[0]
 
-    sent_user_ids = {item["user_id"] for item in manager.sent_messages}
+    assert sender_message["user_id"] == user1.id
+    assert sender_message["message"]["type"] == "message"
+    assert sender_message["message"]["sender_id"] == user1.id
+    assert sender_message["message"]["content"] == "Hello!"
 
-    assert sent_user_ids == {
-        user1.id,
-        user2.id,
-    }
+    # Recipient receives the message
+    recipient_message = manager.sent_messages[1]
 
-    for item in manager.sent_messages:
-        assert item["message"]["sender_id"] == user1.id
-        assert item["message"]["content"] == "Hello!"
+    assert recipient_message["user_id"] == user2.id
+    assert recipient_message["message"]["type"] == "message"
+    assert recipient_message["message"]["sender_id"] == user1.id
+    assert recipient_message["message"]["content"] == "Hello!"
 
+    # Recipient receives the notification
+    recipient_notification = manager.sent_messages[2]
 
-@pytest.mark.asyncio
-async def test_send_message_creates_private_chat(
-    db,
-    create_test_user,
-):
-    user1 = create_test_user(
-        email="new_chat_sender@example.com",
-        name="Sender",
-    )
-
-    user2 = create_test_user(
-        email="new_chat_recipient@example.com",
-        name="Recipient",
-    )
-
-    from models.friend import DBFriend
-
-    friendship = DBFriend(
-        user_id=user1.id,
-        friend_id=user2.id,
-    )
-
-    db.add(friendship)
-    db.commit()
-
+    assert recipient_notification["user_id"] == user2.id
+    assert recipient_notification["message"]["type"] == "notification"
     assert (
-        get_private_chat(
-            user1.id,
-            user2.id,
-            db,
-        )
-        is None
+        recipient_notification["message"]["notification_type"]
+        == NotificationType.new_message
     )
+    assert recipient_notification["message"]["message"] == "Sender Sent You A Message!"
 
-    websocket = FakeWebSocket()
-    manager = FakeConnectionManager()
+    # Only three messages are sent:
+    # sender -> message
+    # recipient -> message
+    # recipient -> notification
+    assert len(manager.sent_messages) == 3
 
-    data = {
-        "type": "message",
-        "recipient_id": user2.id,
-        "content": "First message",
-    }
 
-    await handle_message(
-        data,
-        user1.id,
-        websocket,
-        manager,
-        db,
-    )
-
-    chat = get_private_chat(
-        user1.id,
-        user2.id,
-        db,
-    )
-
-    assert chat is not None
-    assert chat.type == ChatType.private
+# ============================================================
+# NON-FRIEND
+# ============================================================
 
 
 @pytest.mark.asyncio
-async def test_send_message_reuses_existing_private_chat(
+async def test_send_message_to_non_friend(
     db,
     create_test_user,
 ):
     user1 = create_test_user(
-        email="reuse_sender@example.com",
+        email="non_friend_sender@example.com",
         name="Sender",
     )
 
     user2 = create_test_user(
-        email="reuse_recipient@example.com",
+        email="non_friend_recipient@example.com",
         name="Recipient",
     )
-
-    from models.friend import DBFriend
-
-    friendship = DBFriend(
-        user_id=user1.id,
-        friend_id=user2.id,
-    )
-
-    db.add(friendship)
-    db.commit()
 
     websocket = FakeWebSocket()
     manager = FakeConnectionManager()
@@ -543,11 +275,125 @@ async def test_send_message_reuses_existing_private_chat(
         db,
     )
 
-    first_chat = get_private_chat(
-        user1.id,
-        user2.id,
+    assert len(manager.sent_messages) == 0
+
+    assert websocket.sent_messages == [{"error": "You can only message your friends."}]
+
+
+# ============================================================
+# SELF MESSAGE
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_send_message_to_self(
+    db,
+    create_test_user,
+):
+    user = create_test_user(
+        email="self_message@example.com",
+        name="User",
+    )
+
+    websocket = FakeWebSocket()
+    manager = FakeConnectionManager()
+
+    data = {
+        "type": "message",
+        "recipient_id": user.id,
+        "content": "Hello!",
+    }
+
+    await handle_message(
+        data,
+        user.id,
+        websocket,
+        manager,
         db,
     )
+
+    assert manager.sent_messages == []
+
+    assert websocket.sent_messages == [
+        {"error": "You cannot send a message to yourself."}
+    ]
+
+
+# ============================================================
+# RECIPIENT NOT FOUND
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_send_message_to_non_existing_recipient(
+    db,
+    create_test_user,
+):
+    user = create_test_user(
+        email="missing_recipient_sender@example.com",
+        name="Sender",
+    )
+
+    websocket = FakeWebSocket()
+    manager = FakeConnectionManager()
+
+    data = {
+        "type": "message",
+        "recipient_id": 999999,
+        "content": "Hello!",
+    }
+
+    await handle_message(
+        data,
+        user.id,
+        websocket,
+        manager,
+        db,
+    )
+
+    assert manager.sent_messages == []
+
+    assert websocket.sent_messages == [{"error": "Recipient not found."}]
+
+
+# ============================================================
+# EMPTY MESSAGE
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_send_empty_message(
+    db,
+    create_test_user,
+):
+    user1 = create_test_user(
+        email="empty_sender@example.com",
+        name="Sender",
+    )
+
+    user2 = create_test_user(
+        email="empty_recipient@example.com",
+        name="Recipient",
+    )
+
+    from models.friend import DBFriend
+
+    friendship = DBFriend(
+        user_id=user1.id,
+        friend_id=user2.id,
+    )
+
+    db.add(friendship)
+    db.commit()
+
+    websocket = FakeWebSocket()
+    manager = FakeConnectionManager()
+
+    data = {
+        "type": "message",
+        "recipient_id": user2.id,
+        "content": "",
+    }
 
     await handle_message(
         data,
@@ -557,13 +403,154 @@ async def test_send_message_reuses_existing_private_chat(
         db,
     )
 
-    second_chat = get_private_chat(
+    assert manager.sent_messages == []
+
+    assert websocket.sent_messages == [{"error": "Message cannot be empty."}]
+
+
+# ============================================================
+# WHITESPACE ONLY MESSAGE
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_send_whitespace_only_message(
+    db,
+    create_test_user,
+):
+    user1 = create_test_user(
+        email="whitespace_sender@example.com",
+        name="Sender",
+    )
+
+    user2 = create_test_user(
+        email="whitespace_recipient@example.com",
+        name="Recipient",
+    )
+
+    from models.friend import DBFriend
+
+    friendship = DBFriend(
+        user_id=user1.id,
+        friend_id=user2.id,
+    )
+
+    db.add(friendship)
+    db.commit()
+
+    websocket = FakeWebSocket()
+    manager = FakeConnectionManager()
+
+    data = {
+        "type": "message",
+        "recipient_id": user2.id,
+        "content": "     ",
+    }
+
+    await handle_message(
+        data,
         user1.id,
-        user2.id,
+        websocket,
+        manager,
         db,
     )
 
-    assert first_chat.id == second_chat.id
+    assert manager.sent_messages == []
+
+    assert websocket.sent_messages == [{"error": "Message cannot be empty."}]
+
+
+# ============================================================
+# NONE CONTENT
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_send_none_content(
+    db,
+    create_test_user,
+):
+    user1 = create_test_user(
+        email="none_content_sender@example.com",
+        name="Sender",
+    )
+
+    user2 = create_test_user(
+        email="none_content_recipient@example.com",
+        name="Recipient",
+    )
+
+    from models.friend import DBFriend
+
+    friendship = DBFriend(
+        user_id=user1.id,
+        friend_id=user2.id,
+    )
+
+    db.add(friendship)
+    db.commit()
+
+    websocket = FakeWebSocket()
+    manager = FakeConnectionManager()
+
+    data = {
+        "type": "message",
+        "recipient_id": user2.id,
+        "content": None,
+    }
+
+    await handle_message(
+        data,
+        user1.id,
+        websocket,
+        manager,
+        db,
+    )
+
+    assert manager.sent_messages == []
+
+    assert websocket.sent_messages == [{"error": "Message cannot be empty."}]
+
+
+# ============================================================
+# MISSING RECIPIENT
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_send_message_without_recipient(
+    db,
+    create_test_user,
+):
+    user = create_test_user(
+        email="missing_recipient@example.com",
+        name="Sender",
+    )
+
+    websocket = FakeWebSocket()
+    manager = FakeConnectionManager()
+
+    data = {
+        "type": "message",
+        "content": "Hello!",
+    }
+
+    await handle_message(
+        data,
+        user.id,
+        websocket,
+        manager,
+        db,
+    )
+
+    assert manager.sent_messages == []
+
+    assert websocket.sent_messages == [{"error": "Recipient is required."}]
+
+
+# ============================================================
+# STRIP MESSAGE WHITESPACE
+# ============================================================
 
 
 @pytest.mark.asyncio
@@ -608,7 +595,29 @@ async def test_send_message_strips_whitespace(
         db,
     )
 
-    assert len(manager.sent_messages) == 2
+    # Message to sender
+    sender_message = manager.sent_messages[0]
 
-    for item in manager.sent_messages:
-        assert item["message"]["content"] == "Hello!"
+    assert sender_message["user_id"] == user1.id
+    assert sender_message["message"]["type"] == "message"
+    assert sender_message["message"]["content"] == "Hello!"
+
+    # Message to recipient
+    recipient_message = manager.sent_messages[1]
+
+    assert recipient_message["user_id"] == user2.id
+    assert recipient_message["message"]["type"] == "message"
+    assert recipient_message["message"]["content"] == "Hello!"
+
+    # Notification to recipient
+    recipient_notification = manager.sent_messages[2]
+
+    assert recipient_notification["user_id"] == user2.id
+    assert recipient_notification["message"]["type"] == "notification"
+    assert (
+        recipient_notification["message"]["notification_type"]
+        == NotificationType.new_message
+    )
+    assert recipient_notification["message"]["message"] == "Sender Sent You A Message!"
+
+    assert len(manager.sent_messages) == 3

@@ -16,7 +16,7 @@ from db.database import get_db
 from models.user import DBUser
 from schemas.post import PostCreate, PostUpdate, PostResponse
 from service.image import save_image
-from models.enums import ImageType
+from models.enums import ImageType, PostVisibility
 from service.pagination import PaginatedResponse, calculate_total_pages, paginate
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -43,6 +43,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 async def create_post(
     title: str = Form(...),
     content: str = Form(...),
+    visibility: PostVisibility = Form(PostVisibility.public),
     image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
@@ -54,10 +55,7 @@ async def create_post(
     if image is not None:
         image_url = await save_image(image, ImageType.post_picture)
 
-    request = PostCreate(
-        title=title,
-        content=content,
-    )
+    request = PostCreate(title=title, content=content, visibility=visibility)
 
     result = db_post.create_post(
         db=db,
@@ -200,12 +198,12 @@ def get_user_posts(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_user),
 ):
     """Return paginated posts belonging to a specific user."""
 
     query = db_post.get_posts_by_user(
-        db=db,
-        user_id=user_id,
+        db=db, user_id=user_id, current_user_id=current_user.id
     )
 
     total = query.count()

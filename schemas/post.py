@@ -1,11 +1,13 @@
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
+from models.enums import PostVisibility
 
 
 class PostCreate(BaseModel):
     title: str
     content: str
+    visibility: PostVisibility = PostVisibility.public
 
 
 class PostUpdate(BaseModel):
@@ -24,6 +26,7 @@ class PostResponse(BaseModel):
     is_visible: bool
     created_at: datetime
     updated_at: datetime
+    visibility: PostVisibility
     model_config = ConfigDict(from_attributes=True)
 
 

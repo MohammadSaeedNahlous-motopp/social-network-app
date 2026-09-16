@@ -30,3 +30,13 @@ class FriendRequestStatus(str, PyEnum):
 class ChatType(str, PyEnum):
     private = "private"
     group = "group"
+
+
+class NotificationType(str, PyEnum):
+    new_friend_request = "new_friend_request"
+    new_message = "new_message"
+
+
+class PostVisibility(str, PyEnum):
+    public = "public"
+    friends_only = "friends_only"
