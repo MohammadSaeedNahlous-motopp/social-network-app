@@ -1,6 +1,9 @@
 from sqlalchemy.orm.session import Session
 from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
+from models.enums import PostVisibility
+from models.friend import DBFriend
+from db.friend import is_friend_with
 
 
 def create_post(
@@ -16,6 +19,7 @@ def create_post(
         title=request.title,
         content=request.content,
         image_url=image_url,
+        visibility=request.visibility
     )
 
     db.add(new_post)
@@ -75,7 +79,7 @@ def update_post(
 def delete_post(
     db: Session,
     post_id: int,
-    user_id: int,
+    user_id: int
 ):
     """Delete a post owned by the user."""
     post = (
@@ -95,9 +99,13 @@ def delete_post(
 
     return post
 
+def get_posts_by_user(
+    db: Session,
+    user_id: int,
+    current_user_id: int,
+):
+    """Return posts the current user is allowed to see on a user's wall."""
 
-def get_posts_by_user(db: Session, user_id: int):
-    """Return a query for visible posts published by a specific user."""
     query = (
         db.query(DBPost)
         .filter(
@@ -105,6 +113,26 @@ def get_posts_by_user(db: Session, user_id: int):
             DBPost.is_visible.is_(True),
         )
         .order_by(DBPost.created_at.desc())
+    )
+
+    # The user is viewing their own wall
+    if current_user_id == user_id:
+        return query
+
+    # Check friendship using the existing method
+    are_friends = is_friend_with(
+        user_id=user_id,
+        current_user_id=current_user_id,
+        db=db
+    )
+
+    # Friends can see both public and friends-only posts
+    if are_friends:
+        return query
+
+    # Non-friends can only see public posts
+    query = query.filter(
+        DBPost.visibility == PostVisibility.public
     )
 
     return query
