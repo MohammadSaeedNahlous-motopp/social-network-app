@@ -85,7 +85,7 @@ async def handle_message(data, user_id, websocket, manager: ConnectionManager, d
             NotificationCreate(
                 user_id=member.user_id,
                 type=NotificationType.new_message,
-                message="New Message Received",
+                message=message.content,
             ),
             db,
         )

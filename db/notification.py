@@ -18,11 +18,7 @@ def create_notification(request: NotificationCreate, db: Session):
 
     new_notification = DBNotification(
         user_id=request.user_id,
-        message=(
-            "You received a friend request"
-            if request.type == NotificationType.new_friend_request
-            else request.message
-        ),
+        message=request.message,
         type=request.type,
     )
 

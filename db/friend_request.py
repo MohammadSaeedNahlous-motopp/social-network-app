@@ -23,6 +23,7 @@ def get_user_pending_friend_requests(user_id: int, db: Session):
 async def create_friend_request(
     request: FriendRequestBase,
     user_id: int,
+    user_name: str,
     db: Session,
 ):
     # Check that the user is not sending a request to themselves
@@ -84,7 +85,7 @@ async def create_friend_request(
         NotificationCreate(
             user_id=request.receiver_id,
             type=NotificationType.new_friend_request,
-            message="",
+            message=f"{user_name} Sent A Friend Request!",
         ),
         db,
     )

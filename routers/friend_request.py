@@ -75,6 +75,7 @@ async def create_friend_request(
     friend_request_obj = await friend_request.create_friend_request(
         request,
         current_user.id,
+        current_user.name,
         db,
     )
 
