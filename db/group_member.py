@@ -13,7 +13,7 @@ from models.group_role import DBGroupRole
 from models.user import DBUser
 
 from db.group import get_group_by_id
-from service.permissions import can_see_group_members, can_see_user_membership_of_group_query_filter, \
+from service.permissions import can_see_group_details, can_see_user_membership_of_group_query_filter, \
     validate_can_change_user_membership_role
 
 
@@ -28,7 +28,7 @@ def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Qu
     """
     searched_group = get_group_by_id(db, group_id)
 
-    if not can_see_group_members(user_id=requesting_user_id, group=searched_group, db=db):
+    if not can_see_group_details(user_id=requesting_user_id, group=searched_group, db=db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User has no permission to read list of group members",
