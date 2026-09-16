@@ -3,6 +3,7 @@ from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
 from models.enums import PostVisibility
 from models.friend import DBFriend
+from db.friend import is_friend_with
 
 
 def create_post(
@@ -118,18 +119,15 @@ def get_posts_by_user(
     if current_user_id == user_id:
         return query
 
-    # Check whether the current user is a friend of the wall owner
-    friendship = (
-        db.query(DBFriend)
-        .filter(
-            DBFriend.user_id == current_user_id,
-            DBFriend.friend_id == user_id,
-        )
-        .first()
+    # Check friendship using the existing method
+    are_friends = is_friend_with(
+        user_id=user_id,
+        current_user_id=current_user_id,
+        db=db
     )
 
     # Friends can see both public and friends-only posts
-    if friendship is not None:
+    if are_friends:
         return query
 
     # Non-friends can only see public posts
