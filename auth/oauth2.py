@@ -16,11 +16,11 @@ oauth2_schema = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_current_user(
-    session_token: str = Depends(oauth2_schema),
+    access_token: str = Depends(oauth2_schema),
     db: Session = Depends(get_db),
 ):
 
-    session = get_session_by_token(session_token, db)
+    session = get_session_by_token(access_token, db)
 
     if session is None:
         raise HTTPException(

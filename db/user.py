@@ -40,13 +40,13 @@ def login(
     db.commit()
     db.refresh(searched_user)
 
-    session, session_token, refresh_token = create_session(
+    session, access_token, refresh_token = create_session(
         searched_user.id,
         db,
     )
 
     return {
-        "access_token": session_token,
+        "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
         "user_id": searched_user.id,

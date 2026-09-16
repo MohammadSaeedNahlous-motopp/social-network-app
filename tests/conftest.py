@@ -16,9 +16,12 @@ from models.group import DBGroup
 from models.group_member import DBGroupMember
 from models.group_role import DBGroupRole
 
+from service.key_pair_generator import generate_key_pair, encrypt_private_key
+
 from io import BytesIO
 
 from PIL import Image
+
 
 SQLALCHEMY_TEST_DATABASE_URL = "sqlite:///./test.db"
 
@@ -71,14 +74,20 @@ def create_test_user(db: Session):
 
         if existing_user:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists."
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User already exists.",
             )
+
+        public_key, private_key = generate_key_pair()
+        encrypted_private_key = encrypt_private_key(private_key)
 
         user = DBUser(
             name=name,
             email=email,
             password=Hash.hash("password123"),
             is_active=True,
+            public_key=public_key,
+            encrypted_private_key=encrypted_private_key,
         )
 
         db.add(user)

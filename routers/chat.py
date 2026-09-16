@@ -60,10 +60,16 @@ def create_chat(
 )
 def get_chat_messages(
     chat_id: int,
+    page: int,
+    limit: int = 10,
     db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_user),
 ):
     return chat.get_chat_messages(
         chat_id,
+        current_user.id,
+        page,
+        limit,
         db,
     )
 

@@ -20,10 +20,10 @@ def ensure_utc(dt: datetime) -> datetime:
 
 
 def create_session(user_id: int, db: Session):
-    session_token = secrets.token_urlsafe(32)
+    access_token = secrets.token_urlsafe(32)
     refresh_token = secrets.token_urlsafe(32)
 
-    session_hash = hash_token(session_token)
+    session_hash = hash_token(access_token)
     refresh_hash = hash_token(refresh_token)
 
     new_session = DBSession(
@@ -36,16 +36,41 @@ def create_session(user_id: int, db: Session):
     db.commit()
     db.refresh(new_session)
 
-    return new_session, session_token, refresh_token
+    return new_session, access_token, refresh_token
 
 
-def get_session_by_token(session_token: str, db: Session):
+def get_session_by_token(access_token: str, db: Session):
 
-    session_hash = hash_token(session_token)
+    session_hash = hash_token(access_token)
 
     searched_session = (
         db.query(DBSession).filter(DBSession.session_hash == session_hash).first()
     )
+
+    if searched_session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
+
+    if searched_session.revoked_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Session has been revoked",
+        )
+
+    now = datetime.now(timezone.utc)
+
+    session_expires_at = ensure_utc(searched_session.session_expires_at)
+
+    if session_expires_at <= now:
+        searched_session.revoked_at = now
+        db.commit()
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Session expired",
+        )
 
     return searched_session
 
@@ -82,8 +107,8 @@ def refresh_session(refresh_token: str, db: Session):
             detail="Session expired",
         )
 
-    session_token = secrets.token_urlsafe(32)
-    session_hash = hash_token(session_token)
+    access_token = secrets.token_urlsafe(32)
+    session_hash = hash_token(access_token)
 
     searched_session.session_hash = session_hash
     searched_session.session_expires_at = now + timedelta(minutes=30)
@@ -91,11 +116,11 @@ def refresh_session(refresh_token: str, db: Session):
     db.commit()
     db.refresh(searched_session)
 
-    return searched_session, session_token, refresh_token
+    return searched_session, access_token, refresh_token
 
 
-def revoke_session(session_token: str, db: Session):
-    session_hash = hash_token(session_token)
+def revoke_session(access_token: str, db: Session):
+    session_hash = hash_token(access_token)
 
     session = db.query(DBSession).filter(DBSession.session_hash == session_hash).first()
 

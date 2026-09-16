@@ -32,7 +32,7 @@ def test_login_success(client, create_test_user, db):
 
     data = response.json()
 
-    assert "session_token" in data
+    assert "access_token" in data
     assert "refresh_token" in data
     assert data["token_type"] == "bearer"
     assert data["user_id"] == user.id
@@ -44,7 +44,7 @@ def test_login_success(client, create_test_user, db):
     session = db.query(DBSession).filter(DBSession.user_id == user.id).first()
 
     assert session is not None
-    assert session.session_hash == hash_token(data["session_token"])
+    assert session.session_hash == hash_token(data["access_token"])
     assert session.refresh_hash == hash_token(data["refresh_token"])
     assert session.revoked_at is None
 

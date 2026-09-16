@@ -1,6 +1,10 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from db.chat_member import create_chat_member, is_chat_member
+from db.chat_member import (
+    create_chat_member,
+    is_chat_member,
+    get_chat_members_by_chat_id,
+)
 from db.user import get_user_by_id
 from models.chat import DBChat
 from models.chat_member import DBChatMember
@@ -9,6 +13,9 @@ from models.message import DBMessage
 from schemas.chat import ChatCreate
 from schemas.chat_member import ChatMemberCreate
 from sqlalchemy import and_, func
+
+from service.encryption_methods import decrypt_chat_message
+from service.pagination import paginate
 
 
 def create_chat(request: ChatCreate, db: Session):
@@ -98,7 +105,7 @@ def get_user_chats(user_id: int, db: Session):
     return chat_list
 
 
-def get_chat_messages(chat_id: int, user_id: int, db: Session):
+def get_chat_messages(chat_id: int, user_id: int, page: int, limit: int, db: Session):
     is_member = is_chat_member(chat_id, user_id, db)
 
     if is_member is None:
@@ -112,6 +119,38 @@ def get_chat_messages(chat_id: int, user_id: int, db: Session):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Chat Not Found!",
         )
-    messages = db.query(DBMessage).filter(DBMessage.chat_id == chat_id)
+    messages = (
+        db.query(DBMessage)
+        .filter(DBMessage.chat_id == chat_id)
+        .order_by(DBMessage.created_at.desc())
+    )
 
-    return messages
+    messages = paginate(messages, page, limit)
+
+    result = []
+
+    members = get_chat_members_by_chat_id(chat_id, db)
+
+    for message in messages:
+        recipient_id = next(
+            member.user_id for member in members if member.user_id != message.sender_id
+        )
+
+        recipient = get_user_by_id(recipient_id, db)
+
+        decrypted_message = decrypt_chat_message(
+            message,
+            recipient,
+        )
+
+        result.append(
+            {
+                "id": message.id,
+                "chat_id": message.chat_id,
+                "sender_id": message.sender_id,
+                "content": decrypted_message,
+                "created_at": message.created_at,
+            }
+        )
+
+    return result

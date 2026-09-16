@@ -37,7 +37,7 @@ def test_login_creates_session(client, db, create_test_user):
 
     data = response.json()
 
-    assert "session_token" in data
+    assert "access_token" in data
     assert "refresh_token" in data
     assert data["token_type"] == "bearer"
 
@@ -45,10 +45,8 @@ def test_login_creates_session(client, db, create_test_user):
 
     assert stored_session is not None
 
-    assert stored_session.session_hash == hash_token(data["session_token"])
-
+    assert stored_session.session_hash == hash_token(data["access_token"])
     assert stored_session.refresh_hash == hash_token(data["refresh_token"])
-
     assert stored_session.revoked_at is None
 
 
@@ -86,7 +84,7 @@ def test_login_creates_unique_sessions(
     first_data = first_response.json()
     second_data = second_response.json()
 
-    assert first_data["session_token"] != second_data["session_token"]
+    assert first_data["access_token"] != second_data["access_token"]
     assert first_data["refresh_token"] != second_data["refresh_token"]
 
     sessions = db.query(DBSession).filter(DBSession.user_id == user.id).all()
@@ -99,10 +97,10 @@ def test_login_creates_unique_sessions(
 # ============================================================
 
 
-def test_invalid_session_token_is_rejected(db):
+def test_invalid_access_token_is_rejected(db):
     with pytest.raises(HTTPException) as exc_info:
         get_session_by_token(
-            "invalid_session_token",
+            "invalid_access_token",
             db,
         )
 
@@ -114,7 +112,7 @@ def test_invalid_session_token_is_rejected(db):
 # ============================================================
 
 
-def test_refresh_session_token(
+def test_refresh_access_token(
     client,
     db,
     create_test_user,
@@ -138,7 +136,7 @@ def test_refresh_session_token(
 
     login_data = login_response.json()
 
-    old_session_token = login_data["session_token"]
+    old_access_token = login_data["access_token"]
     refresh_token = login_data["refresh_token"]
 
     response = client.post(
@@ -152,7 +150,7 @@ def test_refresh_session_token(
 
     data = response.json()
 
-    assert data["session_token"] != old_session_token
+    assert data["access_token"] != old_access_token
     assert data["refresh_token"] == refresh_token
     assert data["token_type"] == "bearer"
 
@@ -160,12 +158,11 @@ def test_refresh_session_token(
 
     assert stored_session is not None
 
-    assert stored_session.session_hash == hash_token(data["session_token"])
-
+    assert stored_session.session_hash == hash_token(data["access_token"])
     assert stored_session.refresh_hash == hash_token(refresh_token)
 
 
-def test_old_session_token_is_invalid_after_refresh(
+def test_old_access_token_is_invalid_after_refresh(
     client,
     create_test_user,
     db,
@@ -189,7 +186,7 @@ def test_old_session_token_is_invalid_after_refresh(
 
     data = login_response.json()
 
-    old_session_token = data["session_token"]
+    old_access_token = data["access_token"]
     refresh_token = data["refresh_token"]
 
     refresh_response = client.post(
@@ -201,20 +198,18 @@ def test_old_session_token_is_invalid_after_refresh(
 
     assert refresh_response.status_code == status.HTTP_200_OK
 
-    new_session_token = refresh_response.json()["session_token"]
+    new_access_token = refresh_response.json()["access_token"]
 
-    # Old token should no longer resolve.
     with pytest.raises(HTTPException) as exc_info:
         get_session_by_token(
-            old_session_token,
+            old_access_token,
             db,
         )
 
     assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
 
-    # New token should resolve successfully.
     new_session = get_session_by_token(
-        new_session_token,
+        new_access_token,
         db,
     )
 
@@ -273,7 +268,6 @@ def test_refresh_token_is_not_rotated(
     assert second_refresh.status_code == status.HTTP_200_OK
 
     assert first_refresh.json()["refresh_token"] == refresh_token
-
     assert second_refresh.json()["refresh_token"] == refresh_token
 
 
@@ -304,18 +298,18 @@ def test_logout_revokes_current_session(
 
     assert login_response.status_code == status.HTTP_200_OK
 
-    session_token = login_response.json()["session_token"]
+    access_token = login_response.json()["access_token"]
 
     response = client.patch(
         "/auth/logout",
         headers={
-            "Authorization": f"Bearer {session_token}",
+            "Authorization": f"Bearer {access_token}",
         },
     )
 
     assert response.status_code == status.HTTP_200_OK
 
-    assert response.json()["message"] == ("Logged out successfully.")
+    assert response.json()["message"] == "Logged out successfully."
 
     stored_session = db.query(DBSession).filter(DBSession.user_id == user.id).first()
 
@@ -345,12 +339,12 @@ def test_revoked_session_cannot_authenticate(
 
     assert login_response.status_code == status.HTTP_200_OK
 
-    session_token = login_response.json()["session_token"]
+    access_token = login_response.json()["access_token"]
 
     logout_response = client.patch(
         "/auth/logout",
         headers={
-            "Authorization": f"Bearer {session_token}",
+            "Authorization": f"Bearer {access_token}",
         },
     )
 
@@ -358,13 +352,12 @@ def test_revoked_session_cannot_authenticate(
 
     with pytest.raises(HTTPException) as exc_info:
         get_session_by_token(
-            session_token,
+            access_token,
             db,
         )
 
     assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
-
-    assert exc_info.value.detail == ("Session has been revoked")
+    assert exc_info.value.detail == "Session has been revoked"
 
 
 def test_logout_only_revokes_current_session(
@@ -398,8 +391,8 @@ def test_logout_only_revokes_current_session(
     assert first_login.status_code == status.HTTP_200_OK
     assert second_login.status_code == status.HTTP_200_OK
 
-    first_token = first_login.json()["session_token"]
-    second_token = second_login.json()["session_token"]
+    first_token = first_login.json()["access_token"]
+    second_token = second_login.json()["access_token"]
 
     logout_response = client.patch(
         "/auth/logout",
@@ -410,7 +403,6 @@ def test_logout_only_revokes_current_session(
 
     assert logout_response.status_code == status.HTTP_200_OK
 
-    # First session must be revoked.
     with pytest.raises(HTTPException) as exc_info:
         get_session_by_token(
             first_token,
@@ -419,7 +411,6 @@ def test_logout_only_revokes_current_session(
 
     assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
 
-    # Second session must still be valid.
     second_session = get_session_by_token(
         second_token,
         db,
@@ -465,8 +456,8 @@ def test_logout_all_revokes_all_sessions(
     assert first_login.status_code == status.HTTP_200_OK
     assert second_login.status_code == status.HTTP_200_OK
 
-    first_token = first_login.json()["session_token"]
-    second_token = second_login.json()["session_token"]
+    first_token = first_login.json()["access_token"]
+    second_token = second_login.json()["access_token"]
 
     response = client.patch(
         "/auth/logout-all",
@@ -477,7 +468,7 @@ def test_logout_all_revokes_all_sessions(
 
     assert response.status_code == status.HTTP_200_OK
 
-    assert response.json()["message"] == "Logged out successfully from all sessions."
+    assert response.json()["message"] == ("Logged out successfully from all sessions.")
 
     sessions = db.query(DBSession).filter(DBSession.user_id == user.id).all()
 
@@ -486,14 +477,12 @@ def test_logout_all_revokes_all_sessions(
     for stored_session in sessions:
         assert stored_session.revoked_at is not None
 
-    # First session must be revoked.
     with pytest.raises(HTTPException):
         get_session_by_token(
             first_token,
             db,
         )
 
-    # Second session must also be revoked.
     with pytest.raises(HTTPException):
         get_session_by_token(
             second_token,
@@ -528,7 +517,7 @@ def test_expired_session_is_rejected(
 
     assert login_response.status_code == status.HTTP_200_OK
 
-    session_token = login_response.json()["session_token"]
+    access_token = login_response.json()["access_token"]
 
     stored_session = db.query(DBSession).filter(DBSession.user_id == user.id).first()
 
@@ -542,12 +531,11 @@ def test_expired_session_is_rejected(
 
     with pytest.raises(HTTPException) as exc_info:
         get_session_by_token(
-            session_token,
+            access_token,
             db,
         )
 
     assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
-
     assert exc_info.value.detail == "Session expired"
 
     db.refresh(stored_session)
