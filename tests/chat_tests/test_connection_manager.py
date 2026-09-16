@@ -1,5 +1,4 @@
 import pytest
-from fastapi import WebSocket
 
 from websocket.connection_manager import ConnectionManager
 
@@ -14,6 +13,11 @@ class FakeWebSocket:
 
     async def send_json(self, message):
         self.sent_messages.append(message)
+
+
+# ============================================================
+# CONNECTION TESTS
+# ============================================================
 
 
 @pytest.mark.asyncio
@@ -49,6 +53,40 @@ async def test_disconnect_non_existing_user():
 
 
 @pytest.mark.asyncio
+async def test_multiple_users_can_connect():
+    manager = ConnectionManager()
+
+    websocket1 = FakeWebSocket()
+    websocket2 = FakeWebSocket()
+
+    await manager.connect(1, websocket1)
+    await manager.connect(2, websocket2)
+
+    assert len(manager.active_connections) == 2
+    assert manager.active_connections[1] is websocket1
+    assert manager.active_connections[2] is websocket2
+
+
+@pytest.mark.asyncio
+async def test_reconnecting_user_replaces_old_connection():
+    manager = ConnectionManager()
+
+    old_websocket = FakeWebSocket()
+    new_websocket = FakeWebSocket()
+
+    await manager.connect(1, old_websocket)
+    await manager.connect(1, new_websocket)
+
+    assert len(manager.active_connections) == 1
+    assert manager.active_connections[1] is new_websocket
+
+
+# ============================================================
+# MESSAGE DELIVERY TESTS
+# ============================================================
+
+
+@pytest.mark.asyncio
 async def test_send_message_to_connected_user():
     manager = ConnectionManager()
     websocket = FakeWebSocket()
@@ -80,43 +118,8 @@ async def test_send_message_to_disconnected_user():
 
     await manager.send_to_user(1, message)
 
-    # Nothing should happen because the user is not connected
+    # Nothing should happen because the user is not connected.
     assert manager.active_connections == {}
-
-
-@pytest.mark.timeout(10)
-@pytest.mark.asyncio
-async def test_send_message_to_connected_user():
-    manager = ConnectionManager()
-    websocket = FakeWebSocket()
-
-    await manager.connect(1, websocket)
-
-    message = {
-        "id": 1,
-        "chat_id": 10,
-        "sender_id": 2,
-        "content": "Hello!",
-    }
-
-    await manager.send_to_user(1, message)
-
-    assert websocket.sent_messages == [message]
-
-
-@pytest.mark.asyncio
-async def test_multiple_users_can_connect():
-    manager = ConnectionManager()
-
-    websocket1 = FakeWebSocket()
-    websocket2 = FakeWebSocket()
-
-    await manager.connect(1, websocket1)
-    await manager.connect(2, websocket2)
-
-    assert len(manager.active_connections) == 2
-    assert manager.active_connections[1] is websocket1
-    assert manager.active_connections[2] is websocket2
 
 
 @pytest.mark.asyncio
@@ -146,17 +149,3 @@ async def test_messages_are_sent_to_correct_users():
     assert websocket1.sent_messages == [message_for_user1]
 
     assert websocket2.sent_messages == [message_for_user2]
-
-
-@pytest.mark.asyncio
-async def test_reconnecting_user_replaces_old_connection():
-    manager = ConnectionManager()
-
-    old_websocket = FakeWebSocket()
-    new_websocket = FakeWebSocket()
-
-    await manager.connect(1, old_websocket)
-    await manager.connect(1, new_websocket)
-
-    assert len(manager.active_connections) == 1
-    assert manager.active_connections[1] is new_websocket

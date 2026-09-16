@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from auth import oauth2
 from db.hash import Hash
+from db.session import create_session
 from models.user import DBUser
 from schemas.user import UserBase, UserUpdate
 
@@ -18,7 +19,7 @@ def get_user_by_id(db: Session, user_id: int):
     return db.query(DBUser).filter(DBUser.id == user_id).first()
 
 
-def get_token(
+def login(
     db: Session,
     request: OAuth2PasswordRequestForm,
 ):
@@ -38,10 +39,14 @@ def get_token(
     db.commit()
     db.refresh(searched_user)
 
-    access_token = oauth2.create_access_token(data={"sub": str(searched_user.id)})
+    session, session_token, refresh_token = create_session(
+        searched_user.id,
+        db,
+    )
 
     return {
-        "access_token": access_token,
+        "session_token": session_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user_id": searched_user.id,
         "user_email": searched_user.email,
