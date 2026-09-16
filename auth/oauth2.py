@@ -11,6 +11,7 @@ import os
 from sqlalchemy.orm.session import Session
 
 from db.database import get_db
+from db.session import get_session_by_token
 
 load_dotenv()
 
@@ -21,46 +22,41 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-
-    to_encode.update({"exp": expire})
-
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-    return encoded_jwt
+# def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+#     to_encode = data.copy()
+#
+#     if expires_delta:
+#         expire = datetime.now(timezone.utc) + expires_delta
+#     else:
+#         expire = datetime.now(timezone.utc) + timedelta(
+#             minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+#         )
+#
+#     to_encode.update({"exp": expire})
+#
+#     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+#
+#     return encoded_jwt
 
 
 def get_current_user(
-    token: str = Depends(oauth2_schema), db: Session = Depends(get_db)
+    session_token: str = Depends(oauth2_schema),
+    db: Session = Depends(get_db),
 ):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not verify credentials!",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
 
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    session = get_session_by_token(session_token, db)
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found",
+        )
 
-        user_id: str = payload.get("sub")
+    searched_user = user.get_user_by_id(db, session.user_id)
 
-        if user_id is None:
-            raise credentials_exception
+    if searched_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
 
-    except JWTError:
-        raise credentials_exception
-
-    user_searched = user.get_user_by_id(db, user_id)
-
-    if user_searched is None:
-        raise credentials_exception
-
-    return user_searched
+    return searched_user
