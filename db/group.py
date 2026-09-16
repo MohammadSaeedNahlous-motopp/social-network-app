@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
@@ -9,6 +7,7 @@ from models.enums import GroupRole
 from models.group import DBGroup
 from models.group_member import DBGroupMember
 from schemas import group
+from service.permissions import can_edit_group, can_delete_group
 
 
 def create_group(
@@ -127,7 +126,7 @@ def update_group(
         )
 
     # Needs an extend to support of admins in future
-    if searched_group.owner_id != user_id:
+    if not can_edit_group(user_id=user_id, group_id=group_id, db=db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User has no permission to edit group",
@@ -170,7 +169,7 @@ def delete_group(db: Session, group_id: int, user_id: int):
             status_code=status.HTTP_404_NOT_FOUND, detail="Group not found"
         )
 
-    if searched_group.owner_id != user_id:
+    if not can_delete_group(user_id=user_id, group=searched_group):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User has no permission to delete group",

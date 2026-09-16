@@ -68,7 +68,7 @@ def test_sender_cannot_accept_friend_request(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 def test_cannot_accept_already_processed_friend_request(

@@ -172,9 +172,9 @@ def test_cannot_delete_someone_else_friendship(
         f"/friends/{friendship_id}",
     )
 
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    assert response.json()["detail"] == "Friendship not found!"
+    assert response.json()["detail"] == "Permission denied!"
 
 
 def test_delete_nonexistent_friendship(

@@ -6,6 +6,7 @@ from models.friend_request import DBFriendRequest
 from models.user import DBUser
 from models.friend import DBFriend
 from schemas.friend_request import FriendRequestBase
+from service.permissions import can_change_friend_request_status
 
 
 def get_user_pending_friend_requests(user_id: int, db: Session):
@@ -86,32 +87,24 @@ def change_friend_request_status(
     new_status: FriendRequestStatus,
     db: Session,
 ):
-    if new_status == FriendRequestStatus.canceled:
-        searched_friend_request = (
-            db.query(DBFriendRequest)
-            .filter(
-                DBFriendRequest.id == friend_request_id,
-                DBFriendRequest.sender_id == user_id,
-            )
-            .first()
+    searched_friend_request = (
+        db.query(DBFriendRequest)
+        .filter(
+            DBFriendRequest.id == friend_request_id
         )
-    elif new_status in (
-        FriendRequestStatus.accepted,
-        FriendRequestStatus.declined,
-    ):
-        searched_friend_request = (
-            db.query(DBFriendRequest)
-            .filter(
-                DBFriendRequest.id == friend_request_id,
-                DBFriendRequest.receiver_id == user_id,
-            )
-            .first()
-        )
+        .first()
+    )
 
     if not searched_friend_request:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Friend request not found!",
+        )
+
+    if not can_change_friend_request_status(user_id=user_id, friend_request=searched_friend_request, cancellation= new_status is FriendRequestStatus.canceled):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied!",
         )
 
     if searched_friend_request.status != FriendRequestStatus.pending:

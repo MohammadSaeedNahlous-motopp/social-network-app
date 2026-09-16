@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import or_, exists
+
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 
@@ -13,6 +13,8 @@ from models.group_role import DBGroupRole
 from models.user import DBUser
 
 from db.group import get_group_by_id
+from service.permissions import can_see_group_members, can_see_user_membership_of_group_query_filter, \
+    validate_can_change_user_membership_role
 
 
 # Add pagination for member list
@@ -26,16 +28,7 @@ def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Qu
     """
     searched_group = get_group_by_id(db, group_id)
 
-    req_user_membership = (
-        db.query(DBGroupMember)
-        .filter(
-            DBGroupMember.group_id == group_id,
-            DBGroupMember.user_id == requesting_user_id,
-        )
-        .first()
-    )
-
-    if not searched_group.is_public and req_user_membership is None:
+    if not can_see_group_members(user_id=requesting_user_id, group=searched_group, db=db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User has no permission to read list of group members",
@@ -66,17 +59,12 @@ def get_user_membership(
         db.query(DBGroup)
         .join(DBGroupMember, DBGroupMember.group_id == DBGroup.id)
         .filter(DBGroupMember.user_id == user_id)
-    )
-    if current_user_id != user_id:
-        received_groups = received_groups.filter(
-            or_(
-                DBGroup.is_public.is_(True),
-                exists().where(
-                    DBGroupMember.group_id == DBGroup.id,
-                    DBGroupMember.user_id == current_user_id,
-                ),
-            )
+        .filter(can_see_user_membership_of_group_query_filter(
+            requesting_user_id=current_user_id,
+            user_id=user_id,
+            group_id=DBGroup.id)
         )
+    )
 
     return received_groups
 
@@ -180,47 +168,7 @@ def change_user_role(
             status_code=status.HTTP_404_NOT_FOUND, detail="Group not found."
         )
 
-    user_role = get_group_member_role(db, group_id, user_id)
-
-    if not user_role:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not a group member.",
-        )
-
-    current_user_membership = get_group_member_role(db, group_id, current_user_id)
-
-    if not current_user_membership:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Issuer is not a group member.",
-        )
-
-    if current_user_membership != GroupRole.administrator:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Issuer does not have permission to change the role.",
-        )
-
-    if user_role == new_role:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="User already has the role."
-        )
-
-    if user_id == searched_group.owner_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Issuer cannot change the role. Group owner role can only be '{GroupRole.administrator}'",
-        )
-
-    if (
-        user_role == GroupRole.administrator
-        and current_user_id != searched_group.owner_id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only group owner can change the role.",
-        )
+    validate_can_change_user_membership_role(requesting_user_id=current_user_id, new_role=new_role, user_id=user_id, group=searched_group, db=db)
 
     membership = (
         db.query(DBGroupMember)
