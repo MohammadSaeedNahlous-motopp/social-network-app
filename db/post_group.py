@@ -39,7 +39,7 @@ def create_group_post(
         title=request.title,
         content=request.content,
         image_url=image_url,
-        visibility=PostVisibility.public
+        visibility=PostVisibility.public,
     )
 
     db.add(new_post)
@@ -47,6 +47,7 @@ def create_group_post(
     db.refresh(new_post)
 
     return new_post
+
 
 def get_group_posts(
     db: Session,

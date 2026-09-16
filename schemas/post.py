@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from models.enums import PostVisibility
 
+
 class PostCreate(BaseModel):
     title: str
     content: str

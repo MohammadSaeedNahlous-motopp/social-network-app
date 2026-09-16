@@ -26,9 +26,15 @@ class FriendRequestStatus(str, PyEnum):
     declined = "declined"
     canceled = "canceled"
 
+
 class ChatType(str, PyEnum):
     private = "private"
     group = "group"
+
+
+class NotificationType(str, PyEnum):
+    new_friend_request = "new_friend_request"
+    new_message = "new_message"
 
 
 class PostVisibility(str, PyEnum):
