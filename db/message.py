@@ -11,7 +11,11 @@ from schemas.message import MessageCreate
 
 def create_message(request: MessageCreate, user_id: int, db: Session):
     new_message = DBMessage(
-        chat_id=request.chat_id, content=request.content, sender_id=user_id
+        chat_id=request.chat_id,
+        ciphertext=request.ciphertext,
+        nonce=request.nonce,
+        encrypted_aes_key=request.encrypted_aes_key,
+        sender_id=user_id,
     )
 
     db.add(new_message)
