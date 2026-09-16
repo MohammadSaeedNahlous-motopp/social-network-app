@@ -5,12 +5,18 @@ from datetime import datetime, timezone, timedelta
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from db.user import get_user_by_id
 from models.session import DBSession
 
 
 def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
+
+
+def ensure_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+
+    return dt.astimezone(timezone.utc)
 
 
 def create_session(user_id: int, db: Session):
@@ -54,7 +60,9 @@ def get_session_by_token(session_token: str, db: Session):
 
     now = datetime.now(timezone.utc)
 
-    if searched_session.session_expires_at <= now:
+    session_expires_at = ensure_utc(searched_session.session_expires_at)
+
+    if session_expires_at <= now:
         searched_session.revoked_at = now
         db.commit()
 
@@ -87,13 +95,15 @@ def refresh_session(refresh_token: str, db: Session):
 
     now = datetime.now(timezone.utc)
 
-    if searched_session.refresh_expires_at <= now:
+    refresh_expires_at = ensure_utc(searched_session.refresh_expires_at)
+
+    if refresh_expires_at <= now:
         searched_session.revoked_at = now
         db.commit()
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Refresh token expired",
+            detail="Session expired",
         )
 
     session_token = secrets.token_urlsafe(32)
@@ -134,14 +144,6 @@ def revoke_session(session_token: str, db: Session):
 
 
 def revoke_all_sessions(user_id: int, db: Session):
-    searched_user = get_user_by_id(db, user_id)
-
-    if searched_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
     user_sessions = db.query(DBSession).filter(DBSession.user_id == user_id).all()
 
     now = datetime.now(timezone.utc)

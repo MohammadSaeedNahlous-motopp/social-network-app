@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
-from pydantic.v1 import EmailStr
+from pydantic import EmailStr
 
 from models.enums import ChatType
 
