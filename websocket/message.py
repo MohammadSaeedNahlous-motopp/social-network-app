@@ -11,7 +11,13 @@ from schemas.notification import NotificationCreate
 from websocket.connection_manager import ConnectionManager
 
 
-async def handle_message(data, user_id, websocket, manager: ConnectionManager, db):
+async def handle_message(
+    data,
+    user_id,
+    websocket,
+    manager: ConnectionManager,
+    db,
+):
     content = data.get("content")
     recipient_id = data.get("recipient_id")
 
@@ -37,7 +43,14 @@ async def handle_message(data, user_id, websocket, manager: ConnectionManager, d
         await websocket.send_json({"error": "You can only message your friends."})
         return
 
-    chat = get_private_chat(user_id, recipient_id, db)
+    # Get the authenticated sender
+    sender = get_user_by_id(db, user_id)
+
+    chat = get_private_chat(
+        user_id,
+        recipient_id,
+        db,
+    )
 
     if chat is None:
         chat = create_chat(
@@ -67,7 +80,10 @@ async def handle_message(data, user_id, websocket, manager: ConnectionManager, d
         "content": message.content,
     }
 
-    members = get_chat_members_by_chat_id(chat.id, db)
+    members = get_chat_members_by_chat_id(
+        chat.id,
+        db,
+    )
 
     for member in members:
         # Send the chat message to everyone
@@ -85,7 +101,7 @@ async def handle_message(data, user_id, websocket, manager: ConnectionManager, d
             NotificationCreate(
                 user_id=member.user_id,
                 type=NotificationType.new_message,
-                message=message.content,
+                message=f"{sender.name} Sent You A Message!",
             ),
             db,
         )
