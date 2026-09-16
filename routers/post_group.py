@@ -73,8 +73,7 @@ async def create_group_post(
     status_code=status.HTTP_200_OK,
     summary="View posts inside a group",
     description=(
-        "Retrieves the published posts inside a specific group "
-        "with pagination."
+        "Retrieves the published posts inside a specific group with pagination."
     ),
     response_description="The paginated posts inside the group.",
     responses={
@@ -87,12 +86,10 @@ def get_group_posts(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: DBUser = Depends(get_current_user)
+    current_user: DBUser = Depends(get_current_user),
 ):
     query = db_group_post.get_group_posts(
-        db=db,
-        group_id=group_id,
-        current_user_id=current_user.id
+        db=db, group_id=group_id, current_user_id=current_user.id
     )
 
     total = query.count()

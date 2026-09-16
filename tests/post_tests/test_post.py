@@ -136,7 +136,7 @@ def test_get_user_posts(client, authenticated_user):
         data={
             "title": "Second Post",
             "content": "My second wall post.",
-            "visibility": "friends_only"
+            "visibility": "friends_only",
         },
     )
 
@@ -148,7 +148,8 @@ def test_get_user_posts(client, authenticated_user):
         params={
             "page": 1,
             "page_size": 10,
-        })
+        },
+    )
 
     assert response.status_code == 200
 
@@ -157,10 +158,7 @@ def test_get_user_posts(client, authenticated_user):
 
     assert len(posts) == 2
 
-    assert all(
-        post["user_id"] == user.id
-        for post in posts
-    )
+    assert all(post["user_id"] == user.id for post in posts)
 
     returned_titles = {post["title"] for post in posts}
 

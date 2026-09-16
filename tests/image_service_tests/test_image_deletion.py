@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from fastapi import status
 
 
-
 def test_update_group_deletes_old_background_image(
     client,
     authenticated_user,

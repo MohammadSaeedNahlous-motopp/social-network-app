@@ -19,7 +19,7 @@ def create_post(
         title=request.title,
         content=request.content,
         image_url=image_url,
-        visibility=request.visibility
+        visibility=request.visibility,
     )
 
     db.add(new_post)
@@ -76,11 +76,7 @@ def update_post(
     return post
 
 
-def delete_post(
-    db: Session,
-    post_id: int,
-    user_id: int
-):
+def delete_post(db: Session, post_id: int, user_id: int):
     """Delete a post owned by the user."""
     post = (
         db.query(DBPost)
@@ -98,6 +94,7 @@ def delete_post(
     db.commit()
 
     return post
+
 
 def get_posts_by_user(
     db: Session,
@@ -121,9 +118,7 @@ def get_posts_by_user(
 
     # Check friendship using the existing method
     are_friends = is_friend_with(
-        user_id=user_id,
-        current_user_id=current_user_id,
-        db=db
+        user_id=user_id, current_user_id=current_user_id, db=db
     )
 
     # Friends can see both public and friends-only posts
@@ -131,8 +126,6 @@ def get_posts_by_user(
         return query
 
     # Non-friends can only see public posts
-    query = query.filter(
-        DBPost.visibility == PostVisibility.public
-    )
+    query = query.filter(DBPost.visibility == PostVisibility.public)
 
     return query
