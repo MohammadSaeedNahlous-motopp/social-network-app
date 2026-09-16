@@ -13,12 +13,7 @@ from models.user import DBUser
 
 router = APIRouter(prefix="/images", tags=["images"])
 
-@router.get("/me",tags=["users"], status_code=status.HTTP_200_OK)
-def get_my_profile(current_user: DBUser = Depends(get_current_user)):
-    if not current_user.profile_img:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User image not found")
-
-    filepath = Path(current_user.profile_img)
+def generate_file_response(filepath: Path) -> FileResponse:
     filename = filepath.name
     media_type, _ = mimetypes.guess_type(filepath.name)
 
@@ -27,6 +22,13 @@ def get_my_profile(current_user: DBUser = Depends(get_current_user)):
         filename=filename,
         media_type=media_type or "application/octet-stream",
     )
+
+@router.get("/me",tags=["users"], status_code=status.HTTP_200_OK)
+def get_my_profile(current_user: DBUser = Depends(get_current_user)):
+    if not current_user.profile_img:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User image not found")
+
+    return generate_file_response(Path(current_user.profile_img))
 
 
 @router.get("/profile/{user_id}",tags=["users"], status_code=status.HTTP_200_OK)
@@ -36,15 +38,7 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
     if not user.profile_img:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User image not found")
 
-    filepath = Path(user.profile_img)
-    filename = filepath.name
-    media_type, _ = mimetypes.guess_type(filepath.name)
-
-    return FileResponse(
-        path=filepath,
-        filename=filename,
-        media_type=media_type or "application/octet-stream",
-    )
+    return generate_file_response(Path(user.profile_img))
 
 
 @router.get("/group/{group_id}/icon",tags=["groups"], status_code=status.HTTP_200_OK)
@@ -54,15 +48,7 @@ def get_group_icon(group_id: int, db: Session = Depends(get_db)):
     if not group.icon_img:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group icon image not found")
 
-    filepath = Path(group.profile_img)
-    filename = filepath.name
-    media_type, _ = mimetypes.guess_type(filepath.name)
-
-    return FileResponse(
-        path=filepath,
-        filename=filename,
-        media_type=media_type or "application/octet-stream",
-    )
+    return generate_file_response(Path(group.profile_img))
 
 
 @router.get("/group/{group_id}/background", tags=["groups"], status_code=status.HTTP_200_OK)
@@ -72,15 +58,7 @@ def get_group_background(group_id: int, db: Session = Depends(get_db)):
     if not group.background_img:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group background image not found")
 
-    filepath = Path(group.background_img)
-    filename = filepath.name
-    media_type, _ = mimetypes.guess_type(filepath.name)
-
-    return FileResponse(
-        path=filepath,
-        filename=filename,
-        media_type=media_type or "application/octet-stream",
-    )
+    return generate_file_response(Path(group.background_img))
 
 
 @router.get("/post/{post_id}/image", tags=["posts", "group posts"], status_code=status.HTTP_200_OK)
