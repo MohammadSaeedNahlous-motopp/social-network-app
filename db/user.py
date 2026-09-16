@@ -9,6 +9,7 @@ from db.hash import Hash
 from db.session import create_session
 from models.user import DBUser
 from schemas.user import UserBase, UserUpdate
+from service.key_pair_generator import generate_key_pair, encrypt_private_key
 
 
 def get_user_by_email(db: Session, email: str):
@@ -51,6 +52,7 @@ def login(
         "user_id": searched_user.id,
         "user_email": searched_user.email,
         "user_name": searched_user.name,
+        "public_key":searched_user.public_key
     }
 
 
@@ -75,6 +77,8 @@ def register_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Passwords don't match",
         )
+    public_key,private_key =  generate_key_pair()
+    encrypted_private_key = encrypt_private_key(private_key)
 
     new_user = DBUser(
         name=request.name,
@@ -85,6 +89,8 @@ def register_user(
         profile_img=image_path,
         location=request.location,
         gender=request.gender,
+        public_key = public_key,
+        encrypted_private_key = encrypted_private_key
     )
 
     db.add(new_user)
