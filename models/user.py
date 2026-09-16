@@ -19,7 +19,7 @@ class DBUser(Base):
 
     bio = Column(String, nullable=True)
     phone = Column(String, nullable=True)
-    profile_img = Column(String, nullable=True)
+    profile_img = Column(String, nullable=True, info={"file_field": True})
     location = Column(String, nullable=True)
     gender = Column(SQLEnum(Gender), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)

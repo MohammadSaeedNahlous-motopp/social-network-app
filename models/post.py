@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, Boolean
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, Boolean, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from db.database import Base
+from models.enums import PostVisibility
 
 
 class DBPost(Base):
@@ -19,11 +20,17 @@ class DBPost(Base):
 
     content = Column(Text, nullable=False)
 
-    image_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String, nullable=True, info={"file_field": True})
 
     score = Column(Integer, default=0, nullable=False)
 
     is_visible = Column(Boolean, default=True, nullable=False)
+
+    visibility = Column(
+        Enum(PostVisibility),
+        default=PostVisibility.public,
+        nullable=False,
+    )
 
     created_at = Column(
         DateTime(timezone=True),
