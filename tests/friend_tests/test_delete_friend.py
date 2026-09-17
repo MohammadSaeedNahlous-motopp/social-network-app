@@ -46,7 +46,7 @@ def test_delete_friend_successfully(
     )
 
     # Accept request
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 

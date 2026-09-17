@@ -75,7 +75,7 @@ async def create_friend_request(
         )
 
     # Check for an existing friendship in either direction
-    are_friends = is_friend_with(user_id, request.receiver_id)
+    are_friends = is_friend_with(user_id, request.receiver_id, db)
 
     if are_friends:
         raise HTTPException(
@@ -119,26 +119,10 @@ def change_friend_request_status(
     new_status: FriendRequestStatus,
     db: Session,
 ):
-    if new_status == FriendRequestStatus.canceled:
-        user_filter = DBFriendRequest.sender_id == user_id
-
-    elif new_status in (
-        FriendRequestStatus.accepted,
-        FriendRequestStatus.declined,
-    ):
-        user_filter = DBFriendRequest.receiver_id == user_id
-
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid friend request status!",
-        )
-
     searched_friend_request = (
         db.query(DBFriendRequest)
         .filter(
             DBFriendRequest.id == friend_request_id,
-            user_filter,
         )
         .first()
     )
@@ -149,7 +133,11 @@ def change_friend_request_status(
             detail="Friend request not found!",
         )
 
-    if not can_change_friend_request_status(user_id=user_id, friend_request=searched_friend_request, cancellation= new_status is FriendRequestStatus.canceled):
+    if not can_change_friend_request_status(
+        user_id=user_id,
+        friend_request=searched_friend_request,
+        cancellation=new_status is FriendRequestStatus.canceled,
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied!",
@@ -166,9 +154,8 @@ def change_friend_request_status(
         FriendRequestStatus.declined,
     ):
         db.delete(searched_friend_request)
-        db.commit()
 
-    if new_status == FriendRequestStatus.accepted:
+    elif new_status == FriendRequestStatus.accepted:
         new_friendship = DBFriend(
             user_id=searched_friend_request.sender_id,
             friend_id=searched_friend_request.receiver_id,
@@ -177,6 +164,12 @@ def change_friend_request_status(
         db.add(new_friendship)
         db.delete(searched_friend_request)
 
-        db.commit()
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid friend request status!",
+        )
+
+    db.commit()
 
     return True

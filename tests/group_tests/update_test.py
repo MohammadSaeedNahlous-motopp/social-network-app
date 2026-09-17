@@ -102,7 +102,9 @@ def test_update_group(
         is_public=True,
     )
 
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     group_image = generate_test_image()
     group_background_image = generate_test_image()
@@ -233,7 +235,9 @@ def test_update_group_empty_request(
         is_public=True,
     )
 
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     # Act
     response = client.put(
@@ -272,7 +276,9 @@ def test_update_group_updates_updated_at(
         is_public=True,
     )
 
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     original_updated_at = test_group.updated_at
     new_group_name = "New Name"
