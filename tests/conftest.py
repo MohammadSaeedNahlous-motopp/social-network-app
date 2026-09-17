@@ -1,3 +1,11 @@
+import os
+
+from cryptography.fernet import Fernet
+
+# Generate a temporary master key for the test environment.
+# This means tests do not depend on the local .env file.
+os.environ["MASTER_KEY"] = Fernet.generate_key().decode()
+
 import pytest
 from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
@@ -16,7 +24,10 @@ from models.group import DBGroup
 from models.group_member import DBGroupMember
 from models.group_role import DBGroupRole
 
-from service.key_pair_generator import generate_key_pair, encrypt_private_key
+from service.key_pair_generator import (
+    generate_key_pair,
+    encrypt_private_key,
+)
 
 from io import BytesIO
 
@@ -69,7 +80,10 @@ def client(db):
 
 @pytest.fixture
 def create_test_user(db: Session):
-    def _create_test_user(email="test_user@example.com", name="John Doe"):
+    def _create_test_user(
+        email="test_user@example.com",
+        name="John Doe",
+    ):
         existing_user = db.query(DBUser).filter(DBUser.email == email).first()
 
         if existing_user:
@@ -79,6 +93,7 @@ def create_test_user(db: Session):
             )
 
         public_key, private_key = generate_key_pair()
+
         encrypted_private_key = encrypt_private_key(private_key)
 
         user = DBUser(
@@ -108,7 +123,10 @@ def authenticated_user(db: Session, create_test_user):
         user = db.query(DBUser).filter(DBUser.email == email).first()
 
         if not user:
-            user = create_test_user(email=email, name=name)
+            user = create_test_user(
+                email=email,
+                name=name,
+            )
 
         app.dependency_overrides[get_current_user] = lambda: user
 
@@ -116,7 +134,10 @@ def authenticated_user(db: Session, create_test_user):
 
     yield _authenticated_user
 
-    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(
+        get_current_user,
+        None,
+    )
 
 
 @pytest.fixture
@@ -175,7 +196,10 @@ def create_test_group_member(db: Session):
 @pytest.fixture
 def get_test_group_role(db: Session):
     def _get_test_group_role(role: GroupRole):
-        return get_role_obj(db=db, role=role)
+        return get_role_obj(
+            db=db,
+            role=role,
+        )
 
     return _get_test_group_role
 
@@ -193,11 +217,18 @@ def mock_image_path(monkeypatch, tmp_path):
 
 @pytest.fixture
 def generate_test_image():
-    def _generate_test_image(image_format="JPEG", size=(100, 100)):
+    def _generate_test_image(
+        image_format="JPEG",
+        size=(100, 100),
+    ):
         image = Image.new("RGB", size)
         image_bytes = BytesIO()
 
-        image.save(image_bytes, format=image_format)
+        image.save(
+            image_bytes,
+            format=image_format,
+        )
+
         image_bytes.seek(0)
 
         return image_bytes

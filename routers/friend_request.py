@@ -38,10 +38,11 @@ def get_user_pending_friend_requests(
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
-    return friend_request.get_user_pending_friend_requests(
+    query = friend_request.get_user_pending_friend_requests(
         current_user.id,
         db,
     )
+    return query.all()
 
 
 @router.post(
@@ -82,9 +83,9 @@ async def create_friend_request(
     return friend_request_obj
 
 
-@router.patch(
+@router.delete(
     "/{friend_request_id}/decline",
-    response_model=FriendRequestDisplayBase,
+    response_model=bool,
     status_code=status.HTTP_200_OK,
     summary="Decline a friend request",
     description=(
@@ -117,9 +118,9 @@ def decline_friend_request(
     )
 
 
-@router.patch(
+@router.delete(
     "/{friend_request_id}/accept",
-    response_model=FriendRequestDisplayBase,
+    response_model=bool,
     status_code=status.HTTP_200_OK,
     summary="Accept a friend request",
     description=(
@@ -152,7 +153,7 @@ def accept_friend_request(
     )
 
 
-@router.patch(
+@router.delete(
     "/{friend_request_id}/cancel",
     response_model=bool,
     status_code=status.HTTP_200_OK,

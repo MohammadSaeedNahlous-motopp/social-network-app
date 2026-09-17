@@ -105,7 +105,7 @@ def get_user_chats(user_id: int, db: Session):
     return chat_list
 
 
-def get_chat_messages(chat_id: int, user_id: int, page: int, limit: int, db: Session):
+def get_encrypted_chat_messages(chat_id: int, user_id: int, db: Session):
     is_member = is_chat_member(chat_id, user_id, db)
 
     if is_member is None:
@@ -125,7 +125,10 @@ def get_chat_messages(chat_id: int, user_id: int, page: int, limit: int, db: Ses
         .order_by(DBMessage.created_at.desc())
     )
 
-    messages = paginate(messages, page, limit)
+    return messages
+
+
+def get_decrypted_chat_messages(messages, chat_id: int, user_id: int, db: Session):
 
     result = []
 
@@ -136,7 +139,7 @@ def get_chat_messages(chat_id: int, user_id: int, page: int, limit: int, db: Ses
             member.user_id for member in members if member.user_id != message.sender_id
         )
 
-        recipient = get_user_by_id(recipient_id, db)
+        recipient = get_user_by_id(db, recipient_id)
 
         decrypted_message = decrypt_chat_message(
             message,

@@ -125,7 +125,7 @@ def get_chat_messages(
         ge=1,
         description="Page number to retrieve. Starts at 1.",
     ),
-    limit: int = Query(
+    page_size: int = Query(
         10,
         ge=1,
         le=100,
@@ -134,13 +134,29 @@ def get_chat_messages(
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
-    return chat.get_chat_messages(
-        chat_id,
-        current_user.id,
-        page,
-        limit,
-        db,
+    messages = chat.get_encrypted_chat_messages(chat_id, current_user.id, db)
+    query = chat.get_decrypted_chat_messages(messages, chat_id, current_user.id, db)
+    total = query.count()
+
+    paginated_query = pagination.paginate(
+        query=query,
+        page=page,
+        page_size=page_size,
     )
+
+    items = paginated_query.all()
+
+    result = {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": pagination.calculate_total_pages(
+            total=total,
+            page_size=page_size,
+        ),
+    }
+    return result
 
 
 @router.get(

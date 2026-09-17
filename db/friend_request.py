@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from db.friend import is_friend_with
 from db.notification import create_notification
 from models.enums import FriendRequestStatus, NotificationType
 from models.friend_request import DBFriendRequest
@@ -17,7 +18,7 @@ def get_user_pending_friend_requests(user_id: int, db: Session):
         DBFriendRequest.status == FriendRequestStatus.pending,
     )
 
-    return pending_friend_requests.all()
+    return pending_friend_requests
 
 
 async def create_friend_request(
@@ -72,6 +73,14 @@ async def create_friend_request(
             detail="A pending friend request already exists between these users!",
         )
 
+    # Check for an existing friendship in either direction
+    are_friends = is_friend_with(user_id, request.receiver_id)
+
+    if are_friends:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You can not send friend request to a friend",
+        )
     new_friend_request = DBFriendRequest(
         sender_id=user_id,
         receiver_id=request.receiver_id,
@@ -145,24 +154,22 @@ def change_friend_request_status(
             detail="This friend request has already been processed!",
         )
 
-    if new_status == FriendRequestStatus.canceled:
+    if new_status in (
+        FriendRequestStatus.canceled,
+        FriendRequestStatus.declined,
+    ):
+        db.delete(searched_friend_request)
+        db.commit()
+
+    if new_status == FriendRequestStatus.accepted:
+        new_friendship = DBFriend(
+            user_id=searched_friend_request.sender_id,
+            friend_id=searched_friend_request.receiver_id,
+        )
+
+        db.add(new_friendship)
         db.delete(searched_friend_request)
 
-    else:
-        searched_friend_request.status = new_status
+        db.commit()
 
-        if new_status == FriendRequestStatus.accepted:
-            new_friendship = DBFriend(
-                user_id=searched_friend_request.sender_id,
-                friend_id=searched_friend_request.receiver_id,
-            )
-
-            db.add(new_friendship)
-
-    db.commit()
-
-    if new_status != FriendRequestStatus.canceled:
-        db.refresh(searched_friend_request)
-        return searched_friend_request
-    else:
-        return True
+    return True
