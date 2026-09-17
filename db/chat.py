@@ -12,7 +12,9 @@ from models.enums import ChatType
 from models.message import DBMessage
 from schemas.chat import ChatCreate
 from schemas.chat_member import ChatMemberCreate
-from sqlalchemy import and_, func
+from sqlalchemy import func
+
+from service.permissions import can_see_chat
 
 from service.encryption_methods import decrypt_chat_message
 from service.pagination import paginate
@@ -52,9 +54,7 @@ def get_chat_by_id(chat_id: int, user_id: int, db: Session):
             detail="Chat not found!",
         )
 
-    is_member = is_chat_member(chat_id, user_id, db)
-
-    if is_member is None:
+    if not can_see_chat(user_id=user_id, chat_id=chat_id, db=db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not allowed to view this chat!",

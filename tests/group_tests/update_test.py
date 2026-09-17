@@ -5,6 +5,8 @@ import pytest
 from fastapi import status
 from sqlalchemy.orm import Session
 
+from models.enums import GroupRole
+
 
 @pytest.mark.parametrize(
     "update_data, expected_data",
@@ -81,6 +83,8 @@ def test_update_group(
     client,
     authenticated_user,
     create_test_group,
+    create_test_group_member,
+    get_test_group_role,
     generate_test_image,
     db: Session,
     update_data,
@@ -88,9 +92,6 @@ def test_update_group(
 ):
     # Arrange
     user = authenticated_user(email="update_test@example.com")
-
-    group_image = generate_test_image()
-    group_background_image = generate_test_image()
 
     test_group = create_test_group(
         owner=user,
@@ -100,6 +101,9 @@ def test_update_group(
         background_img="background.jpg",
         is_public=True,
     )
+
+    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+
     group_image = generate_test_image()
     group_background_image = generate_test_image()
 
@@ -215,6 +219,8 @@ def test_update_group_empty_request(
     client,
     authenticated_user,
     create_test_group,
+    create_test_group_member,
+    get_test_group_role,
     db: Session,
 ):
     # Arrange
@@ -227,12 +233,14 @@ def test_update_group_empty_request(
         is_public=True,
     )
 
+    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+
     # Act
     response = client.put(
         f"/groups/edit/{test_group.id}",
         data={},
     )
-
+    print(response.json())
     # Assert
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == (
@@ -250,6 +258,8 @@ def test_update_group_updates_updated_at(
     client,
     authenticated_user,
     create_test_group,
+    create_test_group_member,
+    get_test_group_role,
     db: Session,
 ):
     # Arrange
@@ -261,6 +271,8 @@ def test_update_group_updates_updated_at(
         description="Original description",
         is_public=True,
     )
+
+    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
 
     original_updated_at = test_group.updated_at
     new_group_name = "New Name"
