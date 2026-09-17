@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
 from db import chat
 from db.database import get_db
 from models.user import DBUser
-from schemas.chat import ChatCreate
-
+from schemas.chat import ChatCreate, ChatResponse
+from schemas.message import MessageResponse
+from service import pagination
 
 router = APIRouter(
     prefix="/chat",
@@ -17,10 +18,25 @@ router = APIRouter(
 @router.get(
     "/",
     summary="Get user's chats",
+    response_model=list[ChatResponse],
+    responses={
+        200: {
+            "description": (
+                "Successfully retrieved all chats belonging to the authenticated user."
+            ),
+        },
+        401: {
+            "description": ("Authentication credentials are invalid or missing."),
+        },
+    },
     description=(
-        "Returns all chats that the currently authenticated user is a member of."
+        "Returns all chats that the currently authenticated user is a "
+        "member of. Only chats belonging to the authenticated user are "
+        "returned."
     ),
-    response_description="A list of chats belonging to the current user.",
+    response_description=(
+        "A list of chats in which the authenticated user is a member."
+    ),
 )
 def get_user_chats(
     current_user: DBUser = Depends(get_current_user),
@@ -36,11 +52,27 @@ def get_user_chats(
     "/",
     status_code=status.HTTP_201_CREATED,
     summary="Create a chat",
+    response_model=ChatResponse,
+    responses={
+        201: {
+            "description": ("Chat successfully created."),
+        },
+        400: {
+            "description": ("Invalid chat data or the chat cannot be created."),
+        },
+        401: {
+            "description": ("Authentication credentials are invalid or missing."),
+        },
+    },
     description=(
         "Creates a new chat using the provided chat information. "
-        "The users included in the request will be added as chat members."
+        "The users specified in the request are added as members of "
+        "the chat. The request must contain the required chat type "
+        "and user information."
     ),
-    response_description="The newly created chat.",
+    response_description=(
+        "The newly created chat, including its chat information and members."
+    ),
 )
 def create_chat(
     request: ChatCreate,
@@ -55,13 +87,50 @@ def create_chat(
 @router.get(
     "/messages/{chat_id}",
     summary="Get chat messages",
-    description=("Returns all messages belonging to the specified chat."),
-    response_description="A list of messages in the specified chat.",
+    response_model=pagination.PaginatedResponse[MessageResponse],
+    responses={
+        200: {
+            "description": ("Successfully retrieved the paginated chat messages."),
+        },
+        401: {
+            "description": ("Authentication credentials are invalid or missing."),
+        },
+        403: {
+            "description": (
+                "The authenticated user is not a member of the requested chat."
+            ),
+        },
+        404: {
+            "description": ("The requested chat was not found."),
+        },
+    },
+    description=(
+        "Returns a paginated list of messages belonging to the specified "
+        "chat. The authenticated user must be a member of the chat. "
+        "Messages are returned in descending order by creation time, "
+        "with the newest messages appearing first. "
+        "The page parameter specifies the requested page, while the "
+        "limit parameter specifies the maximum number of messages "
+        "returned per page. Encrypted message content is decrypted "
+        "before being included in the response."
+    ),
+    response_description=(
+        "A paginated list of decrypted messages belonging to the specified chat."
+    ),
 )
 def get_chat_messages(
     chat_id: int,
-    page: int,
-    limit: int = 10,
+    page: int = Query(
+        1,
+        ge=1,
+        description="Page number to retrieve. Starts at 1.",
+    ),
+    limit: int = Query(
+        10,
+        ge=1,
+        le=100,
+        description="Number of messages per page. Maximum is 100.",
+    ),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
@@ -77,11 +146,30 @@ def get_chat_messages(
 @router.get(
     "/private/{user_id}",
     summary="Get private chat",
+    response_model=ChatResponse,
+    responses={
+        200: {
+            "description": ("Successfully retrieved the private chat."),
+        },
+        401: {
+            "description": ("Authentication credentials are invalid or missing."),
+        },
+        404: {
+            "description": (
+                "No private chat exists between the authenticated user "
+                "and the specified user."
+            ),
+        },
+    },
     description=(
-        "Returns the private chat between the currently authenticated user "
-        "and the specified user."
+        "Returns the private one-to-one chat between the currently "
+        "authenticated user and the specified user. Authentication "
+        "is required. The endpoint searches for an existing private "
+        "chat shared by the two users."
     ),
-    response_description="The private chat between the two users.",
+    response_description=(
+        "The private chat shared by the authenticated user and the specified user."
+    ),
 )
 def get_private_chat(
     user_id: int,
@@ -98,11 +186,29 @@ def get_private_chat(
 @router.get(
     "/{chat_id}",
     summary="Get chat by ID",
+    response_model=ChatResponse,
+    responses={
+        200: {
+            "description": ("Successfully retrieved the requested chat."),
+        },
+        401: {
+            "description": ("Authentication credentials are invalid or missing."),
+        },
+        403: {
+            "description": (
+                "The authenticated user does not have access to the requested chat."
+            ),
+        },
+        404: {
+            "description": ("The requested chat was not found."),
+        },
+    },
     description=(
-        "Returns the specified chat if the currently authenticated user "
-        "has access to it."
+        "Returns a specific chat by its ID. Authentication is required, "
+        "and the currently authenticated user must have access to the "
+        "requested chat."
     ),
-    response_description="The requested chat.",
+    response_description=("The requested chat and its associated information."),
 )
 def get_chat_by_id(
     chat_id: int,

@@ -33,8 +33,6 @@ def test_cancel_friend_request_successfully(
 
     assert response.status_code == status.HTTP_200_OK
 
-    assert response.json()["status"] == "canceled"
-
 
 def test_receiver_cannot_cancel_friend_request(
     client,

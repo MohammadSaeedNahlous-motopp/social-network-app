@@ -154,7 +154,7 @@ def accept_friend_request(
 
 @router.patch(
     "/{friend_request_id}/cancel",
-    response_model=FriendRequestDisplayBase,
+    response_model=bool,
     status_code=status.HTTP_200_OK,
     summary="Cancel a friend request",
     description=(

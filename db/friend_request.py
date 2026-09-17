@@ -17,7 +17,7 @@ def get_user_pending_friend_requests(user_id: int, db: Session):
         DBFriendRequest.status == FriendRequestStatus.pending,
     )
 
-    return pending_friend_requests
+    return pending_friend_requests.all()
 
 
 async def create_friend_request(
@@ -110,26 +110,28 @@ def change_friend_request_status(
     db: Session,
 ):
     if new_status == FriendRequestStatus.canceled:
-        searched_friend_request = (
-            db.query(DBFriendRequest)
-            .filter(
-                DBFriendRequest.id == friend_request_id,
-                DBFriendRequest.sender_id == user_id,
-            )
-            .first()
-        )
+        user_filter = DBFriendRequest.sender_id == user_id
+
     elif new_status in (
         FriendRequestStatus.accepted,
         FriendRequestStatus.declined,
     ):
-        searched_friend_request = (
-            db.query(DBFriendRequest)
-            .filter(
-                DBFriendRequest.id == friend_request_id,
-                DBFriendRequest.receiver_id == user_id,
-            )
-            .first()
+        user_filter = DBFriendRequest.receiver_id == user_id
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid friend request status!",
         )
+
+    searched_friend_request = (
+        db.query(DBFriendRequest)
+        .filter(
+            DBFriendRequest.id == friend_request_id,
+            user_filter,
+        )
+        .first()
+    )
 
     if not searched_friend_request:
         raise HTTPException(
@@ -143,17 +145,24 @@ def change_friend_request_status(
             detail="This friend request has already been processed!",
         )
 
-    searched_friend_request.status = new_status
-    if new_status == FriendRequestStatus.accepted:
-        new_friendship = DBFriend(
-            user_id=searched_friend_request.sender_id,
-            friend_id=searched_friend_request.receiver_id,
-        )
-        db.add(new_friendship)
-        db.commit()
-        db.refresh(new_friendship)
+    if new_status == FriendRequestStatus.canceled:
+        db.delete(searched_friend_request)
+
+    else:
+        searched_friend_request.status = new_status
+
+        if new_status == FriendRequestStatus.accepted:
+            new_friendship = DBFriend(
+                user_id=searched_friend_request.sender_id,
+                friend_id=searched_friend_request.receiver_id,
+            )
+
+            db.add(new_friendship)
 
     db.commit()
-    db.refresh(searched_friend_request)
 
-    return searched_friend_request
+    if new_status != FriendRequestStatus.canceled:
+        db.refresh(searched_friend_request)
+        return searched_friend_request
+    else:
+        return True
