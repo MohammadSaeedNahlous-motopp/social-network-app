@@ -10,6 +10,7 @@ from models.friend import DBFriend
 from schemas.friend_request import FriendRequestBase
 from schemas.notification import NotificationCreate
 from websocket.connection_manager import manager
+from service.permissions import can_change_friend_request_status
 
 
 def get_user_pending_friend_requests(user_id: int, db: Session):
@@ -146,6 +147,12 @@ def change_friend_request_status(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Friend request not found!",
+        )
+
+    if not can_change_friend_request_status(user_id=user_id, friend_request=searched_friend_request, cancellation= new_status is FriendRequestStatus.canceled):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied!",
         )
 
     if searched_friend_request.status != FriendRequestStatus.pending:
