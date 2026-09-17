@@ -7,6 +7,7 @@ from db.group_member import get_group_member_role
 from db.post import get_post
 from models.enums import GroupRole, PostVisibility
 from schemas.post import PostCreate, PostUpdate
+from service.permissions import can_see_group_details, can_edit_post, can_delete_post
 
 
 def create_group_post(
@@ -61,18 +62,11 @@ def get_group_posts(
         group_id=group_id,
     )
 
-    if not group.is_public:
-        user_role = get_group_member_role(
-            db=db,
-            group_id=group_id,
-            user_id=current_user_id,
+    if not can_see_group_details(user_id=current_user_id, group=group, db=db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a group member to view posts in this private group.",
         )
-
-        if user_role is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must be a group member to view posts in this private group.",
-            )
 
     return (
         db.query(DBPost)
@@ -91,27 +85,21 @@ def update_group_post(
     request: PostUpdate,
     user_id: int,
 ):
-    user_role = get_group_member_role(
-        db=db,
-        group_id=group_id,
-        user_id=user_id,
-    )
-
-    if user_role is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be a group member.",
-        )
-
     post = get_post(
         db=db,
         post_id=post_id,
     )
 
-    if post is None or post.group_id != group_id or post.user_id != user_id:
+    if post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Group post not found.",
+        )
+
+    if not can_edit_post(user_id=user_id, post=post, group_id=group_id, db=db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be a group member and post author.",
         )
 
     if request.title is not None:
@@ -132,18 +120,6 @@ def delete_group_post(
     post_id: int,
     user_id: int,
 ):
-    user_role = get_group_member_role(
-        db=db,
-        group_id=group_id,
-        user_id=user_id,
-    )
-
-    if user_role is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You must be a group administrator or the owner of the post to delete this post.",
-        )
-
     post = get_post(
         db=db,
         post_id=post_id,
@@ -155,15 +131,10 @@ def delete_group_post(
             detail="Group post not found.",
         )
 
-    is_post_owner = post.user_id == user_id
-    is_group_admin = user_role == GroupRole.administrator
-
-    if not is_post_owner and not is_group_admin:
+    if not can_delete_post(user_id=user_id, post=post, group_id=group_id, db=db):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=(
-                "Only a group administrator or the post owner can delete this post."
-            ),
+            detail="Only a group administrator or the owner of the post that belongs to a group to can delete this post.",
         )
 
     db.delete(post)
