@@ -1,9 +1,11 @@
+from fastapi import HTTPException, status
 from sqlalchemy.orm.session import Session
+
 from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
-from models.enums import PostVisibility
-from models.friend import DBFriend
+
 from db.friend import is_friend_with
+from service.permissions import get_user_post_visibility_filter, can_delete_post, can_edit_post
 
 
 def create_post(
@@ -51,18 +53,13 @@ def update_post(
     user_id: int,
 ):
     """Update the title or content of a post owned by the user."""
-    post = (
-        db.query(DBPost)
-        .filter(
-            DBPost.id == post_id,
-            DBPost.user_id == user_id,
-            DBPost.is_visible.is_(True),
-        )
-        .first()
-    )
+    post = get_post(db=db, post_id=post_id)
 
     if post is None:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    if not can_edit_post(user_id=user_id, post=post):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     if request.title is not None:
         post.title = request.title
@@ -78,17 +75,13 @@ def update_post(
 
 def delete_post(db: Session, post_id: int, user_id: int):
     """Delete a post owned by the user."""
-    post = (
-        db.query(DBPost)
-        .filter(
-            DBPost.id == post_id,
-            DBPost.user_id == user_id,
-        )
-        .first()
-    )
+    post = get_post(db=db, post_id=post_id)
 
     if post is None:
         return None
+
+    if not can_delete_post(user_id=user_id, post=post):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     db.delete(post)
     db.commit()
@@ -107,25 +100,17 @@ def get_posts_by_user(
         db.query(DBPost)
         .filter(
             DBPost.user_id == user_id,
+            DBPost.group_id.is_(None),
             DBPost.is_visible.is_(True),
         )
-        .order_by(DBPost.created_at.desc())
     )
-
-    # The user is viewing their own wall
-    if current_user_id == user_id:
-        return query
 
     # Check friendship using the existing method
     are_friends = is_friend_with(
         user_id=user_id, current_user_id=current_user_id, db=db
     )
 
-    # Friends can see both public and friends-only posts
-    if are_friends:
-        return query
-
     # Non-friends can only see public posts
-    query = query.filter(DBPost.visibility == PostVisibility.public)
+    query = query.filter(get_user_post_visibility_filter(requesting_user_id=current_user_id, user_id=user_id, are_friends=are_friends))
 
-    return query
+    return query.order_by(DBPost.created_at.desc())
