@@ -27,6 +27,8 @@ class DBGroup(Base):
         "DBGroupMember", back_populates="group", cascade="all, delete-orphan"
     )
 
+    tags = relationship("DBGroupTag", back_populates="group", cascade="all, delete-orphan")
+
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
