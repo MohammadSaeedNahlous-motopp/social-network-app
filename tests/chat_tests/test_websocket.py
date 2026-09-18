@@ -20,7 +20,7 @@ def create_websocket_token(
 
     assert response.status_code == 200
 
-    return response.json()["session_token"]
+    return response.json()["access_token"]
 
 
 # =========================================================
@@ -67,7 +67,7 @@ def test_websocket_rejects_invalid_token(
 def test_websocket_rejects_non_existing_session(
     client,
 ):
-    invalid_token = "non_existing_session_token"
+    invalid_token = "non_existing_access_token"
 
     with pytest.raises(Exception):
         with client.websocket_connect(f"/ws?token={invalid_token}"):

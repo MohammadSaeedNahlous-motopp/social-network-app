@@ -1,17 +1,18 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from db.chat import get_chat_by_id
-from db.chat_member import is_chat_member
-from models.chat import DBChat
-from models.chat_member import DBChatMember
 from models.message import DBMessage
 from schemas.message import MessageCreate
+from service.permissions import validate_can_get_message
 
 
 def create_message(request: MessageCreate, user_id: int, db: Session):
     new_message = DBMessage(
-        chat_id=request.chat_id, content=request.content, sender_id=user_id
+        chat_id=request.chat_id,
+        ciphertext=request.ciphertext,
+        nonce=request.nonce,
+        encrypted_aes_key=request.encrypted_aes_key,
+        sender_id=user_id,
     )
 
     db.add(new_message)
@@ -30,12 +31,6 @@ def get_message_by_id(message_id: int, user_id: int, db: Session):
             detail="Message not found!",
         )
 
-    is_member = is_chat_member(searched_message.chat_id)
-
-    if is_member is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not allowed to view this message!",
-        )
+    validate_can_get_message(user_id=user_id, chat_id=searched_message.chat_id, db=db)
 
     return searched_message

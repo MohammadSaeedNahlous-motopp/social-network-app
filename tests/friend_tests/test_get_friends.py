@@ -46,7 +46,7 @@ def test_get_friends_successfully(
     )
 
     # User 2 accepts the friend request
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 

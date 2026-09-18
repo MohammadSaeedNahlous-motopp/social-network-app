@@ -8,7 +8,9 @@ class DBMessage(Base):
     id = Column(Integer, primary_key=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"))
     chat_id = Column(Integer, ForeignKey("chats.id"))
-    content = Column(String, nullable=False)
+    ciphertext = Column(String, nullable=False)
+    nonce = Column(String, nullable=False)
+    encrypted_aes_key = Column(String, nullable=False)
 
     created_at = Column(
         DateTime(timezone=True),

@@ -31,14 +31,14 @@ class SessionResponse(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    session_token: str
+    access_token: str
     refresh_token: str
     token_type: str
     model_config = ConfigDict(from_attributes=True)
 
 
 class GetTokenResponse(BaseModel):
-    session_token: str
+    access_token: str
     refresh_token: str
     token_type: str
     user_id: int

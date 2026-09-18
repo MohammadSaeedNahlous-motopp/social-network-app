@@ -46,7 +46,7 @@ def test_delete_friend_successfully(
     )
 
     # Accept request
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
@@ -142,7 +142,7 @@ def test_cannot_delete_someone_else_friendship(
     )
 
     # User 2 accepts
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
@@ -172,9 +172,9 @@ def test_cannot_delete_someone_else_friendship(
         f"/friends/{friendship_id}",
     )
 
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    assert response.json()["detail"] == "Friendship not found!"
+    assert response.json()["detail"] == "Permission denied!"
 
 
 def test_delete_nonexistent_friendship(

@@ -3,12 +3,16 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 from fastapi import status
 
+from models.enums import GroupRole
+
 
 def test_update_group_deletes_old_background_image(
     client,
     authenticated_user,
     create_test_group,
     generate_test_image,
+    create_test_group_member,
+    get_test_group_role,
     db: Session,
     tmp_path,
 ):
@@ -27,6 +31,9 @@ def test_update_group_deletes_old_background_image(
         profile_img="profile.jpg",
         background_img=str(old_background),
         is_public=True,
+    )
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
     )
 
     original_background_img = test_group.background_img
@@ -69,6 +76,8 @@ def test_update_group_deletes_old_profile_image(
     authenticated_user,
     create_test_group,
     generate_test_image,
+    create_test_group_member,
+    get_test_group_role,
     db: Session,
     tmp_path,
 ):
@@ -87,6 +96,9 @@ def test_update_group_deletes_old_profile_image(
         profile_img=str(old_profile),
         background_img="background.jpg",
         is_public=True,
+    )
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
     )
 
     original_profile_img = test_group.profile_img
@@ -129,6 +141,8 @@ def test_update_group_background_image_does_not_delete_profile_image(
     authenticated_user,
     create_test_group,
     generate_test_image,
+    create_test_group_member,
+    get_test_group_role,
     db: Session,
     tmp_path,
 ):
@@ -150,6 +164,9 @@ def test_update_group_background_image_does_not_delete_profile_image(
         profile_img=str(old_profile),
         background_img=str(old_background),
         is_public=True,
+    )
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
     )
 
     # Act
@@ -184,6 +201,8 @@ def test_update_group_profile_image_does_not_delete_background_image(
     authenticated_user,
     create_test_group,
     generate_test_image,
+    create_test_group_member,
+    get_test_group_role,
     db: Session,
     tmp_path,
 ):
@@ -205,6 +224,9 @@ def test_update_group_profile_image_does_not_delete_background_image(
         profile_img=str(old_profile),
         background_img=str(old_background),
         is_public=True,
+    )
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
     )
 
     # Act
@@ -239,6 +261,8 @@ def test_update_group_image_only_preserves_other_fields(
     authenticated_user,
     create_test_group,
     generate_test_image,
+    create_test_group_member,
+    get_test_group_role,
     db: Session,
 ):
     # Arrange
@@ -251,6 +275,9 @@ def test_update_group_image_only_preserves_other_fields(
         profile_img="profile.jpg",
         background_img="background.jpg",
         is_public=True,
+    )
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
     )
 
     new_background = generate_test_image()

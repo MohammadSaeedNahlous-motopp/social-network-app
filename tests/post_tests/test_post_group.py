@@ -199,7 +199,7 @@ def test_normal_member_cannot_delete_another_members_post(
     # Assert
     assert delete_response.status_code == status.HTTP_403_FORBIDDEN
     assert delete_response.json()["detail"] == (
-        "Only a group administrator or the post owner can delete this post."
+        "Only a group administrator or the owner of the post that belongs to a group to can delete this post."
     )
 
 
