@@ -13,8 +13,11 @@ from models.group_role import DBGroupRole
 from models.user import DBUser
 
 from db.group import get_group_by_id
-from service.permissions import can_see_group_details, can_see_user_membership_of_group_query_filter, \
-    validate_can_change_user_membership_role
+from service.permissions import (
+    can_see_group_details,
+    can_see_user_membership_of_group_query_filter,
+    validate_can_change_user_membership_role,
+)
 
 
 # Add pagination for member list
@@ -28,7 +31,9 @@ def get_group_members(db: Session, group_id: int, requesting_user_id: int) -> Qu
     """
     searched_group = get_group_by_id(db, group_id)
 
-    if not can_see_group_details(user_id=requesting_user_id, group=searched_group, db=db):
+    if not can_see_group_details(
+        user_id=requesting_user_id, group=searched_group, db=db
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User has no permission to read list of group members",
@@ -59,10 +64,10 @@ def get_user_membership(
         db.query(DBGroup)
         .join(DBGroupMember, DBGroupMember.group_id == DBGroup.id)
         .filter(DBGroupMember.user_id == user_id)
-        .filter(can_see_user_membership_of_group_query_filter(
-            requesting_user_id=current_user_id,
-            user_id=user_id,
-            group_id=DBGroup.id)
+        .filter(
+            can_see_user_membership_of_group_query_filter(
+                requesting_user_id=current_user_id, user_id=user_id, group_id=DBGroup.id
+            )
         )
     )
 
@@ -168,7 +173,13 @@ def change_user_role(
             status_code=status.HTTP_404_NOT_FOUND, detail="Group not found."
         )
 
-    validate_can_change_user_membership_role(requesting_user_id=current_user_id, new_role=new_role, user_id=user_id, group=searched_group, db=db)
+    validate_can_change_user_membership_role(
+        requesting_user_id=current_user_id,
+        new_role=new_role,
+        user_id=user_id,
+        group=searched_group,
+        db=db,
+    )
 
     membership = (
         db.query(DBGroupMember)

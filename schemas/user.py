@@ -92,6 +92,7 @@ class UserDisplay(BaseModel):
     phone: str | None = None
     location: str | None = None
     gender: Gender | None = None
+    public_key: str
 
     model_config = ConfigDict(from_attributes=True)
 

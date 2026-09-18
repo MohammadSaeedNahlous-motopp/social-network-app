@@ -23,6 +23,11 @@ class DBUser(Base):
     location = Column(String, nullable=True)
     gender = Column(SQLEnum(Gender), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    public_key = Column(String, nullable=False, unique=True)
+    encrypted_private_key = Column(
+        String,
+        nullable=False,
+    )
 
     last_login_at = Column(DateTime, nullable=True)
     created_at = Column(

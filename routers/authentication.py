@@ -111,17 +111,17 @@ async def create_user(
         },
     },
 )
-def refresh_session_token(
+def refresh_access_token(
     request: RefreshTokenRequest,
     db: Session = Depends(get_db),
 ):
-    _, session_token, refresh_token = session.refresh_session(
+    _, access_token, refresh_token = session.refresh_session(
         request.refresh_token,
         db,
     )
 
     return {
-        "session_token": session_token,
+        "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
@@ -146,10 +146,10 @@ def refresh_session_token(
     },
 )
 def logout_user(
-    session_token: str = Depends(oauth2.oauth2_schema),
+    access_token: str = Depends(oauth2.oauth2_schema),
     db: Session = Depends(get_db),
 ):
-    session.revoke_session(session_token, db)
+    session.revoke_session(access_token, db)
 
     return {"message": "Logged out successfully."}
 
