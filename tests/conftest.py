@@ -1,5 +1,7 @@
+from email.message import Message
+
 import pytest
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -186,7 +188,10 @@ def mock_image_path(monkeypatch, tmp_path):
 def generate_test_image():
     def _generate_test_image(image_format="JPEG", size=(100, 100)):
         image = Image.new("RGB", size)
-        image_bytes = BytesIO()
+        image_bytes = TestImageBytesIO(
+            filename=f"test.{image_format.lower()}",
+            content_type=f"image/{image_format.lower()}",
+        )
 
         image.save(image_bytes, format=image_format)
         image_bytes.seek(0)
@@ -194,3 +199,31 @@ def generate_test_image():
         return image_bytes
 
     return _generate_test_image
+
+
+class TestImageBytesIO(BytesIO):
+    def __init__(self, *args, filename: str, content_type: str, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filename = filename
+        self.content_type = content_type
+
+    def as_upload_file(self) -> UploadFile:
+        file = BytesIO(self.getvalue())
+
+        return UploadFile(
+            file=file,
+            filename=self.filename,
+            size=len(self.getvalue()),
+            headers={
+                "content-type": self.content_type,
+            },
+        )
+
+
+@pytest.fixture
+def get_response_filename():
+    def _get_response_filename(response):
+        message = Message()
+        message["content-disposition"] = response.headers["content-disposition"]
+        return message.get_filename()
+    return _get_response_filename
