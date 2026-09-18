@@ -1,9 +1,10 @@
 from models.comment import DBComment
 from models.post import DBPost
 
+
 def test_post_owner_can_create_comment(
     client,
-    db_session,
+    db,
     authenticated_user,
 ):
     user = authenticated_user()
@@ -14,9 +15,9 @@ def test_post_owner_can_create_comment(
         content="Test content",
     )
 
-    db_session.add(post)
-    db_session.commit()
-    db_session.refresh(post)
+    db.add(post)
+    db.commit()
+    db.refresh(post)
 
     response = client.post(
         f"/comments/posts/{post.id}",
@@ -37,7 +38,7 @@ def test_post_owner_can_create_comment(
 
 def test_created_comment_is_saved_in_database(
     client,
-    db_session,
+    db,
     authenticated_user,
 ):
     user = authenticated_user()
@@ -48,9 +49,9 @@ def test_created_comment_is_saved_in_database(
         content="Test content",
     )
 
-    db_session.add(post)
-    db_session.commit()
-    db_session.refresh(post)
+    db.add(post)
+    db.commit()
+    db.refresh(post)
 
     response = client.post(
         f"/comments/posts/{post.id}",
@@ -62,7 +63,7 @@ def test_created_comment_is_saved_in_database(
     assert response.status_code == 201
 
     comment = (
-        db_session.query(DBComment)
+        db.query(DBComment)
         .filter(DBComment.post_id == post.id)
         .first()
     )
@@ -75,7 +76,7 @@ def test_created_comment_is_saved_in_database(
 
 def test_comment_owner_can_delete_own_comment(
     client,
-    db_session,
+    db,
     authenticated_user,
 ):
     user = authenticated_user()
@@ -86,9 +87,9 @@ def test_comment_owner_can_delete_own_comment(
         content="Test content",
     )
 
-    db_session.add(post)
-    db_session.commit()
-    db_session.refresh(post)
+    db.add(post)
+    db.commit()
+    db.refresh(post)
 
     comment = DBComment(
         user_id=user.id,
@@ -96,9 +97,9 @@ def test_comment_owner_can_delete_own_comment(
         content="Comment to delete",
     )
 
-    db_session.add(comment)
-    db_session.commit()
-    db_session.refresh(comment)
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
 
     response = client.delete(
         f"/comments/{comment.id}",
@@ -109,7 +110,7 @@ def test_comment_owner_can_delete_own_comment(
         "message": "Comment deleted successfully."
     }
 
-    db_session.refresh(comment)
+    db.refresh(comment)
 
     assert comment.is_visible is False
 
@@ -129,4 +130,3 @@ def test_create_comment_post_not_found(
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Post not found."
-
