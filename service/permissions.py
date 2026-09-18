@@ -235,10 +235,5 @@ def can_delete_post(
         condition2_a = post.user_id == user_id and user_role is not None
         # if user is group admin
         condition2_b = user_role is GroupRole.administrator
-        print(
-            f"condition1: {condition1}\tcondition2_a: {condition2_a}\tcondition2_b: {condition2_b}"
-        )
-        print(
-            f"result is {True if condition1 and (condition2_a or condition2_b) else False}"
-        )
+
         return True if condition1 and (condition2_a or condition2_b) else False

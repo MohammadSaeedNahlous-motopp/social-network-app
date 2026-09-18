@@ -21,7 +21,6 @@ class PostResponse(BaseModel):
     group_id: int | None = None
     title: str
     content: str
-    image_url: str | None = None
     score: int
     is_visible: bool
     created_at: datetime

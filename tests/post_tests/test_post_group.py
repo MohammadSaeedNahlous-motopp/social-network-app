@@ -1,6 +1,6 @@
 from fastapi import status
-from io import BytesIO
-from PIL import Image
+from fastapi.responses import FileResponse
+
 from models.enums import GroupRole
 
 
@@ -276,6 +276,8 @@ def test_group_member_can_create_post_with_image(
     create_test_group,
     create_test_group_member,
     get_test_group_role,
+    generate_test_image,
+    get_response_filename
 ):
     # Arrange
     owner = create_test_user(
@@ -306,11 +308,7 @@ def test_group_member_can_create_post_with_image(
         role=get_test_group_role(GroupRole.member),
     )
 
-    image_file = BytesIO()
-
-    image = Image.new("RGB", (10, 10))
-    image.save(image_file, format="PNG")
-    image_file.seek(0)
+    image_file = generate_test_image(image_format="png")
 
     # Act
     response = client.post(
@@ -329,11 +327,13 @@ def test_group_member_can_create_post_with_image(
         },
     )
 
+
     # Assert
     assert response.status_code == status.HTTP_201_CREATED
     assert response.json()["title"] == "Group post with image"
-    assert response.json()["image_url"] is not None
-    assert response.json()["image_url"].endswith(".png")
+
+    image_response: FileResponse = client.get(f"/images/post/{response.json()["id"]}/image")
+    assert image_response.status_code == status.HTTP_200_OK
 
 
 def test_get_group_posts_with_pagination(
