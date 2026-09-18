@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
 from db.database import get_db
-from models.enums import FriendRequestStatus
+from models.enums import RequestStatus
 from models.user import DBUser
 from schemas.friend_request import (
     FriendRequestBase,
@@ -113,7 +113,7 @@ def decline_friend_request(
     return friend_request.change_friend_request_status(
         friend_request_id,
         current_user.id,
-        FriendRequestStatus.declined,
+        RequestStatus.declined,
         db,
     )
 
@@ -148,7 +148,7 @@ def accept_friend_request(
     return friend_request.change_friend_request_status(
         friend_request_id,
         current_user.id,
-        FriendRequestStatus.accepted,
+        RequestStatus.accepted,
         db,
     )
 
@@ -183,6 +183,6 @@ def cancel_friend_request(
     return friend_request.change_friend_request_status(
         friend_request_id,
         current_user.id,
-        FriendRequestStatus.canceled,
+        RequestStatus.canceled,
         db,
     )

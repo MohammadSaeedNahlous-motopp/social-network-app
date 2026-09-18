@@ -103,11 +103,7 @@ def join_group(db: Session, group_id: int, user_id: int) -> DBGroupMember:
         )
 
     # Check if user is already a member
-    existing_membership = (
-        db.query(DBGroupMember)
-        .filter(DBGroupMember.group_id == group_id, DBGroupMember.user_id == user_id)
-        .first()
-    )
+    existing_membership = is_group_member(user_id, group_id, db)
     if existing_membership:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -198,3 +194,12 @@ def change_user_role(
     db.refresh(membership)
 
     return membership
+
+
+def is_group_member(user_id: int, group_id: int, db: Session):
+    existing_membership = (
+        db.query(DBGroupMember)
+        .filter(DBGroupMember.group_id == group_id, DBGroupMember.user_id == user_id)
+        .first()
+    )
+    return existing_membership

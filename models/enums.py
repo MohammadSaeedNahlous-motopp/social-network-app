@@ -20,7 +20,7 @@ class GroupRole(str, PyEnum):
     administrator = "administrator"
 
 
-class FriendRequestStatus(str, PyEnum):
+class RequestStatus(str, PyEnum):
     pending = "pending"
     accepted = "accepted"
     declined = "declined"
