@@ -79,6 +79,22 @@ def can_edit_group(
     return role is GroupRole.administrator
 
 
+def can_view_group_requests(
+    user_id: int,
+    group_id: int,
+    db: Session,
+) -> bool:
+    from db.group_member import get_group_member_role
+
+    role = get_group_member_role(
+        db=db,
+        group_id=group_id,
+        user_id=user_id,
+    )
+
+    return role is GroupRole.administrator
+
+
 def can_delete_group(
     user_id: int,
     group: DBGroup,

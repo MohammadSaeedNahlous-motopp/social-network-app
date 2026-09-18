@@ -18,10 +18,18 @@ from websocket.connection_manager import manager
 from service.permissions import (
     can_change_friend_request_status,
     can_change_group_request_status,
+    can_view_group_requests,
 )
 
 
-def get_group_pending_join_requests(group_id: int, db: Session):
+def get_group_pending_join_requests(group_id: int, user_id: int, db: Session):
+    can_view = can_view_group_requests(user_id, group_id, db)
+    if not can_view:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You Are Not Allowed To View Group Request",
+        )
+
     pending_group_requests = db.query(DBGroupRequest).filter(
         DBGroupRequest.group_id == group_id,
         DBGroupRequest.status == RequestStatus.pending,
