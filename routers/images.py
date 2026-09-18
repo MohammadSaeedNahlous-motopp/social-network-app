@@ -26,7 +26,7 @@ def generate_file_response(filepath: Path) -> FileResponse:
     )
 
 @router.get("/me",tags=["users"], status_code=status.HTTP_200_OK)
-def get_my_profile(current_user: DBUser = Depends(get_current_user)):
+def get_my_profile(current_user: DBUser = Depends(get_current_user)) -> FileResponse:
     if not current_user.profile_img:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User image not found")
 
@@ -34,7 +34,7 @@ def get_my_profile(current_user: DBUser = Depends(get_current_user)):
 
 
 @router.get("/profile/{user_id}",tags=["users"], status_code=status.HTTP_200_OK)
-def get_profile(user_id: int, db: Session = Depends(get_db)):
+def get_profile(user_id: int, db: Session = Depends(get_db)) -> FileResponse:
     user = get_user_by_id(db=db, user_id=user_id)
 
     if not user.profile_img:
@@ -44,17 +44,17 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/group/{group_id}/icon",tags=["groups"], status_code=status.HTTP_200_OK)
-def get_group_icon(group_id: int, db: Session = Depends(get_db)):
+def get_group_icon(group_id: int, db: Session = Depends(get_db)) -> FileResponse:
     group = get_group_by_id(db=db, group_id=group_id)
 
-    if not group.icon_img:
+    if not group.profile_img:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Group icon image not found")
 
     return generate_file_response(Path(group.profile_img))
 
 
 @router.get("/group/{group_id}/background", tags=["groups"], status_code=status.HTTP_200_OK)
-def get_group_background(group_id: int, db: Session = Depends(get_db)):
+def get_group_background(group_id: int, db: Session = Depends(get_db)) -> FileResponse:
     group = get_group_by_id(db=db, group_id=group_id)
 
     if not group.background_img:
@@ -64,7 +64,7 @@ def get_group_background(group_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/post/{post_id}/image", tags=["posts", "group posts"], status_code=status.HTTP_200_OK)
-def get_post_image(post_id: int, current_user: DBUser = Depends(get_current_user),  db: Session = Depends(get_db)):
+def get_post_image(post_id: int, current_user: DBUser = Depends(get_current_user),  db: Session = Depends(get_db)) -> FileResponse:
     post = get_post(db=db, post_id=post_id)
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
