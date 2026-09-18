@@ -70,3 +70,9 @@ class DBUser(Base):
         "DBChatMember",
         back_populates="user",
     )
+
+    sent_group_requests = relationship(
+        "DBGroupRequest",
+        foreign_keys="DBGroupRequest.sender_id",
+        back_populates="sender",
+    )

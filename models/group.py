@@ -38,3 +38,9 @@ class DBGroup(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+    group_requests = relationship(
+        "DBGroupRequest",
+        foreign_keys="DBGroupRequest.group_id",
+        back_populates="group",
+    )
