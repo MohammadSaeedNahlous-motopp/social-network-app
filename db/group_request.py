@@ -2,9 +2,10 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from db.friend import is_friend_with
-from db.group_member import is_group_member
+from db.group_member import is_group_member, join_group
+from db.group_role import get_role_obj
 from db.notification import create_notification
-from models.enums import RequestStatus, NotificationType
+from models.enums import RequestStatus, NotificationType, GroupRole
 from models.friend_request import DBFriendRequest
 from models.group_member import DBGroupMember
 from models.group_request import DBGroupRequest
@@ -49,7 +50,7 @@ async def create_group_request(
         db.query(DBGroup)
         .filter(
             DBGroup.id == request.group_id,
-            not DBUser.is_public,
+            DBGroup.is_public.is_(False),
         )
         .first()
     )
@@ -97,6 +98,27 @@ async def create_group_request(
     return new_group_request
 
 
+def create_group_membership(
+    db: Session,
+    group_id: int,
+    user_id: int,
+) -> DBGroupMember:
+    new_membership = DBGroupMember(
+        group_id=group_id,
+        user_id=user_id,
+        role=get_role_obj(
+            db=db,
+            role=GroupRole.member,
+        ),
+    )
+
+    db.add(new_membership)
+    db.commit()
+    db.refresh(new_membership)
+
+    return new_membership
+
+
 def change_group_request_status(
     group_request_id: int,
     user_id: int,
@@ -142,12 +164,12 @@ def change_group_request_status(
         db.delete(searched_group_request)
 
     elif new_status == RequestStatus.accepted:
-        new_membership = DBGroupMember(
-            user_id=searched_group_request.sender_id,
+        create_group_membership(
+            db=db,
             group_id=searched_group_request.group_id,
+            user_id=searched_group_request.sender_id,
         )
 
-        db.add(new_membership)
         db.delete(searched_group_request)
 
     else:
