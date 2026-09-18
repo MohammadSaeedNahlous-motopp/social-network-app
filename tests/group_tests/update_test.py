@@ -268,7 +268,7 @@ def test_update_group_empty_request(
         f"/groups/edit/{test_group.id}",
         data={},
     )
-    print(response.json())
+
     # Assert
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json()["detail"] == (
