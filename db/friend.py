@@ -30,7 +30,7 @@ def delete_friend(
             detail="Friendship not found!",
         )
 
-    if not can_delete_friendship(user_id=user_id, friendship= searched_friendship):
+    if not can_delete_friendship(user_id=user_id, friendship=searched_friendship):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied!",

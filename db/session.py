@@ -20,10 +20,10 @@ def ensure_utc(dt: datetime) -> datetime:
 
 
 def create_session(user_id: int, db: Session):
-    session_token = secrets.token_urlsafe(32)
+    access_token = secrets.token_urlsafe(32)
     refresh_token = secrets.token_urlsafe(32)
 
-    session_hash = hash_token(session_token)
+    session_hash = hash_token(access_token)
     refresh_hash = hash_token(refresh_token)
 
     new_session = DBSession(
@@ -36,11 +36,12 @@ def create_session(user_id: int, db: Session):
     db.commit()
     db.refresh(new_session)
 
-    return new_session, session_token, refresh_token
+    return new_session, access_token, refresh_token
 
 
-def get_session_by_token(session_token: str, db: Session):
-    session_hash = hash_token(session_token)
+def get_session_by_token(access_token: str, db: Session):
+
+    session_hash = hash_token(access_token)
 
     searched_session = (
         db.query(DBSession).filter(DBSession.session_hash == session_hash).first()
@@ -106,8 +107,8 @@ def refresh_session(refresh_token: str, db: Session):
             detail="Session expired",
         )
 
-    session_token = secrets.token_urlsafe(32)
-    session_hash = hash_token(session_token)
+    access_token = secrets.token_urlsafe(32)
+    session_hash = hash_token(access_token)
 
     searched_session.session_hash = session_hash
     searched_session.session_expires_at = now + timedelta(minutes=30)
@@ -115,11 +116,11 @@ def refresh_session(refresh_token: str, db: Session):
     db.commit()
     db.refresh(searched_session)
 
-    return searched_session, session_token, refresh_token
+    return searched_session, access_token, refresh_token
 
 
-def revoke_session(session_token: str, db: Session):
-    session_hash = hash_token(session_token)
+def revoke_session(access_token: str, db: Session):
+    session_hash = hash_token(access_token)
 
     session = db.query(DBSession).filter(DBSession.session_hash == session_hash).first()
 

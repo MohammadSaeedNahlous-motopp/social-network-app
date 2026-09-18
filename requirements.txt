@@ -4,6 +4,7 @@ sqlalchemy
 python-multipart
 pwdlib[argon2]
 python-jose[cryptography]
+cryptography
 ruff
 httpx
 python-dotenv

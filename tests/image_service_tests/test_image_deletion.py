@@ -32,7 +32,9 @@ def test_update_group_deletes_old_background_image(
         background_img=str(old_background),
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     original_background_img = test_group.background_img
 
@@ -95,7 +97,9 @@ def test_update_group_deletes_old_profile_image(
         background_img="background.jpg",
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     original_profile_img = test_group.profile_img
 
@@ -161,7 +165,9 @@ def test_update_group_background_image_does_not_delete_profile_image(
         background_img=str(old_background),
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     # Act
     response = client.put(
@@ -219,7 +225,9 @@ def test_update_group_profile_image_does_not_delete_background_image(
         background_img=str(old_background),
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     # Act
     response = client.put(
@@ -268,7 +276,9 @@ def test_update_group_image_only_preserves_other_fields(
         background_img="background.jpg",
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     new_background = generate_test_image()
 

@@ -5,7 +5,11 @@ from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
 
 from db.friend import is_friend_with
-from service.permissions import get_user_post_visibility_filter, can_delete_post, can_edit_post
+from service.permissions import (
+    get_user_post_visibility_filter,
+    can_delete_post,
+    can_edit_post,
+)
 
 
 def create_post(
@@ -96,13 +100,10 @@ def get_posts_by_user(
 ):
     """Return posts the current user is allowed to see on a user's wall."""
 
-    query = (
-        db.query(DBPost)
-        .filter(
-            DBPost.user_id == user_id,
-            DBPost.group_id.is_(None),
-            DBPost.is_visible.is_(True),
-        )
+    query = db.query(DBPost).filter(
+        DBPost.user_id == user_id,
+        DBPost.group_id.is_(None),
+        DBPost.is_visible.is_(True),
     )
 
     # Check friendship using the existing method
@@ -111,6 +112,10 @@ def get_posts_by_user(
     )
 
     # Non-friends can only see public posts
-    query = query.filter(get_user_post_visibility_filter(requesting_user_id=current_user_id, user_id=user_id, are_friends=are_friends))
+    query = query.filter(
+        get_user_post_visibility_filter(
+            requesting_user_id=current_user_id, user_id=user_id, are_friends=are_friends
+        )
+    )
 
     return query.order_by(DBPost.created_at.desc())
