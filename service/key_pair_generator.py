@@ -4,6 +4,9 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def generate_key_pair():
     private_key = rsa.generate_private_key(
