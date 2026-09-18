@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import Column, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import String, Integer, Boolean
-
+from models.group_request import DBGroupRequest
 from db.database import Base
 from models.enums import Gender
 

@@ -4,6 +4,7 @@ from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import Integer
 
+
 from db.database import Base
 from models.enums import RequestStatus
 
@@ -57,5 +58,5 @@ class DBGroupRequest(Base):
     group = relationship(
         "DBGroup",
         foreign_keys=[group_id],
-        back_populates="group_requests",
+        back_populates="group_join_requests",
     )

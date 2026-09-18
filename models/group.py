@@ -39,8 +39,7 @@ class DBGroup(Base):
         onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    group_requests = relationship(
+    group_join_requests = relationship(
         "DBGroupRequest",
-        foreign_keys="DBGroupRequest.group_id",
         back_populates="group",
     )
