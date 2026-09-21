@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def generate_key_pair():
     private_key = rsa.generate_private_key(
