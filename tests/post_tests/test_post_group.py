@@ -1,6 +1,6 @@
 from fastapi import status
-from io import BytesIO
-from PIL import Image
+from fastapi.responses import FileResponse
+
 from models.enums import GroupRole
 
 
@@ -55,15 +55,11 @@ def test_group_member_can_delete_own_post(
     post_id = create_response.json()["id"]
 
     # Act
-    delete_response = client.delete(
-        f"/group_posts/{group.id}/posts/{post_id}"
-    )
+    delete_response = client.delete(f"/group_posts/{group.id}/posts/{post_id}")
 
     # Assert
     assert delete_response.status_code == status.HTTP_200_OK
-    assert delete_response.json()["message"] == (
-        "Group post deleted successfully."
-    )
+    assert delete_response.json()["message"] == ("Group post deleted successfully.")
 
 
 def test_group_admin_can_delete_another_members_post(
@@ -123,15 +119,11 @@ def test_group_admin_can_delete_another_members_post(
     )
 
     # Act
-    delete_response = client.delete(
-        f"/group_posts/{group.id}/posts/{post_id}"
-    )
+    delete_response = client.delete(f"/group_posts/{group.id}/posts/{post_id}")
 
     # Assert
     assert delete_response.status_code == status.HTTP_200_OK
-    assert delete_response.json()["message"] == (
-        "Group post deleted successfully."
-    )
+    assert delete_response.json()["message"] == ("Group post deleted successfully.")
 
 
 def test_normal_member_cannot_delete_another_members_post(
@@ -202,14 +194,12 @@ def test_normal_member_cannot_delete_another_members_post(
     )
 
     # Act
-    delete_response = client.delete(
-        f"/group_posts/{group.id}/posts/{post_id}"
-    )
+    delete_response = client.delete(f"/group_posts/{group.id}/posts/{post_id}")
 
     # Assert
     assert delete_response.status_code == status.HTTP_403_FORBIDDEN
     assert delete_response.json()["detail"] == (
-        "Only a group administrator or the post owner can delete this post."
+        "Only a group administrator or the owner of the post that belongs to a group to can delete this post."
     )
 
 
@@ -286,6 +276,8 @@ def test_group_member_can_create_post_with_image(
     create_test_group,
     create_test_group_member,
     get_test_group_role,
+    generate_test_image,
+    get_response_filename,
 ):
     # Arrange
     owner = create_test_user(
@@ -316,11 +308,7 @@ def test_group_member_can_create_post_with_image(
         role=get_test_group_role(GroupRole.member),
     )
 
-    image_file = BytesIO()
-
-    image = Image.new("RGB", (10, 10))
-    image.save(image_file, format="PNG")
-    image_file.seek(0)
+    image_file = generate_test_image(image_format="png")
 
     # Act
     response = client.post(
@@ -342,8 +330,11 @@ def test_group_member_can_create_post_with_image(
     # Assert
     assert response.status_code == status.HTTP_201_CREATED
     assert response.json()["title"] == "Group post with image"
-    assert response.json()["image_url"] is not None
-    assert response.json()["image_url"].endswith(".png")
+
+    image_response: FileResponse = client.get(
+        f"/images/post/{response.json()['id']}/image"
+    )
+    assert image_response.status_code == status.HTTP_200_OK
 
 
 def test_get_group_posts_with_pagination(
@@ -421,10 +412,7 @@ def test_get_group_posts_with_pagination(
 
     assert len(posts) == 2
 
-    assert all(
-        post["group_id"] == group.id
-        for post in posts
-    )
+    assert all(post["group_id"] == group.id for post in posts)
 
     returned_titles = {post["title"] for post in posts}
 
@@ -450,9 +438,10 @@ def test_get_group_posts_group_not_found(client, authenticated_user):
             "page_size": 10,
         },
     )
-    #Assert
+    # Assert
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Group not found"
+
 
 def test_non_member_can_view_posts_in_public_group(
     client,
@@ -531,6 +520,7 @@ def test_non_member_can_view_posts_in_public_group(
     assert data["items"][0]["title"] == "Public Group Post"
     assert data["total"] == 1
 
+
 def test_non_member_cannot_view_posts_in_private_group(
     client,
     authenticated_user,
@@ -604,4 +594,3 @@ def test_non_member_cannot_view_posts_in_private_group(
     assert response.json()["detail"] == (
         "You must be a group member to view posts in this private group."
     )
-

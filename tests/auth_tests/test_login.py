@@ -12,7 +12,7 @@ def unique_email(prefix="test"):
 # ============================================================
 
 
-def test_login_success(client, create_test_user):
+def test_login_success(client, create_test_user, db):
     email = unique_email("login_success")
 
     user = create_test_user(
@@ -33,8 +33,20 @@ def test_login_success(client, create_test_user):
     data = response.json()
 
     assert "access_token" in data
+    assert "refresh_token" in data
     assert data["token_type"] == "bearer"
     assert data["user_id"] == user.id
+
+    # Verify that a server-side session was actually created.
+    from db.session import hash_token
+    from models.session import DBSession
+
+    session = db.query(DBSession).filter(DBSession.user_id == user.id).first()
+
+    assert session is not None
+    assert session.session_hash == hash_token(data["access_token"])
+    assert session.refresh_hash == hash_token(data["refresh_token"])
+    assert session.revoked_at is None
 
 
 def test_login_wrong_password(client, create_test_user):
@@ -55,7 +67,7 @@ def test_login_wrong_password(client, create_test_user):
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    assert response.json()["detail"] == ("Incorrect email or password")
+    assert response.json()["detail"] == "Incorrect email or password"
 
 
 def test_login_user_not_found(client):
@@ -71,7 +83,7 @@ def test_login_user_not_found(client):
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    assert response.json()["detail"] == ("Incorrect email or password")
+    assert response.json()["detail"] == "Incorrect email or password"
 
 
 def test_login_missing_password(client):

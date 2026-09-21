@@ -19,7 +19,7 @@ def test_get_friend_requests_without_authentication(client):
 
 
 def test_accept_friend_request_without_authentication(client):
-    response = client.patch(
+    response = client.delete(
         "/friend-requests/1/accept",
     )
 
@@ -27,7 +27,7 @@ def test_accept_friend_request_without_authentication(client):
 
 
 def test_decline_friend_request_without_authentication(client):
-    response = client.patch(
+    response = client.delete(
         "/friend-requests/1/decline",
     )
 
@@ -35,7 +35,7 @@ def test_decline_friend_request_without_authentication(client):
 
 
 def test_cancel_friend_request_without_authentication(client):
-    response = client.patch(
+    response = client.delete(
         "/friend-requests/1/cancel",
     )
 

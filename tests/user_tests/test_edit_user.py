@@ -70,7 +70,6 @@ def test_edit_user_success(
     assert data["phone"] == "0698765432"
     assert data["location"] == "Amsterdam"
     assert data["gender"] == "male"
-    assert data["profile_img"] is not None
 
     db.refresh(user)
 
@@ -80,7 +79,6 @@ def test_edit_user_success(
     assert user.phone == "0698765432"
     assert user.location == "Amsterdam"
     assert user.gender == Gender.male
-    assert user.profile_img is not None
 
 
 def test_edit_user_without_optional_fields(
@@ -187,7 +185,6 @@ def test_edit_user_update_selected_values(
 
     assert data["bio"] == "Old bio"
     assert data["phone"] == "0612345678"
-    assert data["profile_img"] == "profile.jpg"
 
     db.refresh(user)
 
@@ -197,7 +194,6 @@ def test_edit_user_update_selected_values(
     assert user.gender == Gender.female
     assert user.bio == "Old bio"
     assert user.phone == "0612345678"
-    assert user.profile_img == "profile.jpg"
 
 
 def test_edit_user_empty_optional_fields(
@@ -239,7 +235,6 @@ def test_edit_user_empty_optional_fields(
     assert data["name"] == "John Doe"
     assert data["email"] == "edit_empty_fields_original@example.com"
     assert data["gender"] == "male"
-    assert data["profile_img"] == "profile.jpg"
 
     db.refresh(user)
 

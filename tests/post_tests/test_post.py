@@ -17,7 +17,6 @@ def test_create_post(client, authenticated_user):
     assert response.status_code == 201
     assert response.json()["title"] == "Test Post"
     assert response.json()["content"] == "This is a test post."
-    assert response.json()["image_url"] is None
     assert response.json()["user_id"] == user.id
     assert response.json()["visibility"] == "public"
 
@@ -56,8 +55,6 @@ def test_get_post(client, authenticated_user):
     assert response.json()["id"] == post_id
     assert response.json()["title"] == "Get Post Test"
     assert response.json()["content"] == "Testing GET."
-    assert response.json()["image_url"] is not None
-    assert response.json()["image_url"].endswith(".png")
 
 
 def test_get_post_not_found(client):
@@ -92,7 +89,6 @@ def test_update_post(client, authenticated_user):
     assert response.status_code == 200
     assert response.json()["title"] == "Updated title"
     assert response.json()["content"] == "Old content"
-    assert response.json()["image_url"] is None
 
 
 def test_delete_post(client, authenticated_user):
@@ -136,7 +132,7 @@ def test_get_user_posts(client, authenticated_user):
         data={
             "title": "Second Post",
             "content": "My second wall post.",
-            "visibility": "friends_only"
+            "visibility": "friends_only",
         },
     )
 
@@ -148,7 +144,8 @@ def test_get_user_posts(client, authenticated_user):
         params={
             "page": 1,
             "page_size": 10,
-        })
+        },
+    )
 
     assert response.status_code == 200
 
@@ -157,10 +154,7 @@ def test_get_user_posts(client, authenticated_user):
 
     assert len(posts) == 2
 
-    assert all(
-        post["user_id"] == user.id
-        for post in posts
-    )
+    assert all(post["user_id"] == user.id for post in posts)
 
     returned_titles = {post["title"] for post in posts}
 

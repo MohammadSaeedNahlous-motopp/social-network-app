@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
 from db.database import get_db
-from models.enums import FriendRequestStatus
+from models.enums import RequestStatus
 from models.user import DBUser
 from schemas.friend_request import (
     FriendRequestBase,
@@ -38,10 +38,11 @@ def get_user_pending_friend_requests(
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
-    return friend_request.get_user_pending_friend_requests(
+    query = friend_request.get_user_pending_friend_requests(
         current_user.id,
         db,
     )
+    return query.all()
 
 
 @router.post(
@@ -67,21 +68,24 @@ def get_user_pending_friend_requests(
         404: {"description": "Receiver user was not found."},
     },
 )
-def create_friend_request(
+async def create_friend_request(
     request: FriendRequestBase,
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
-    return friend_request.create_friend_request(
+    friend_request_obj = await friend_request.create_friend_request(
         request,
         current_user.id,
+        current_user.name,
         db,
     )
 
+    return friend_request_obj
 
-@router.patch(
+
+@router.delete(
     "/{friend_request_id}/decline",
-    response_model=FriendRequestDisplayBase,
+    response_model=bool,
     status_code=status.HTTP_200_OK,
     summary="Decline a friend request",
     description=(
@@ -109,14 +113,14 @@ def decline_friend_request(
     return friend_request.change_friend_request_status(
         friend_request_id,
         current_user.id,
-        FriendRequestStatus.declined,
+        RequestStatus.declined,
         db,
     )
 
 
-@router.patch(
+@router.delete(
     "/{friend_request_id}/accept",
-    response_model=FriendRequestDisplayBase,
+    response_model=bool,
     status_code=status.HTTP_200_OK,
     summary="Accept a friend request",
     description=(
@@ -144,14 +148,14 @@ def accept_friend_request(
     return friend_request.change_friend_request_status(
         friend_request_id,
         current_user.id,
-        FriendRequestStatus.accepted,
+        RequestStatus.accepted,
         db,
     )
 
 
-@router.patch(
+@router.delete(
     "/{friend_request_id}/cancel",
-    response_model=FriendRequestDisplayBase,
+    response_model=bool,
     status_code=status.HTTP_200_OK,
     summary="Cancel a friend request",
     description=(
@@ -179,6 +183,6 @@ def cancel_friend_request(
     return friend_request.change_friend_request_status(
         friend_request_id,
         current_user.id,
-        FriendRequestStatus.canceled,
+        RequestStatus.canceled,
         db,
     )

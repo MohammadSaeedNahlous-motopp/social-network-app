@@ -1,13 +1,12 @@
 from pydantic import BaseModel, ConfigDict
 
-from models.enums import FriendRequestStatus
+from models.enums import RequestStatus
 from models.user import DBUser
 
 
 class User(BaseModel):
     id: int
     name: str
-    profile_img: str | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -20,6 +19,6 @@ class FriendRequestDisplayBase(BaseModel):
     id: int
     receiver: User
     sender: User
-    status: FriendRequestStatus
+    status: RequestStatus
 
     model_config = ConfigDict(from_attributes=True)

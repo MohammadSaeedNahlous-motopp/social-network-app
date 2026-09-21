@@ -3,7 +3,7 @@ from sqlalchemy import Column, Enum as SQLEnum, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import String, Integer, Boolean
 from db.database import Base
-from models.enums import FriendRequestStatus
+from models.enums import RequestStatus
 
 
 class DBFriendRequest(Base):
@@ -20,9 +20,9 @@ class DBFriendRequest(Base):
         nullable=False,
     )
     status = Column(
-        SQLEnum(FriendRequestStatus),
+        SQLEnum(RequestStatus),
         nullable=False,
-        default=FriendRequestStatus.pending,
+        default=RequestStatus.pending,
     )
     created_at = Column(
         DateTime(timezone=True),

@@ -1,7 +1,16 @@
 from datetime import datetime, timezone
-
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, Boolean, Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from models.post_reactions import DBPostReaction
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Boolean,
+    Enum,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.database import Base
 from models.enums import PostVisibility
@@ -20,7 +29,9 @@ class DBPost(Base):
 
     content = Column(Text, nullable=False)
 
-    image_url: Mapped[str | None] = mapped_column(String, nullable=True, info={"file_field": True})
+    image_url: Mapped[str | None] = mapped_column(
+        String, nullable=True, info={"file_field": True}
+    )
 
     score = Column(Integer, default=0, nullable=False)
 
@@ -43,4 +54,10 @@ class DBPost(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
+    )
+
+    reactions = relationship(
+        "DBPostReaction",
+        foreign_keys="DBPostReaction.post_id",
+        back_populates="post",
     )

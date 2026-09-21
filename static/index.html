@@ -172,6 +172,62 @@
             background: #dc2626;
         }
 
+        /* Notifications */
+
+        .notifications {
+            padding: 24px 28px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notifications h2 {
+            margin: 0 0 16px;
+            font-size: 18px;
+            color: #1f2937;
+        }
+
+        .notification-area {
+            height: 160px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .notification {
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 9px;
+        }
+
+        .notification:last-child {
+            margin-bottom: 0;
+        }
+
+        .notification-type {
+            font-size: 11px;
+            font-weight: 600;
+            color: #2563eb;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            color: #1f2937;
+        }
+
+        .no-notifications {
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
         /* Chat */
 
         .chat {
@@ -273,6 +329,10 @@
             .message-area {
                 height: 280px;
             }
+
+            .notification-area {
+                height: 140px;
+            }
         }
     </style>
 </head>
@@ -305,12 +365,12 @@
         </div>
 
         <div class="field">
-            <label for="token">JWT Token</label>
+            <label for="token">Session Token</label>
 
             <input
                 id="token"
                 type="password"
-                placeholder="Enter your JWT token"
+                placeholder="Enter your Session token"
             >
         </div>
 
@@ -332,6 +392,27 @@
         >
             <span class="status-dot"></span>
             <span id="statusText">Disconnected</span>
+        </div>
+
+    </div>
+
+
+    <!-- Notifications -->
+
+    <div class="notifications">
+
+        <h2>Notifications</h2>
+
+        <div
+            id="notifications"
+            class="notification-area"
+        >
+            <div
+                id="noNotifications"
+                class="no-notifications"
+            >
+                No notifications yet.
+            </div>
         </div>
 
     </div>
@@ -435,7 +516,7 @@
 
 
         if (!token) {
-            alert("Please enter your JWT token.");
+            alert("Please enter your Session token.");
             return;
         }
 
@@ -489,9 +570,30 @@
             }
 
 
-            // Normal message
+            // Notification
 
-            displayMessage(data);
+            if (data.type === "notification") {
+
+                displayNotification(data);
+
+                return;
+            }
+
+
+            // Normal chat message
+
+            if (data.type === "message") {
+
+                displayMessage(data);
+
+                return;
+            }
+
+
+            console.log(
+                "Unknown WebSocket message:",
+                data
+            );
         };
 
 
@@ -718,6 +820,72 @@
             messages.scrollHeight;
     }
 
+
+    // =====================================================
+    // Display Notifications
+    // =====================================================
+
+    function displayNotification(data) {
+
+        const notifications =
+            document.getElementById(
+                "notifications"
+            );
+
+
+        const noNotifications =
+            document.getElementById(
+                "noNotifications"
+            );
+
+
+        // Remove "No notifications yet."
+
+        if (noNotifications) {
+            noNotifications.remove();
+        }
+
+
+        const notification =
+            document.createElement("div");
+
+        notification.className =
+            "notification";
+
+
+        const type =
+            document.createElement("div");
+
+        type.className =
+            "notification-type";
+
+        type.textContent =
+            data.notification_type;
+
+
+        const message =
+            document.createElement("div");
+
+        message.className =
+            "notification-message";
+
+        message.textContent =
+            data.message;
+
+
+        notification.appendChild(type);
+        notification.appendChild(message);
+
+
+        notifications.prepend(
+            notification
+        );
+    }
+
+
+    // =====================================================
+    // Display Errors
+    // =====================================================
 
     function displayError(error) {
 
