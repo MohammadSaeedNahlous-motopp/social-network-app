@@ -4,6 +4,7 @@ from sqlalchemy import Column, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import String, Integer, Boolean
 from models.group_request import DBGroupRequest
+from models.post_reactions import DBPostReaction
 from db.database import Base
 from models.enums import Gender
 
@@ -75,4 +76,10 @@ class DBUser(Base):
         "DBGroupRequest",
         foreign_keys="DBGroupRequest.sender_id",
         back_populates="sender",
+    )
+
+    post_reactions = relationship(
+        "DBPostReaction",
+        foreign_keys="DBPostReaction.user_id",
+        back_populates="user",
     )

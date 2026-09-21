@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-
+from models.post_reactions import DBPostReaction
 from sqlalchemy import (
     Column,
     DateTime,
@@ -10,7 +10,7 @@ from sqlalchemy import (
     Boolean,
     Enum,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.database import Base
 from models.enums import PostVisibility
@@ -54,4 +54,10 @@ class DBPost(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
+    )
+
+    reactions = relationship(
+        "DBPostReaction",
+        foreign_keys="DBPostReaction.post_id",
+        back_populates="post",
     )
