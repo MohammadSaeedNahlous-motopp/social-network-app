@@ -8,11 +8,15 @@ from models.tag import DBTag
 from service.permissions import can_edit_group
 
 
-def get_all_tags(db: Session, group_id: int | None = None) -> Query[DBGroupTag]:
+def get_all_tags(db: Session, group_id: int | None = None) -> Query[DBTag]:
     if group_id is None:
         return db.query(DBTag)
 
-    return db.query(DBGroupTag).filter(DBGroupTag.group_id == group_id)
+    return (
+        db.query(DBTag)
+        .join(DBGroupTag, DBGroupTag.tag_id == DBTag.id)
+        .filter(DBGroupTag.group_id == group_id)
+    )
 
 
 def add_tags(tags: list[int], group_id: int, current_user_id: int, db: Session) -> None:
@@ -73,4 +77,7 @@ def remove_tags(tags: list[int], group_id: int, current_user_id: int, db: Sessio
     if len(tags_to_remove) == 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="These tags are already not associated with a group")
 
-    db.query(DBGroupTag).filter(DBGroupTag.group_id == group_id and DBGroupTag.tag_id.in_(tags_to_remove)).delete()
+    db.query(DBGroupTag).filter(
+        DBGroupTag.group_id == group_id,
+        DBGroupTag.tag_id.in_(tags_to_remove),
+    ).delete()
