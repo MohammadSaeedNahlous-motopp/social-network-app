@@ -90,6 +90,7 @@ def test_update_post(client, authenticated_user):
     assert response.json()["title"] == "Updated title"
     assert response.json()["content"] == "Old content"
 
+
 def test_delete_post(client, authenticated_user):
     authenticated_user()
 

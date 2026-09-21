@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from db.friend import is_friend_with
-from db.group_member import is_group_member, join_group
+from db.group_member import join_group, get_group_member_role
 from db.group_role import get_role_obj
 from db.notification import create_notification
 from models.enums import RequestStatus, NotificationType, GroupRole
@@ -79,13 +79,14 @@ async def create_group_request(
         )
 
     # Check for an existing membership
-    already_group_member = is_group_member(user_id, request.group_id, db)
+    already_group_member = get_group_member_role(db, request.group_id, user_id)
 
-    if already_group_member:
+    if already_group_member is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You can not send group joining request to already joined group",
         )
+
     new_group_request = DBGroupRequest(
         sender_id=user_id,
         group_id=request.group_id,
