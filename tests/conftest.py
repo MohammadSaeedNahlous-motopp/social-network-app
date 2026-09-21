@@ -18,7 +18,7 @@ from auth.oauth2 import get_current_user
 from db.database import Base, get_db
 from db.hash import Hash
 from db.group_role import get_role_obj
-from db.seed import seed_group_roles
+from db.seed import seed_group_roles, seed_tags
 from main import app
 from models.enums import GroupRole
 from models.user import DBUser
@@ -58,6 +58,7 @@ def db():
 
     try:
         seed_group_roles(db)
+        seed_tags(db)
         yield db
     finally:
         db.close()
