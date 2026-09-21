@@ -40,3 +40,8 @@ class NotificationType(str, PyEnum):
 class PostVisibility(str, PyEnum):
     public = "public"
     friends_only = "friends_only"
+
+
+class PostReactionType(str, PyEnum):
+    like = "like"
+    dislike = "dislike"
