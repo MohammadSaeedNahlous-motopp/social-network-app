@@ -9,7 +9,7 @@ from schemas.post_reaction import (
     PostReactionResponse,
 )
 from db import post_reaction
-from service.pagination import paginate, calculate_total_pages
+from service.pagination import paginate, calculate_total_pages, PaginatedResponse
 
 router = APIRouter(
     prefix="/posts",
@@ -73,7 +73,7 @@ def handle_post_reaction(
 
 @router.get(
     "/{post_id}/reactions",
-    response_model=list[PostReactionResponse],
+    response_model=PaginatedResponse[PostReactionResponse],
     status_code=status.HTTP_200_OK,
     summary="Get reactions for a post",
     description="""
@@ -83,12 +83,12 @@ The authenticated user must have permission to see the post.
 
 Pagination parameters:
 
-- `skip`: Number of reactions to skip.
-- `limit`: Maximum number of reactions to return.
+- `page`: Page number, starting from 1.
+- `page_size`: Maximum number of reactions returned per page.
 """,
     responses={
         200: {
-            "description": "List of reactions for the post.",
+            "description": "Paginated list of reactions for the post.",
         },
         403: {
             "description": (

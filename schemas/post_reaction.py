@@ -22,6 +22,7 @@ class PostReactionResponse(BaseModel):
     post_id: int
     user_id: int
     user: User
+    reaction_type: PostReactionType
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
