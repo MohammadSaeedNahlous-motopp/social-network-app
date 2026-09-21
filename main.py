@@ -13,7 +13,10 @@ from routers import (
     chat,
     message,
     chat_member,
-    comment, group_request, images,
+    comment,
+    images,
+    group_request,
+    post_reaction,
 )
 from db.database import engine, Base, SessionLocal
 from fastapi.staticfiles import StaticFiles
@@ -44,6 +47,7 @@ app.include_router(chat_member.router)
 app.include_router(images.router)
 app.include_router(group_request.router)
 app.include_router(comment.router)
+app.include_router(post_reaction.router)
 
 Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
