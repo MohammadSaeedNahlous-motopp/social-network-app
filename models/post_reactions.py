@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Enum as SQLEnum, DateTime, ForeignKey
+from sqlalchemy import Column, Enum as SQLEnum, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.sqltypes import Integer
 
@@ -10,6 +10,14 @@ from models.enums import PostReactionType
 
 class DBPostReaction(Base):
     __tablename__ = "post_reactions"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "post_id",
+            name="uq_user_post_reaction",
+        ),
+    )
 
     id = Column(
         Integer,
