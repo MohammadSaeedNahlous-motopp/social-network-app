@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from websocket.chat import router as websocket_router
-from db.seed import seed_group_roles
+from db.seed import seed_group_roles, seed_tags
 from routers import (
     authentication,
     user,
@@ -15,6 +15,7 @@ from routers import (
     chat_member,
     images,
     group_request,
+    tag,
 )
 from db.database import engine, Base, SessionLocal
 from fastapi.staticfiles import StaticFiles
@@ -44,7 +45,9 @@ app.include_router(message.router)
 app.include_router(chat_member.router)
 app.include_router(images.router)
 app.include_router(group_request.router)
+app.include_router(tag.router)
 
 Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
     seed_group_roles(db)
+    seed_tags(db)

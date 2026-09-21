@@ -54,7 +54,13 @@ async def create_group(
 def get_searched_groups(
     request_model: GroupSearch = Depends(), db: Session = Depends(get_db)
 ):
-    searched_groups = group.get_groups(db, request_model)
+    tag_id_list: list[int] | None = (
+        [int(tag.strip()) for tag in request_model.tag_ids.split(",")]
+        if request_model.tag_ids
+        else None
+    )
+
+    searched_groups = group.get_groups(db=db, request_model=request_model, tags=tag_id_list)
 
     return searched_groups
 
