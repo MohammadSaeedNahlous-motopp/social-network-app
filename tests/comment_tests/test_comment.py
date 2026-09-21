@@ -200,33 +200,29 @@ def test_comment_owner_can_delete_own_comment(
     db.commit()
     db.refresh(post)
 
-    visible_comment = DBComment(
+    comment = DBComment(
         user_id=user.id,
         post_id=post.id,
-        content="Visible comment",
+        content="Comment to delete",
         is_visible=True,
     )
 
-    deleted_comment = DBComment(
-        user_id=user.id,
-        post_id=post.id,
-        content="Deleted comment",
-        is_visible=False,
-    )
-
-    db.add_all([visible_comment, deleted_comment])
+    db.add(comment)
     db.commit()
+    db.refresh(comment)
 
-    response = client.get(
-        f"/comments/posts/{post.id}?offset=0"
+    response = client.delete(
+        f"/comments/{comment.id}"
     )
 
     assert response.status_code == 200
+    assert response.json() == {
+        "message": "Comment deleted successfully."
+    }
 
-    data = response.json()
+    db.refresh(comment)
 
-    assert len(data["items"]) == 1
-    assert data["items"][0]["content"] == "Visible comment"
+    assert comment.is_visible is False
 
 
 def test_create_comment_post_not_found(
