@@ -18,14 +18,16 @@ async def test_update_group_deletes_old_background_image(
     create_test_group_member,
     get_test_group_role,
     db: Session,
-    get_response_filename
+    get_response_filename,
 ):
     # Arrange
     image = generate_test_image()
     upload_image = image.as_upload_file()
     upload_image.filename = "old_background.jpg"
 
-    image_path = await save_image(file=upload_image, image_type=ImageType.group_background_picture)
+    image_path = await save_image(
+        file=upload_image, image_type=ImageType.group_background_picture
+    )
     image_path: Path = Path(image_path)
     save_dir = image_path.parent
 
@@ -43,7 +45,9 @@ async def test_update_group_deletes_old_background_image(
         background_img=str(old_background),
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     original_background_img = test_group.background_img
 
@@ -60,7 +64,9 @@ async def test_update_group_deletes_old_background_image(
         },
     )
 
-    image_response: FileResponse = client.get(f"/images/group/{test_group.id}/background")
+    image_response: FileResponse = client.get(
+        f"/images/group/{test_group.id}/background"
+    )
 
     # Assert
     assert response.status_code == status.HTTP_200_OK
@@ -92,7 +98,7 @@ async def test_update_group_deletes_old_profile_image(
     create_test_group_member,
     get_test_group_role,
     db: Session,
-    get_response_filename
+    get_response_filename,
 ):
     # Arrange
     image = generate_test_image()
@@ -116,7 +122,9 @@ async def test_update_group_deletes_old_profile_image(
         background_img="background.jpg",
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     original_profile_img = test_group.profile_img
 
@@ -133,7 +141,6 @@ async def test_update_group_deletes_old_profile_image(
         },
     )
     image_response: FileResponse = client.get(f"/images/group/{test_group.id}/icon")
-
 
     # Assert
     assert response.status_code == status.HTTP_200_OK
@@ -185,7 +192,9 @@ def test_update_group_background_image_does_not_delete_profile_image(
         background_img=str(old_background),
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     # Act
     response = client.put(
@@ -223,21 +232,25 @@ async def test_update_group_profile_image_does_not_delete_background_image(
     create_test_group_member,
     get_test_group_role,
     db: Session,
-    get_response_filename
+    get_response_filename,
 ):
     # Arrange
     image = generate_test_image()
     upload_image = image.as_upload_file()
     upload_image.filename = "old_profile.jpg"
 
-    image_path = await save_image(file=upload_image, image_type=ImageType.group_background_picture)
+    image_path = await save_image(
+        file=upload_image, image_type=ImageType.group_background_picture
+    )
     image_path: Path = Path(image_path)
 
     user = authenticated_user(email="profile_only@example.com")
 
     old_background = image_path
 
-    image_path = Path(await save_image(file=upload_image, image_type=ImageType.group_picture))
+    image_path = Path(
+        await save_image(file=upload_image, image_type=ImageType.group_picture)
+    )
 
     old_profile = image_path
 
@@ -251,7 +264,9 @@ async def test_update_group_profile_image_does_not_delete_background_image(
         background_img=str(old_background),
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
 
     # Act
     response = client.put(
@@ -266,8 +281,9 @@ async def test_update_group_profile_image_does_not_delete_background_image(
         },
     )
     profile_response: FileResponse = client.get(f"/images/group/{test_group.id}/icon")
-    background_response: FileResponse = client.get(f"/images/group/{test_group.id}/background")
-
+    background_response: FileResponse = client.get(
+        f"/images/group/{test_group.id}/background"
+    )
 
     # Assert
     assert response.status_code == status.HTTP_200_OK
@@ -294,14 +310,16 @@ async def test_update_group_image_only_preserves_other_fields(
     create_test_group_member,
     get_test_group_role,
     db: Session,
-    get_response_filename
+    get_response_filename,
 ):
     # Arrange
     image = generate_test_image()
     upload_image = image.as_upload_file()
     upload_image.filename = "old_background.jpg"
 
-    image_path = await save_image(file=upload_image, image_type=ImageType.group_background_picture)
+    image_path = await save_image(
+        file=upload_image, image_type=ImageType.group_background_picture
+    )
     image_path: Path = Path(image_path)
     save_dir = image_path.parent
 
@@ -315,7 +333,9 @@ async def test_update_group_image_only_preserves_other_fields(
         background_img=str(image_path),
         is_public=True,
     )
-    create_test_group_member(user=user, group=test_group, role=get_test_group_role(GroupRole.administrator))
+    create_test_group_member(
+        user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
+    )
     original_background = test_group.background_img
     new_background = generate_test_image()
 
@@ -332,8 +352,9 @@ async def test_update_group_image_only_preserves_other_fields(
         },
     )
 
-    image_response: FileResponse = client.get(f"/images/group/{test_group.id}/background")
-
+    image_response: FileResponse = client.get(
+        f"/images/group/{test_group.id}/background"
+    )
 
     # Assert
     assert response.status_code == status.HTTP_200_OK

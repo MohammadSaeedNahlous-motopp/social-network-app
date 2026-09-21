@@ -6,18 +6,14 @@ from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
 
 
-
 # ============================================================
 # PROFILE IMAGE TESTS
 # ============================================================
 
+
 @pytest.mark.asyncio
 async def test_edit_user_profile_image(
-    client,
-    db: Session,
-    authenticated_user,
-    generate_test_image,
-    get_response_filename
+    client, db: Session, authenticated_user, generate_test_image, get_response_filename
 ):
     user = authenticated_user(
         email="profile_image_original@example.com",
@@ -55,11 +51,7 @@ async def test_edit_user_profile_image(
 
 
 def test_edit_user_remove_profile_image(
-    client,
-    db: Session,
-    authenticated_user,
-    generate_test_image,
-    get_response_filename
+    client, db: Session, authenticated_user, generate_test_image, get_response_filename
 ):
     user = authenticated_user(
         email="remove_profile_image@example.com",

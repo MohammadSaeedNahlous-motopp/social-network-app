@@ -277,7 +277,7 @@ def test_group_member_can_create_post_with_image(
     create_test_group_member,
     get_test_group_role,
     generate_test_image,
-    get_response_filename
+    get_response_filename,
 ):
     # Arrange
     owner = create_test_user(
@@ -327,12 +327,13 @@ def test_group_member_can_create_post_with_image(
         },
     )
 
-
     # Assert
     assert response.status_code == status.HTTP_201_CREATED
     assert response.json()["title"] == "Group post with image"
 
-    image_response: FileResponse = client.get(f"/images/post/{response.json()["id"]}/image")
+    image_response: FileResponse = client.get(
+        f"/images/post/{response.json()['id']}/image"
+    )
     assert image_response.status_code == status.HTTP_200_OK
 
 

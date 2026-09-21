@@ -92,7 +92,7 @@ async def test_update_group(
     db: Session,
     update_data,
     expected_data,
-    get_response_filename
+    get_response_filename,
 ):
     # Arrange
     user = authenticated_user(email="update_test@example.com")
@@ -126,7 +126,6 @@ async def test_update_group(
         user=user, group=test_group, role=get_test_group_role(GroupRole.administrator)
     )
 
-
     original_background_img = Path(test_group.background_img).name
     original_profile_img = Path(test_group.profile_img).name
 
@@ -145,8 +144,12 @@ async def test_update_group(
         )
     response = client.put(f"/groups/edit/{test_group.id}", data=form_data, files=files)
 
-    icon_image_response: FileResponse = client.get(f"/images/group/{test_group.id}/icon")
-    background_image_response: FileResponse = client.get(f"/images/group/{test_group.id}/background")
+    icon_image_response: FileResponse = client.get(
+        f"/images/group/{test_group.id}/icon"
+    )
+    background_image_response: FileResponse = client.get(
+        f"/images/group/{test_group.id}/background"
+    )
 
     # Assert
     assert response.status_code == status.HTTP_200_OK
