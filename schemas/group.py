@@ -43,8 +43,6 @@ class GroupView(BaseModel):
     name: str
     description: str | None
     owner: UserDisplay
-    background_img: str | None
-    profile_img: str | None
     is_public: bool
     created_at: datetime
 

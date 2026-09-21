@@ -1,17 +1,9 @@
-from io import BytesIO
+from pathlib import Path
 
-from PIL import Image
+import pytest
+
 from sqlalchemy.orm import Session
-
-
-def create_test_image(image_format="JPEG", size=(100, 100)):
-    image = Image.new("RGB", size)
-    image_bytes = BytesIO()
-
-    image.save(image_bytes, format=image_format)
-    image_bytes.seek(0)
-
-    return image_bytes
+from fastapi.responses import FileResponse
 
 
 # ============================================================
@@ -19,17 +11,16 @@ def create_test_image(image_format="JPEG", size=(100, 100)):
 # ============================================================
 
 
-def test_edit_user_profile_image(
-    client,
-    db: Session,
-    authenticated_user,
+@pytest.mark.asyncio
+async def test_edit_user_profile_image(
+    client, db: Session, authenticated_user, generate_test_image, get_response_filename
 ):
     user = authenticated_user(
         email="profile_image_original@example.com",
         name="Profile Image User",
     )
 
-    image = create_test_image()
+    image = generate_test_image()
 
     response = client.put(
         "/users/edit",
@@ -44,24 +35,23 @@ def test_edit_user_profile_image(
             )
         },
     )
+    image_response: FileResponse = client.get(f"/images/profile/{user.id}")
 
     assert response.status_code == 200
+    assert image_response.status_code == 200
 
     data = response.json()
 
     assert data["bio"] == "Updated bio"
-    assert data["profile_img"] is not None
 
     db.refresh(user)
 
     assert user.bio == "Updated bio"
-    assert user.profile_img is not None
+    assert Path(user.profile_img).name == get_response_filename(image_response)
 
 
 def test_edit_user_remove_profile_image(
-    client,
-    db: Session,
-    authenticated_user,
+    client, db: Session, authenticated_user, generate_test_image, get_response_filename
 ):
     user = authenticated_user(
         email="remove_profile_image@example.com",
@@ -69,7 +59,7 @@ def test_edit_user_remove_profile_image(
     )
 
     # First upload a REAL profile image
-    image = create_test_image()
+    image = generate_test_image()
 
     response = client.put(
         "/users/edit",
@@ -82,13 +72,17 @@ def test_edit_user_remove_profile_image(
         },
     )
 
+    image_response: FileResponse = client.get(f"/images/profile/{user.id}")
+
     assert response.status_code == 200
+    assert image_response.status_code == 200
 
     db.refresh(user)
 
-    assert user.profile_img is not None
+    assert Path(user.profile_img).exists()
 
     # Now remove the profile image
+    old_img_path = Path(user.profile_img)
     response = client.put(
         "/users/edit",
         data={
@@ -98,10 +92,7 @@ def test_edit_user_remove_profile_image(
 
     assert response.status_code == 200
 
-    data = response.json()
-
-    assert data["profile_img"] is None
-
     db.refresh(user)
 
     assert user.profile_img is None
+    assert not Path(old_img_path).exists()

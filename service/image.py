@@ -8,7 +8,7 @@ from models.enums import ImageType
 
 
 def get_image_path(image_type: ImageType):
-    return Path(f"uploads/{image_type}s")
+    return Path(f"uploads/{image_type.value}s")
 
 
 ALLOWED_CONTENT_TYPES = {
