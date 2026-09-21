@@ -5,8 +5,9 @@ from db.friend import is_friend_with
 from db.group_member import get_group_member_role
 from db.post import get_post
 from models.comment import DBComment
-from schemas.comment import CommentCreate
+from schemas.comment import CommentCreate, CommentResponse
 from models.enums import GroupRole
+from models.user import DBUser
 
 def get_comment(
     db: Session,
@@ -83,7 +84,86 @@ def create_comment(
     db.commit()
     db.refresh(new_comment)
 
-    return new_comment
+    user = (
+        db.query(DBUser)
+        .filter(DBUser.id == new_comment.user_id)
+        .first()
+    )
+
+    result = CommentResponse(
+        id=new_comment.id,
+        user_id=new_comment.user_id,
+        name=user.name,
+        post_id=new_comment.post_id,
+        content=new_comment.content,
+        is_visible=new_comment.is_visible,
+        created_at=new_comment.created_at,
+        updated_at=new_comment.updated_at
+    )
+
+    return result
+
+
+def get_comments_by_post(
+    db: Session,
+    post_id: int,
+    offset: int = 0
+):
+    """Return visible comments for a personal or group post."""
+
+    post = get_post(
+        db=db,
+        post_id=post_id,
+    )
+
+    if post is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found."
+        )
+
+    comments = (
+        db.query(
+            DBComment,
+            DBUser.name
+        )
+        .join(
+            DBUser,
+            DBComment.user_id == DBUser.id
+        )
+        .filter(
+            DBComment.post_id == post_id,
+            DBComment.is_visible.is_(True)
+        )
+        .order_by(DBComment.created_at.asc())
+        .offset(offset)
+        .limit(11)
+        .all()
+    )
+
+    has_more = len(comments) > 10
+    comments = comments[:10]
+
+    results = []
+
+    for comment, name in comments:
+        result = CommentResponse(
+            id=comment.id,
+            user_id=comment.user_id,
+            name=name,
+            post_id=comment.post_id,
+            content=comment.content,
+            is_visible=comment.is_visible,
+            created_at=comment.created_at,
+            updated_at=comment.updated_at
+        )
+
+        results.append(result)
+
+    next_offset = offset + 10 if has_more else None
+
+    return results, has_more, next_offset
+
 
 def delete_comment(
     db: Session,

@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
 from db import comment as db_comment
 from db.database import get_db
 from models.user import DBUser
-from schemas.comment import CommentCreate, CommentResponse
+from schemas.comment import CommentCreate, CommentResponse, CommentListResponse
 
 
 router = APIRouter(
@@ -48,6 +48,41 @@ def create_comment(
         user_id=current_user.id
     )
     return results
+
+
+@router.get(
+    "/posts/{post_id}",
+    response_model=CommentListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get comments for a post",
+    description=(
+        "Retrieves visible comments for a post in batches. "
+        "Each request returns up to 10 comments."
+    ),
+    response_description="A batch of comments for the post.",
+    responses={
+        200: {"description": "Comments retrieved successfully."},
+        404: {"description": "The post was not found."},
+    },
+)
+def get_post_comments(
+    post_id: int,
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db)
+):
+    """Return visible comments for a post using load-more pagination."""
+
+    comments, has_more, next_offset = db_comment.get_comments_by_post(
+        db=db,
+        post_id=post_id,
+        offset=offset
+    )
+
+    return CommentListResponse(
+        items=comments,
+        has_more=has_more,
+        next_offset=next_offset
+    )
 
 
 @router.delete(

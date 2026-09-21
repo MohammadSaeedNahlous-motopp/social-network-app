@@ -13,6 +13,7 @@ from routers import (
     chat,
     message,
     chat_member,
+    comment,
 )
 from db.database import engine, Base, SessionLocal
 from fastapi.staticfiles import StaticFiles
@@ -40,6 +41,7 @@ app.include_router(websocket_router)
 app.include_router(chat.router)
 app.include_router(message.router)
 app.include_router(chat_member.router)
+app.include_router(comment.router)
 
 Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
