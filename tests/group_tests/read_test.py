@@ -1,5 +1,6 @@
 import pytest
 from fastapi import status
+from sqlalchemy.orm import Session
 
 
 def test_get_group_by_id(client, create_test_user, create_test_group):
@@ -120,3 +121,213 @@ def test_search_groups_without_parameters(client):
     assert response.json()["detail"] == (
         "At least one field must be provided for search"
     )
+
+
+def test_search_groups_by_all_tags(
+    client,
+    db: Session,
+    authenticated_user,
+    create_test_group,
+    add_test_tags,
+):
+    user = authenticated_user()
+
+    group_1 = create_test_group(
+        owner=user,
+        name="Python and JavaScript",
+    )
+    add_test_tags(group_1, [1, 2])
+
+    group_2 = create_test_group(
+        owner=user,
+        name="Python only",
+    )
+    add_test_tags(group_2, [1])
+
+    group_3 = create_test_group(
+        owner=user,
+        name="JavaScript only",
+    )
+    add_test_tags(group_3, [2])
+
+    response = client.get(
+        "/groups/search",
+        params={"tag_ids": "1,2"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Python and JavaScript"
+
+
+def test_search_groups_with_extra_tags(
+    client,
+    db: Session,
+    authenticated_user,
+    create_test_group,
+    add_test_tags,
+):
+    user = authenticated_user()
+
+    test_group = create_test_group(
+        owner=user,
+        name="Many Tags",
+    )
+
+    add_test_tags(test_group, [1, 2, 3, 5])
+
+    response = client.get(
+        "/groups/search",
+        params={"tag_ids": "1,2"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Many Tags"
+
+    assert {tag["id"] for tag in data[0]["tags"]} == {1, 2, 3, 5}
+
+
+def test_search_groups_excludes_groups_missing_tag(
+    client,
+    db: Session,
+    authenticated_user,
+    create_test_group,
+    add_test_tags,
+):
+    user = authenticated_user()
+
+    group_1 = create_test_group(
+        owner=user,
+        name="Has Both",
+    )
+    add_test_tags(group_1, [1, 2])
+
+    group_2 = create_test_group(
+        owner=user,
+        name="Missing JavaScript",
+    )
+    add_test_tags(group_2, [1])
+
+    response = client.get(
+        "/groups/search",
+        params={"tag_ids": "1,2"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Has Both"
+
+
+def test_search_groups_by_name_and_tags(
+    client,
+    db: Session,
+    authenticated_user,
+    create_test_group,
+    add_test_tags,
+):
+    user = authenticated_user()
+
+    group_1 = create_test_group(
+        owner=user,
+        name="Python Backend",
+    )
+    add_test_tags(group_1, [1, 3])
+
+    group_2 = create_test_group(
+        owner=user,
+        name="Python Frontend",
+    )
+    add_test_tags(group_2, [1, 4])
+
+    group_3 = create_test_group(
+        owner=user,
+        name="JavaScript Backend",
+    )
+    add_test_tags(group_3, [2, 3])
+
+    response = client.get(
+        "/groups/search",
+        params={
+            "name": "Python",
+            "tag_ids": "1,3",
+        },
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Python Backend"
+
+
+def test_search_groups_by_single_tag(
+    client,
+    db: Session,
+    authenticated_user,
+    create_test_group,
+    add_test_tags,
+):
+    user = authenticated_user()
+
+    group_1 = create_test_group(
+        owner=user,
+        name="Python Group",
+    )
+    add_test_tags(group_1, [1])
+
+    group_2 = create_test_group(
+        owner=user,
+        name="JavaScript Group",
+    )
+    add_test_tags(group_2, [2])
+
+    response = client.get(
+        "/groups/search",
+        params={"tag_ids": "1"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Python Group"
+
+
+def test_search_groups_with_spaces_in_tag_ids(
+    client,
+    db: Session,
+    authenticated_user,
+    create_test_group,
+    add_test_tags,
+):
+    user = authenticated_user()
+
+    test_group = create_test_group(
+        owner=user,
+        name="Python JavaScript",
+    )
+    add_test_tags(test_group, [1, 2])
+
+    response = client.get(
+        "/groups/search",
+        params={"tag_ids": "1, 2"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["name"] == "Python JavaScript"

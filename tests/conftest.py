@@ -4,6 +4,8 @@ import os
 
 from cryptography.fernet import Fernet
 
+from models.group_tags import DBGroupTag
+
 # Generate a temporary master key for the test environment.
 # This means tests do not depend on the local .env file.
 os.environ["MASTER_KEY"] = Fernet.generate_key().decode()
@@ -18,7 +20,7 @@ from auth.oauth2 import get_current_user
 from db.database import Base, get_db
 from db.hash import Hash
 from db.group_role import get_role_obj
-from db.seed import seed_group_roles
+from db.seed import seed_group_roles, seed_tags
 from main import app
 from models.enums import GroupRole
 from models.user import DBUser
@@ -58,6 +60,7 @@ def db():
 
     try:
         seed_group_roles(db)
+        seed_tags(db)
         yield db
     finally:
         db.close()
@@ -248,3 +251,22 @@ def get_response_filename():
         return message.get_filename()
 
     return _get_response_filename
+
+
+@pytest.fixture
+def add_test_tags(db: Session):
+    def _add_test_tags(group: DBGroup, tag_ids: list[int]):
+        for tag_id in set(tag_ids):
+            db.add(
+                DBGroupTag(
+                    group_id=group.id,
+                    tag_id=tag_id,
+                )
+            )
+
+        db.commit()
+        db.refresh(group)
+
+        return group
+
+    return _add_test_tags

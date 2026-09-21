@@ -27,6 +27,12 @@ class DBGroup(Base):
         "DBGroupMember", back_populates="group", cascade="all, delete-orphan"
     )
 
+    tags = relationship("DBGroupTag", back_populates="group", cascade="all, delete-orphan")
+
+    @property
+    def tag_list(self):
+        return [group_tag.tag for group_tag in self.tags]
+
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,
