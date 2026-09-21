@@ -4,7 +4,7 @@ from sqlalchemy import Column, DateTime
 from sqlalchemy.sql.sqltypes import Integer, String
 
 
-class DBUser(Base):
+class DBTag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)

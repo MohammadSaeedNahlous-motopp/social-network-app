@@ -7,7 +7,7 @@ from sqlalchemy.sql.sqltypes import Integer
 from db.database import Base
 
 
-class DBGroupMember(Base):
+class DBGroupTag(Base):
     __tablename__ = "group_tags"
     __table_args__ = (
         UniqueConstraint(
@@ -22,7 +22,7 @@ class DBGroupMember(Base):
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
     group = relationship("DBGroup", back_populates="tags")
 
-    tag_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False)
     tag = relationship("DBTag")
 
     created_at = Column(
