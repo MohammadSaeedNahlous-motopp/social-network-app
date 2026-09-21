@@ -4,6 +4,8 @@ from schemas.post import PostCreate, PostUpdate
 from models.enums import PostVisibility
 from models.friend import DBFriend
 from db.friend import is_friend_with
+from models.group_member import DBGroupMember
+from sqlalchemy import or_, select
 
 
 def create_post(
@@ -136,3 +138,42 @@ def get_posts_by_user(
     )
 
     return query
+
+
+def get_feed(
+    db: Session,
+    user_id: int,
+):
+    """Return posts for the authenticated user's feed."""
+
+    friend_ids = (
+        db.query(DBFriend.friend_id)
+        .filter(DBFriend.user_id == user_id)
+    )
+
+    group_ids = (
+        db.query(DBGroupMember.group_id)
+        .filter(DBGroupMember.user_id == user_id)
+    )
+
+    query = db.query(DBPost).filter(
+        DBPost.is_visible.is_(True),
+        or_(
+            # User's own personal posts
+            (
+                (DBPost.user_id == user_id)
+                & DBPost.group_id.is_(None)
+            ),
+
+            # Friends' personal posts
+            (
+                DBPost.user_id.in_(friend_ids)
+                & DBPost.group_id.is_(None)
+            ),
+
+            # Posts from groups the user belongs to
+            DBPost.group_id.in_(group_ids),
+        ),
+    )
+
+    return query.order_by(DBPost.created_at.desc())
