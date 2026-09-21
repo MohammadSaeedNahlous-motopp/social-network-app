@@ -19,7 +19,7 @@ class DBPostReaction(Base):
 
     post_id = Column(
         Integer,
-        ForeignKey("posts.id"),
+        ForeignKey("post.id"),
         nullable=False,
     )
 
