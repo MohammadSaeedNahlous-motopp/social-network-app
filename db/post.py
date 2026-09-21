@@ -1,10 +1,13 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm.session import Session
 
+from models.friend import DBFriend
 from models.post import DBPost
 from schemas.post import PostCreate, PostUpdate
 
 from db.friend import is_friend_with
+from models.group_member import DBGroupMember
+from sqlalchemy import or_
 from service.permissions import (
     get_user_post_visibility_filter,
     can_delete_post,
@@ -33,6 +36,44 @@ def create_post(
     db.refresh(new_post)
 
     return new_post
+
+def get_feed(
+    db: Session,
+    user_id: int,
+):
+    """Return posts for the authenticated user's feed."""
+
+    friend_ids = (
+        db.query(DBFriend.friend_id)
+        .filter(DBFriend.user_id == user_id)
+    )
+
+    group_ids = (
+        db.query(DBGroupMember.group_id)
+        .filter(DBGroupMember.user_id == user_id)
+    )
+
+    query = db.query(DBPost).filter(
+        DBPost.is_visible.is_(True),
+        or_(
+            # User's own personal posts
+            (
+                (DBPost.user_id == user_id)
+                & DBPost.group_id.is_(None)
+            ),
+
+            # Friends' personal posts
+            (
+                DBPost.user_id.in_(friend_ids)
+                & DBPost.group_id.is_(None)
+            ),
+
+            # Posts from groups the user belongs to
+            DBPost.group_id.in_(group_ids),
+        ),
+    )
+
+    return query.order_by(DBPost.created_at.desc())
 
 
 def get_post(db: Session, post_id: int) -> DBPost | None:
@@ -118,4 +159,4 @@ def get_posts_by_user(
         )
     )
 
-    return query.order_by(DBPost.created_at.desc())
+    return query

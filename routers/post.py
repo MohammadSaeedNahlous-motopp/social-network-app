@@ -65,6 +65,57 @@ async def create_post(
     )
     return result
 
+@router.get(
+    "/feed",
+    response_model=PaginatedResponse[PostResponse],
+    status_code=status.HTTP_200_OK,
+    summary="View personal feed",
+    description=(
+        "Retrieves posts for the authenticated user's feed. "
+        "The feed contains the user's own posts, posts from friends, "
+        "and posts from groups the user belongs to."
+    ),
+    response_description="The authenticated user's paginated feed.",
+    responses={
+        200: {"description": "Feed retrieved successfully."},
+        401: {"description": "Authentication is required to view the feed."},
+    },
+)
+def get_feed(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_user),
+):
+    """Return the authenticated user's paginated feed."""
+
+    query = db_post.get_feed(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    total = query.count()
+
+    paginated_query = paginate(
+        query=query,
+        page=page,
+        page_size=page_size,
+    )
+
+    items = paginated_query.all()
+
+    result_feed = {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": calculate_total_pages(
+            total=total,
+            page_size=page_size,
+        ),
+    }
+    return result_feed
+
 
 @router.get(
     "/{post_id}",
