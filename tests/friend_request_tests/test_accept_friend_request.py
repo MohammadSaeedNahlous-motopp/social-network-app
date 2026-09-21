@@ -30,13 +30,11 @@ def test_accept_friend_request_successfully(
     authenticated_user(email=user_2.email)
 
     # User 2 accepts
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
     assert response.status_code == status.HTTP_200_OK
-
-    assert response.json()["status"] == "accepted"
 
 
 def test_sender_cannot_accept_friend_request(
@@ -64,14 +62,14 @@ def test_sender_cannot_accept_friend_request(
     friend_request_id = response.json()["id"]
 
     # Sender tries to accept their own request
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_cannot_accept_already_processed_friend_request(
+def test_cannot_accept_deleted_friend_request(
     client,
     create_test_user,
     authenticated_user,
@@ -95,22 +93,21 @@ def test_cannot_accept_already_processed_friend_request(
 
     friend_request_id = response.json()["id"]
 
-    # Switch to User 2 and accept
+    # Switch to User 2
     authenticated_user(email=user_2.email)
 
-    response = client.patch(
+    # User 2 accepts
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
     assert response.status_code == status.HTTP_200_OK
 
-    # Try accepting again
-    response = client.patch(
+    # Try accepting the same request again
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    assert response.json()["detail"] == (
-        "This friend request has already been processed!"
-    )
+    assert response.json()["detail"] == "Friend request not found!"

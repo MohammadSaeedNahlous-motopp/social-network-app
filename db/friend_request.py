@@ -1,20 +1,22 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from db.friend import is_friend_with
 from db.notification import create_notification
-from models.enums import FriendRequestStatus, NotificationType
+from models.enums import RequestStatus, NotificationType
 from models.friend_request import DBFriendRequest
 from models.user import DBUser
 from models.friend import DBFriend
 from schemas.friend_request import FriendRequestBase
 from schemas.notification import NotificationCreate
 from websocket.connection_manager import manager
+from service.permissions import can_change_friend_request_status
 
 
 def get_user_pending_friend_requests(user_id: int, db: Session):
     pending_friend_requests = db.query(DBFriendRequest).filter(
         DBFriendRequest.receiver_id == user_id,
-        DBFriendRequest.status == FriendRequestStatus.pending,
+        DBFriendRequest.status == RequestStatus.pending,
     )
 
     return pending_friend_requests
@@ -61,7 +63,7 @@ async def create_friend_request(
                 (DBFriendRequest.sender_id == request.receiver_id)
                 & (DBFriendRequest.receiver_id == user_id)
             ),
-            DBFriendRequest.status == FriendRequestStatus.pending,
+            DBFriendRequest.status == RequestStatus.pending,
         )
         .first()
     )
@@ -72,6 +74,14 @@ async def create_friend_request(
             detail="A pending friend request already exists between these users!",
         )
 
+    # Check for an existing friendship in either direction
+    are_friends = is_friend_with(user_id, request.receiver_id, db)
+
+    if are_friends:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You can not send friend request to a friend",
+        )
     new_friend_request = DBFriendRequest(
         sender_id=user_id,
         receiver_id=request.receiver_id,
@@ -106,30 +116,16 @@ async def create_friend_request(
 def change_friend_request_status(
     friend_request_id: int,
     user_id: int,
-    new_status: FriendRequestStatus,
+    new_status: RequestStatus,
     db: Session,
 ):
-    if new_status == FriendRequestStatus.canceled:
-        searched_friend_request = (
-            db.query(DBFriendRequest)
-            .filter(
-                DBFriendRequest.id == friend_request_id,
-                DBFriendRequest.sender_id == user_id,
-            )
-            .first()
+    searched_friend_request = (
+        db.query(DBFriendRequest)
+        .filter(
+            DBFriendRequest.id == friend_request_id,
         )
-    elif new_status in (
-        FriendRequestStatus.accepted,
-        FriendRequestStatus.declined,
-    ):
-        searched_friend_request = (
-            db.query(DBFriendRequest)
-            .filter(
-                DBFriendRequest.id == friend_request_id,
-                DBFriendRequest.receiver_id == user_id,
-            )
-            .first()
-        )
+        .first()
+    )
 
     if not searched_friend_request:
         raise HTTPException(
@@ -137,23 +133,43 @@ def change_friend_request_status(
             detail="Friend request not found!",
         )
 
-    if searched_friend_request.status != FriendRequestStatus.pending:
+    if not can_change_friend_request_status(
+        user_id=user_id,
+        friend_request=searched_friend_request,
+        cancellation=new_status is RequestStatus.canceled,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied!",
+        )
+
+    if searched_friend_request.status != RequestStatus.pending:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This friend request has already been processed!",
         )
 
-    searched_friend_request.status = new_status
-    if new_status == FriendRequestStatus.accepted:
+    if new_status in (
+        RequestStatus.canceled,
+        RequestStatus.declined,
+    ):
+        db.delete(searched_friend_request)
+
+    elif new_status == RequestStatus.accepted:
         new_friendship = DBFriend(
             user_id=searched_friend_request.sender_id,
             friend_id=searched_friend_request.receiver_id,
         )
+
         db.add(new_friendship)
-        db.commit()
-        db.refresh(new_friendship)
+        db.delete(searched_friend_request)
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid friend request status!",
+        )
 
     db.commit()
-    db.refresh(searched_friend_request)
 
-    return searched_friend_request
+    return True

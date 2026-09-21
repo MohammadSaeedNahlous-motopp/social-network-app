@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session
 
 from auth import oauth2
 from db.hash import Hash
+from db.session import create_session
 from models.user import DBUser
 from schemas.user import UserBase, UserUpdate
+from service.key_pair_generator import generate_key_pair, encrypt_private_key
 
 
 def get_user_by_email(db: Session, email: str):
@@ -18,7 +20,7 @@ def get_user_by_id(db: Session, user_id: int):
     return db.query(DBUser).filter(DBUser.id == user_id).first()
 
 
-def get_token(
+def login(
     db: Session,
     request: OAuth2PasswordRequestForm,
 ):
@@ -38,14 +40,19 @@ def get_token(
     db.commit()
     db.refresh(searched_user)
 
-    access_token = oauth2.create_access_token(data={"sub": str(searched_user.id)})
+    session, access_token, refresh_token = create_session(
+        searched_user.id,
+        db,
+    )
 
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user_id": searched_user.id,
         "user_email": searched_user.email,
         "user_name": searched_user.name,
+        "public_key": searched_user.public_key,
     }
 
 
@@ -70,6 +77,8 @@ def register_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Passwords don't match",
         )
+    public_key, private_key = generate_key_pair()
+    encrypted_private_key = encrypt_private_key(private_key)
 
     new_user = DBUser(
         name=request.name,
@@ -80,6 +89,8 @@ def register_user(
         profile_img=image_path,
         location=request.location,
         gender=request.gender,
+        public_key=public_key,
+        encrypted_private_key=encrypted_private_key,
     )
 
     db.add(new_user)

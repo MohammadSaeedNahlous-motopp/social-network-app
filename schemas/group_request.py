@@ -1,7 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
 from models.enums import RequestStatus
-from models.user import DBUser
 
 
 class User(BaseModel):
@@ -11,13 +10,20 @@ class User(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class FriendRequestBase(BaseModel):
-    receiver_id: int
-
-
-class FriendRequestDisplayBase(BaseModel):
+class Group(BaseModel):
     id: int
-    receiver: User
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GroupRequestBase(BaseModel):
+    group_id: int
+
+
+class GroupRequestDisplayBase(BaseModel):
+    id: int
+    group: Group
     sender: User
     status: RequestStatus
 

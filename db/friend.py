@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from db.user import get_user_by_id
 from models.friend import DBFriend
+from service.permissions import can_delete_friendship
 
 
 def get_friends(user_id: int, db: Session):
@@ -18,7 +19,6 @@ def delete_friend(
     searched_friendship = (
         db.query(DBFriend)
         .filter(
-            DBFriend.user_id == user_id,
             DBFriend.id == friendship_id,
         )
         .first()
@@ -28,6 +28,12 @@ def delete_friend(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Friendship not found!",
+        )
+
+    if not can_delete_friendship(user_id=user_id, friendship=searched_friendship):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied!",
         )
 
     reverse_friendship = (

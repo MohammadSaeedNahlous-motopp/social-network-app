@@ -29,17 +29,15 @@ def test_decline_friend_request_successfully(
     # Switch to User 2
     authenticated_user(email=user_2.email)
 
-    # Decline
-    response = client.patch(
+    # User 2 declines
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/decline",
     )
 
     assert response.status_code == status.HTTP_200_OK
 
-    assert response.json()["status"] == "declined"
 
-
-def test_cannot_decline_already_processed_friend_request(
+def test_cannot_decline_deleted_friend_request(
     client,
     create_test_user,
     authenticated_user,
@@ -66,20 +64,18 @@ def test_cannot_decline_already_processed_friend_request(
     # Switch to User 2
     authenticated_user(email=user_2.email)
 
-    # Decline
-    response = client.patch(
+    # User 2 declines
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/decline",
     )
 
     assert response.status_code == status.HTTP_200_OK
 
-    # Try declining again
-    response = client.patch(
+    # Try declining the deleted request again
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/decline",
     )
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    assert response.json()["detail"] == (
-        "This friend request has already been processed!"
-    )
+    assert response.json()["detail"] == ("Friend request not found!")

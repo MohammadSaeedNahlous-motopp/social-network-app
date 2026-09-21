@@ -1,7 +1,7 @@
-from jose import jwt, JWTError
+from fastapi import HTTPException
 
-from auth.oauth2 import SECRET_KEY, ALGORITHM
-from models.user import DBUser
+from db.session import get_session_by_token
+from db.user import get_user_by_id
 
 
 async def authenticate_websocket(websocket, db):
@@ -12,19 +12,18 @@ async def authenticate_websocket(websocket, db):
         return None
 
     try:
-        payload = jwt.decode(
+        searched_session = get_session_by_token(
             token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM],
+            db,
         )
-
-        user_id = int(payload["sub"])
-
-    except (JWTError, KeyError, ValueError):
+    except HTTPException:
         await websocket.close(code=1008)
         return None
 
-    user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    user = get_user_by_id(
+        db,
+        searched_session.user_id,
+    )
 
     if user is None or not user.is_active:
         await websocket.close(code=1008)

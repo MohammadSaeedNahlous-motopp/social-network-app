@@ -27,13 +27,11 @@ def test_cancel_friend_request_successfully(
     friend_request_id = response.json()["id"]
 
     # User 1 cancels
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/cancel",
     )
 
     assert response.status_code == status.HTTP_200_OK
-
-    assert response.json()["status"] == "canceled"
 
 
 def test_receiver_cannot_cancel_friend_request(
@@ -64,14 +62,14 @@ def test_receiver_cannot_cancel_friend_request(
     authenticated_user(email=user_2.email)
 
     # Receiver tries to cancel
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/cancel",
     )
 
-    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_cannot_cancel_already_processed_friend_request(
+def test_cannot_cancel_deleted_friend_request(
     client,
     create_test_user,
     authenticated_user,
@@ -98,7 +96,7 @@ def test_cannot_cancel_already_processed_friend_request(
     # Switch to User 2 and accept
     authenticated_user(email=user_2.email)
 
-    response = client.patch(
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/accept",
     )
 
@@ -107,13 +105,12 @@ def test_cannot_cancel_already_processed_friend_request(
     # Switch back to User 1
     authenticated_user(email=user_1.email)
 
-    # Try to cancel after acceptance
-    response = client.patch(
+    # The request was deleted after acceptance,
+    # so it cannot be cancelled anymore.
+    response = client.delete(
         f"/friend-requests/{friend_request_id}/cancel",
     )
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    assert response.json()["detail"] == (
-        "This friend request has already been processed!"
-    )
+    assert response.json()["detail"] == ("Friend request not found!")

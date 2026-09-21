@@ -1,8 +1,4 @@
-from datetime import timedelta
-
 import pytest
-
-from auth.oauth2 import create_access_token
 
 
 # =========================================================
@@ -10,11 +6,21 @@ from auth.oauth2 import create_access_token
 # =========================================================
 
 
-def create_websocket_token(user):
-    return create_access_token(
-        data={"sub": str(user.id)},
-        expires_delta=timedelta(minutes=30),
+def create_websocket_token(
+    client,
+    user,
+):
+    response = client.post(
+        "/auth/login",
+        data={
+            "username": user.email,
+            "password": "password123",
+        },
     )
+
+    assert response.status_code == 200
+
+    return response.json()["access_token"]
 
 
 # =========================================================
@@ -31,7 +37,10 @@ def test_websocket_connects_with_valid_token(
         name="WebSocket User",
     )
 
-    token = create_websocket_token(user)
+    token = create_websocket_token(
+        client,
+        user,
+    )
 
     with client.websocket_connect(f"/ws?token={token}") as websocket:
         assert websocket is not None
@@ -48,20 +57,20 @@ def test_websocket_rejects_missing_token(
 def test_websocket_rejects_invalid_token(
     client,
 ):
-    invalid_token = "this-is-not-a-valid-jwt"
+    invalid_token = "this-is-not-a-valid-session-token"
 
     with pytest.raises(Exception):
         with client.websocket_connect(f"/ws?token={invalid_token}"):
             pass
 
 
-def test_websocket_rejects_non_existing_user(
+def test_websocket_rejects_non_existing_session(
     client,
 ):
-    token = create_access_token(data={"sub": "999999"})
+    invalid_token = "non_existing_access_token"
 
     with pytest.raises(Exception):
-        with client.websocket_connect(f"/ws?token={token}"):
+        with client.websocket_connect(f"/ws?token={invalid_token}"):
             pass
 
 
@@ -78,7 +87,10 @@ def test_websocket_rejects_inactive_user(
     user.is_active = False
     db.commit()
 
-    token = create_websocket_token(user)
+    token = create_websocket_token(
+        client,
+        user,
+    )
 
     with pytest.raises(Exception):
         with client.websocket_connect(f"/ws?token={token}"):
@@ -115,8 +127,15 @@ def test_websocket_message_between_friends(
     db.add(friendship)
     db.commit()
 
-    sender_token = create_websocket_token(sender)
-    recipient_token = create_websocket_token(recipient)
+    sender_token = create_websocket_token(
+        client,
+        sender,
+    )
+
+    recipient_token = create_websocket_token(
+        client,
+        recipient,
+    )
 
     with client.websocket_connect(f"/ws?token={sender_token}") as sender_ws:
         with client.websocket_connect(f"/ws?token={recipient_token}") as recipient_ws:
@@ -128,14 +147,25 @@ def test_websocket_message_between_friends(
                 }
             )
 
+            # Sender receives the message.
             sender_message = sender_ws.receive_json()
+
+            # Recipient receives the message.
             recipient_message = recipient_ws.receive_json()
 
-            assert sender_message["content"] == "Hello!"
-            assert recipient_message["content"] == "Hello!"
+            # Recipient also receives a notification.
+            recipient_notification = recipient_ws.receive_json()
 
+            assert sender_message["type"] == "message"
+            assert sender_message["content"] == "Hello!"
             assert sender_message["sender_id"] == sender.id
+
+            assert recipient_message["type"] == "message"
+            assert recipient_message["content"] == "Hello!"
             assert recipient_message["sender_id"] == sender.id
+
+            assert recipient_notification["type"] == "notification"
+            assert recipient_notification["message"] == "Sender Sent You A Message!"
 
 
 def test_websocket_message_to_non_friend(
@@ -152,7 +182,10 @@ def test_websocket_message_to_non_friend(
         name="Recipient",
     )
 
-    sender_token = create_websocket_token(sender)
+    sender_token = create_websocket_token(
+        client,
+        sender,
+    )
 
     with client.websocket_connect(f"/ws?token={sender_token}") as websocket:
         websocket.send_json(
@@ -177,7 +210,10 @@ def test_websocket_message_to_self(
         name="User",
     )
 
-    token = create_websocket_token(user)
+    token = create_websocket_token(
+        client,
+        user,
+    )
 
     with client.websocket_connect(f"/ws?token={token}") as websocket:
         websocket.send_json(
@@ -202,7 +238,10 @@ def test_websocket_message_to_non_existing_user(
         name="Sender",
     )
 
-    token = create_websocket_token(user)
+    token = create_websocket_token(
+        client,
+        user,
+    )
 
     with client.websocket_connect(f"/ws?token={token}") as websocket:
         websocket.send_json(
@@ -232,7 +271,10 @@ def test_websocket_empty_message(
         name="Recipient",
     )
 
-    token = create_websocket_token(sender)
+    token = create_websocket_token(
+        client,
+        sender,
+    )
 
     with client.websocket_connect(f"/ws?token={token}") as websocket:
         websocket.send_json(
