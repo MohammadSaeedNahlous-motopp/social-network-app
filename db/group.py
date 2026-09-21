@@ -1,11 +1,14 @@
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 
 from db.group_role import get_role_obj
+from db.group_tags import add_tags
 from models.enums import GroupRole
 from models.group import DBGroup
 from models.group_member import DBGroupMember
+from models.group_tags import DBGroupTag
 from schemas import group
 from service.permissions import can_edit_group, can_delete_group
 
@@ -49,6 +52,11 @@ def create_group(
     db.commit()
     db.refresh(new_group)
 
+    if group_model.tags is not None and len(group_model.tags) > 0:
+        add_tags(tags=group_model.tags, group_id=new_group.id, current_user_id=owner_id, db=db)
+
+        db.refresh(new_group)
+
     return new_group
 
 
@@ -67,11 +75,12 @@ def get_all_groups(db: Session) -> Query[DBGroup]:
     return db.query(DBGroup)
 
 
-def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
+def get_groups(db: Session, request_model: group.GroupSearch, tags: list[int] | None = None) -> Query[DBGroup]:
     """
     Return all groups that match the search criteria
     :param db: database session
     :param request_model: request model
+    :param tags: list of tags to filter by
     :return: query with all matching groups
     """
     search_data = request_model.model_dump(exclude_unset=True)
@@ -80,6 +89,7 @@ def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
         not search_data
         or request_model.name is None
         and request_model.description is None
+        and not tags
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -87,6 +97,17 @@ def get_groups(db: Session, request_model: group.GroupSearch) -> Query[DBGroup]:
         )
 
     query = db.query(DBGroup)
+
+    if tags:
+        tag_ids = set(tags)
+
+        query = (
+            query
+            .join(DBGroupTag, DBGroupTag.group_id == DBGroup.id)
+            .filter(DBGroupTag.tag_id.in_(tag_ids))
+            .group_by(DBGroup.id)
+            .having(func.count(DBGroupTag.tag_id) == len(tag_ids))
+        )
 
     if request_model.name:
         query = query.filter(DBGroup.name.ilike(f"%{request_model.name}%"))
