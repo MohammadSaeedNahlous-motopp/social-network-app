@@ -17,7 +17,7 @@ from models.user import DBUser
 from schemas.post import PostCreate, PostUpdate, PostResponse
 from service.image import save_image
 from models.enums import ImageType, PostVisibility
-from service.pagination import PaginatedResponse, calculate_total_pages, paginate
+from service.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -94,27 +94,11 @@ def get_feed(
         user_id=current_user.id,
     )
 
-    total = query.count()
-
-    paginated_query = paginate(
+    return PaginatedResponse.from_query(
         query=query,
         page=page,
-        page_size=page_size,
+        page_size=page_size
     )
-
-    items = paginated_query.all()
-
-    result_feed = {
-        "items": items,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": calculate_total_pages(
-            total=total,
-            page_size=page_size,
-        ),
-    }
-    return result_feed
 
 
 @router.get(
@@ -257,24 +241,8 @@ def get_user_posts(
         db=db, user_id=user_id, current_user_id=current_user.id
     )
 
-    total = query.count()
-
-    paginated_query = paginate(
+    return PaginatedResponse.from_query(
         query=query,
         page=page,
-        page_size=page_size,
+        page_size=page_size
     )
-
-    items = paginated_query.all()
-
-    result = {
-        "items": items,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": calculate_total_pages(
-            total=total,
-            page_size=page_size,
-        ),
-    }
-    return result

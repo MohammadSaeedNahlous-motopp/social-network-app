@@ -8,7 +8,7 @@ from models.enums import ImageType
 from models.user import DBUser
 from schemas.post import PostCreate, PostResponse, GroupPostUpdate
 from service.image import save_image
-from service.pagination import PaginatedResponse, calculate_total_pages, paginate
+from service.pagination import PaginatedResponse
 
 router = APIRouter(
     prefix="/group_posts",
@@ -92,26 +92,11 @@ def get_group_posts(
         db=db, group_id=group_id, current_user_id=current_user.id
     )
 
-    total = query.count()
-
-    paginated_query = paginate(
+    return PaginatedResponse.from_query(
         query=query,
         page=page,
-        page_size=page_size,
+        page_size=page_size
     )
-
-    items = paginated_query.all()
-
-    return {
-        "items": items,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": calculate_total_pages(
-            total=total,
-            page_size=page_size,
-        ),
-    }
 
 
 @router.put(
