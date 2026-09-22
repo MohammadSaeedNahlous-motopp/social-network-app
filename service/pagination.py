@@ -1,6 +1,6 @@
 from math import ceil
 from typing import Generic, TypeVar
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 from sqlalchemy.orm import Query
 
 
@@ -43,7 +43,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
         if page_size > 0:
             total_pages = calculate_total_pages(total=total, page_size=page_size)
-            items = paginate_list(items_list=items, page=page, page_size=page_size).all()
+            items = paginate_list(items_list=items, page=page, page_size=page_size)
         else:
             total_pages = 1 if total > 0 else 0
 
