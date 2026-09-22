@@ -6,8 +6,8 @@ from db import chat
 from db.database import get_db
 from models.user import DBUser
 from schemas.chat import ChatCreate, ChatResponse
-from schemas.message import MessageResponse, DecryptedMessageResponse
-from service import pagination
+from schemas.message import DecryptedMessageResponse
+from service.pagination import PaginatedResponse
 
 router = APIRouter(
     prefix="/chat",
@@ -87,7 +87,7 @@ def create_chat(
 @router.get(
     "/messages/{chat_id}",
     summary="Get chat messages",
-    response_model=pagination.PaginatedResponse[DecryptedMessageResponse],
+    response_model=PaginatedResponse[DecryptedMessageResponse],
     responses={
         200: {
             "description": ("Successfully retrieved the paginated chat messages."),
@@ -127,7 +127,7 @@ def get_chat_messages(
     ),
     page_size: int = Query(
         10,
-        ge=1,
+        ge=0,
         le=100,
         description="Number of messages per page. Maximum is 100.",
     ),
@@ -138,25 +138,12 @@ def get_chat_messages(
     items_list = chat.get_decrypted_chat_messages(
         messages, chat_id, current_user.id, db
     )
-    total = len(items_list)
 
-    paginated_list = pagination.paginate_list(
-        items_list=items_list,
+    return PaginatedResponse.from_list(
+        items=items_list,
         page=page,
-        page_size=page_size,
+        page_size=page_size
     )
-
-    result = {
-        "items": paginated_list,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": pagination.calculate_total_pages(
-            total=total,
-            page_size=page_size,
-        ),
-    }
-    return result
 
 
 @router.get(
