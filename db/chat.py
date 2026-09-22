@@ -104,8 +104,6 @@ def get_user_chats(user_id: int, db: Session):
     return chat_list
 
 
-
-
 def get_encrypted_chat_messages(chat_id: int, user_id: int, db: Session):
     is_member = is_chat_member(chat_id, user_id, db)
 
@@ -130,7 +128,6 @@ def get_encrypted_chat_messages(chat_id: int, user_id: int, db: Session):
 
 
 def get_decrypted_chat_messages(messages, chat_id: int, user_id: int, db: Session):
-
 
     members = get_chat_members_by_chat_id(chat_id, db)
 

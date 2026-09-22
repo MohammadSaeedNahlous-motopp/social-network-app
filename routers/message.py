@@ -5,7 +5,7 @@ from auth.oauth2 import get_current_user
 from db import message
 from db.database import get_db
 from models.user import DBUser
-from schemas.message import MessageCreate, MessageResponse
+from schemas.message import MessageCreate, MessageResponse, DecryptedMessageResponse
 
 router = APIRouter(
     prefix="/messages",
@@ -63,7 +63,7 @@ def create_message(
 @router.get(
     "/{message_id}",
     summary="Get message by ID",
-    response_model=MessageResponse,
+    response_model=DecryptedMessageResponse,
     responses={
         200: {
             "description": ("Successfully retrieved the requested message."),

@@ -25,6 +25,17 @@ def paginate(
     return query.offset(offset).limit(page_size)
 
 
+def paginate_list(
+    query: list,
+    page: int,
+    page_size: int,
+) -> list:
+    start = (page - 1) * page_size
+    end = start + page_size
+
+    return query[start:end]
+
+
 def calculate_total_pages(
     total: int,
     page_size: int,

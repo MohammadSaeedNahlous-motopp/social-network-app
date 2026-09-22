@@ -9,6 +9,9 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key,
     load_pem_private_key,
 )
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # For every message generate a key

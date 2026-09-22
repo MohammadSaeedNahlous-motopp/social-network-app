@@ -44,10 +44,6 @@ def get_message_by_id(message_id: int, user_id: int, db: Session):
         db,
     )
 
-
-
-
-
     recipient_id = next(
         member.user_id
         for member in members

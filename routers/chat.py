@@ -6,7 +6,7 @@ from db import chat
 from db.database import get_db
 from models.user import DBUser
 from schemas.chat import ChatCreate, ChatResponse
-from schemas.message import MessageResponse
+from schemas.message import MessageResponse, DecryptedMessageResponse
 from service import pagination
 
 router = APIRouter(
@@ -87,7 +87,7 @@ def create_chat(
 @router.get(
     "/messages/{chat_id}",
     summary="Get chat messages",
-    response_model=pagination.PaginatedResponse[MessageResponse],
+    response_model=pagination.PaginatedResponse[DecryptedMessageResponse],
     responses={
         200: {
             "description": ("Successfully retrieved the paginated chat messages."),
@@ -136,15 +136,15 @@ def get_chat_messages(
 ):
     messages = chat.get_encrypted_chat_messages(chat_id, current_user.id, db)
     query = chat.get_decrypted_chat_messages(messages, chat_id, current_user.id, db)
-    total = query.count()
+    total = len(query)
 
-    paginated_query = pagination.paginate(
+    paginated_query = pagination.paginate_list(
         query=query,
         page=page,
         page_size=page_size,
     )
 
-    items = paginated_query.all()
+    items = paginated_query
 
     result = {
         "items": items,
