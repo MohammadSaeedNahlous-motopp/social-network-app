@@ -84,7 +84,7 @@ async def create_post(
 )
 def get_feed(
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page_size: int = Query(10, ge=0, le=100),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
@@ -236,7 +236,7 @@ def delete_post(
 def get_user_posts(
     user_id: int,
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page_size: int = Query(10, ge=0, le=100),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
