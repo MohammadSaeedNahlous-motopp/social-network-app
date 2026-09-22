@@ -136,7 +136,7 @@ def get_decrypted_chat_messages(messages, chat_id: int, user_id: int, db: Sessio
     if not user_is_chat_member:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You Are Not Authorized!",
+            detail="User has no permissions to see the chat",
         )
 
     result = []

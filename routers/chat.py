@@ -135,19 +135,19 @@ def get_chat_messages(
     current_user: DBUser = Depends(get_current_user),
 ):
     messages = chat.get_encrypted_chat_messages(chat_id, current_user.id, db)
-    query = chat.get_decrypted_chat_messages(messages, chat_id, current_user.id, db)
-    total = len(query)
+    items_list = chat.get_decrypted_chat_messages(
+        messages, chat_id, current_user.id, db
+    )
+    total = len(items_list)
 
-    paginated_query = pagination.paginate_list(
-        query=query,
+    paginated_list = pagination.paginate_list(
+        items_list=items_list,
         page=page,
         page_size=page_size,
     )
 
-    items = paginated_query
-
     result = {
-        "items": items,
+        "items": paginated_list,
         "page": page,
         "page_size": page_size,
         "total": total,

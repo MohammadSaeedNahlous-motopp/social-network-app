@@ -26,14 +26,14 @@ def paginate(
 
 
 def paginate_list(
-    query: list,
+    items_list: list,
     page: int,
     page_size: int,
 ) -> list:
     start = (page - 1) * page_size
     end = start + page_size
 
-    return query[start:end]
+    return items_list[start:end]
 
 
 def calculate_total_pages(
