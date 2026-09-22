@@ -18,6 +18,7 @@ from schemas.post import PostCreate, PostUpdate, PostResponse
 from service.image import save_image
 from models.enums import ImageType, PostVisibility
 from service.pagination import PaginatedResponse, calculate_total_pages, paginate
+from service.permissions import can_see_post
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -130,9 +131,10 @@ def get_feed(
     responses={
         200: {"description": "Post retrieved successfully."},
         404: {"description": "Post not found."},
+        403: {"description": "User does not have permission to view the post."},
     },
 )
-def get_post(post_id: int, db: Session = Depends(get_db)):
+def get_post(post_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
     """Retrieve a visible post by its ID."""
 
     post = db_post.get_post(db, post_id)
@@ -141,6 +143,9 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Post not found."
         )
+
+    if not can_see_post(requesting_user_id=current_user.id, post=post, db=db):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no permission to view the post.")
 
     return post
 
