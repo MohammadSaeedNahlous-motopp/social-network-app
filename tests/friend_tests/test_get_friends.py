@@ -65,9 +65,9 @@ def test_get_friends_successfully(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["friend"]["id"] == user_2.id
-    assert data[0]["friend"]["name"] == user_2.name
+    assert data["total"] == 1
+    assert data["items"][0]["friend"]["id"] == user_2.id
+    assert data["items"][0]["friend"]["name"] == user_2.name
 
 
 def test_get_friends_returns_empty_list(
@@ -82,4 +82,4 @@ def test_get_friends_returns_empty_list(
     response = client.get("/friends/")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == []
+    assert response.json()["total"] == 0

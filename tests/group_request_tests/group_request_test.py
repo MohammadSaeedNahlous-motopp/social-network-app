@@ -244,17 +244,17 @@ def test_get_pending_group_requests(
 
     data = response.json()
 
-    assert len(data) == 1
+    assert data["total"] == 1
 
-    assert data[0]["id"] == group_request.id
+    assert data["items"][0]["id"] == group_request.id
 
-    assert data[0]["group"]["id"] == group.id
-    assert data[0]["group"]["name"] == group.name
+    assert data["items"][0]["group"]["id"] == group.id
+    assert data["items"][0]["group"]["name"] == group.name
 
-    assert data[0]["sender"]["id"] == requester.id
-    assert data[0]["sender"]["name"] == requester.name
+    assert data["items"][0]["sender"]["id"] == requester.id
+    assert data["items"][0]["sender"]["name"] == requester.name
 
-    assert data[0]["status"] == RequestStatus.pending.value
+    assert data["items"][0]["status"] == RequestStatus.pending.value
 
 
 def test_get_pending_group_requests_forbidden_for_non_admin(
