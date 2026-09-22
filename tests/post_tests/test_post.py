@@ -57,7 +57,8 @@ def test_get_post(client, authenticated_user):
     assert response.json()["content"] == "Testing GET."
 
 
-def test_get_post_not_found(client):
+def test_get_post_not_found(client, authenticated_user):
+    authenticated_user()
     response = client.get("/posts/9999")
 
     assert response.status_code == 404

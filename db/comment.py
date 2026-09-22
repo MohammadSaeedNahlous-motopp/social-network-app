@@ -1,13 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from db.friend import is_friend_with
-from db.group_member import get_group_member_role
 from db.post import get_post
 from models.comment import DBComment
 from schemas.comment import CommentCreate, CommentResponse
-from models.enums import GroupRole
 from models.user import DBUser
+from service.permissions import can_see_post, can_delete_post
+
 
 def get_comment(
     db: Session,
@@ -43,32 +42,16 @@ def create_comment(
             detail="Post not found."
         )
 
-    # Personal post
-    if post.group_id is None:
-
-        # The post owner can comment on their own post
-        if post.user_id != user_id:
-            are_friends = is_friend_with(
-                user_id=post.user_id,
-                current_user_id=user_id,
-                db=db
+    if not can_see_post(requesting_user_id=user_id, post=post, db=db):
+        # Personal post
+        if post.group_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the post owner or their friends can comment on this post.",
             )
 
-            if not are_friends:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Only the post owner or their friends can comment on this post.",
-                )
-
-    # Group post
-    else:
-        user_role = get_group_member_role(
-            db=db,
-            group_id=post.group_id,
-            user_id=user_id
-        )
-
-        if user_role is None:
+        # Group post
+        else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You must be a group member to comment on this post.",
@@ -107,7 +90,9 @@ def create_comment(
 def get_comments_by_post(
     db: Session,
     post_id: int,
-    offset: int = 0
+    requesting_user_id: int,
+    limit: int = 10,
+    offset: int = 0,
 ):
     """Return visible comments for a personal or group post."""
 
@@ -121,6 +106,9 @@ def get_comments_by_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found."
         )
+
+    if not can_see_post(requesting_user_id=requesting_user_id, post=post, db=db):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User does not have permission to view the post.")
 
     comments = (
         db.query(
@@ -137,12 +125,12 @@ def get_comments_by_post(
         )
         .order_by(DBComment.created_at.asc())
         .offset(offset)
-        .limit(11)
+        .limit(limit + 1)
         .all()
     )
 
-    has_more = len(comments) > 10
-    comments = comments[:10]
+    has_more = len(comments) > limit
+    comments = comments[:limit]
 
     results = []
 
@@ -160,7 +148,7 @@ def get_comments_by_post(
 
         results.append(result)
 
-    next_offset = offset + 10 if has_more else None
+    next_offset = offset + limit if has_more else None
 
     return results, has_more, next_offset
 
@@ -195,31 +183,18 @@ def delete_comment(
         )
 
     is_comment_owner = comment.user_id == user_id
-    is_post_owner = post.user_id == user_id
 
-    # Personal post
-    if post.group_id is None:
-        if not is_comment_owner and not is_post_owner:
+    if (not can_delete_post(user_id=user_id, post=post, group_id=post.group_id, db=db)
+        and not is_comment_owner):
+        # Personal post
+        if post.group_id is None:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only the comment owner or post owner can delete this comment.",
             )
 
-    # Group post
-    else:
-        user_role = get_group_member_role(
-            db=db,
-            group_id=post.group_id,
-            user_id=user_id,
-        )
-
-        is_group_admin = user_role == GroupRole.administrator
-
-        if (
-            not is_comment_owner
-            and not is_post_owner
-            and not is_group_admin
-        ):
+        # Group post
+        else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=(

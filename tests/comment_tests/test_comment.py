@@ -1,6 +1,8 @@
 from models.comment import DBComment
 from models.post import DBPost
 
+from fastapi import status
+
 
 def test_post_owner_can_create_comment(
     client,
@@ -108,10 +110,10 @@ def test_get_comments_by_post(
     db.commit()
 
     response = client.get(
-        f"/comments/posts/{post.id}?offset=0"
+        f"/comments/posts/{post.id}?limit=10&offset=0"
     )
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
 
@@ -144,41 +146,44 @@ def test_get_comments_pagination(
     db.commit()
     db.refresh(post)
 
+    total_comments: int = 18
+
     comments = [
         DBComment(
             user_id=user.id,
             post_id=post.id,
             content=f"Comment {i}",
         )
-        for i in range(18)
+        for i in range(total_comments)
     ]
 
     db.add_all(comments)
     db.commit()
 
     # First batch
+    limit = 10
     response = client.get(
-        f"/comments/posts/{post.id}?offset=0"
+        f"/comments/posts/{post.id}?limit={limit}&offset=0"
     )
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
 
-    assert len(data["items"]) == 10
+    assert len(data["items"]) == limit
     assert data["has_more"] is True
-    assert data["next_offset"] == 10
+    assert data["next_offset"] == limit
 
     # Second batch
     response = client.get(
-        f"/comments/posts/{post.id}?offset=10"
+        f"/comments/posts/{post.id}?limit={limit}&offset={limit}"
     )
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
 
-    assert len(data["items"]) == 8
+    assert len(data["items"]) == total_comments - limit
     assert data["has_more"] is False
     assert data["next_offset"] is None
 
@@ -242,12 +247,11 @@ def test_create_comment_post_not_found(
     assert response.json()["detail"] == "Post not found."
 
 
-def test_get_comments_post_not_found(
-    client,
-):
+def test_get_comments_post_not_found(client, authenticated_user):
+    authenticated_user()
     response = client.get(
         "/comments/posts/999999?offset=0"
     )
 
-    assert response.status_code == 404
+    assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Post not found."
