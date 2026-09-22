@@ -67,6 +67,7 @@ def create_comment(
 )
 def get_post_comments(
     post_id: int,
+    limit: int = Query(1, ge=1),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user)
@@ -76,6 +77,8 @@ def get_post_comments(
     comments, has_more, next_offset = db_comment.get_comments_by_post(
         db=db,
         post_id=post_id,
+        requesting_user_id=current_user.id,
+        limit=limit,
         offset=offset
     )
 
