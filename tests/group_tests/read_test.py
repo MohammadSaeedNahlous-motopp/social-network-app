@@ -108,8 +108,8 @@ def test_search_groups(
 
     data = response.json()
 
-    assert len(data) == len(expected_names)
-    assert [group["name"] for group in data] == expected_names
+    assert data["total"] == len(expected_names)
+    assert [group["name"] for group in data["items"]] == expected_names
 
 
 def test_search_groups_without_parameters(client):
@@ -159,8 +159,8 @@ def test_search_groups_by_all_tags(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Python and JavaScript"
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Python and JavaScript"
 
 
 def test_search_groups_with_extra_tags(
@@ -188,10 +188,10 @@ def test_search_groups_with_extra_tags(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Many Tags"
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Many Tags"
 
-    assert {tag["id"] for tag in data[0]["tags"]} == {1, 2, 3, 5}
+    assert {tag["id"] for tag in data["items"][0]["tags"]} == {1, 2, 3, 5}
 
 
 def test_search_groups_excludes_groups_missing_tag(
@@ -224,8 +224,8 @@ def test_search_groups_excludes_groups_missing_tag(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Has Both"
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Has Both"
 
 
 def test_search_groups_by_name_and_tags(
@@ -267,8 +267,8 @@ def test_search_groups_by_name_and_tags(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Python Backend"
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Python Backend"
 
 
 def test_search_groups_by_single_tag(
@@ -301,8 +301,8 @@ def test_search_groups_by_single_tag(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Python Group"
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Python Group"
 
 
 def test_search_groups_with_spaces_in_tag_ids(
@@ -329,5 +329,5 @@ def test_search_groups_with_spaces_in_tag_ids(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "Python JavaScript"
+    assert data["total"] == 1
+    assert data["items"][0]["name"] == "Python JavaScript"

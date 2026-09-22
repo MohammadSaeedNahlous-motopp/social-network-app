@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, status, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -13,7 +13,7 @@ from schemas.post import PostResponse
 from db import post as db_post
 from db import user, group_member
 from service.image import save_image
-
+from service.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -86,14 +86,20 @@ def edit_user_active_state(
     return user.edit_user_active_state(db, current_user.id)
 
 
-@router.get("/{user_id}/membership", response_model=List[GroupView])
+@router.get("/{user_id}/membership", response_model=PaginatedResponse[GroupView])
 def get_user_groups(
     user_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     current_user: DBUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    group_list = group_member.get_user_membership(
+    query = group_member.get_user_membership(
         db=db, user_id=user_id, current_user_id=current_user.id
     )
 
-    return group_list
+    return PaginatedResponse.from_query(
+        query=query,
+        page=page,
+        page_size=page_size
+    )

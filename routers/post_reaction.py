@@ -9,7 +9,7 @@ from schemas.post_reaction import (
     PostReactionResponse,
 )
 from db import post_reaction
-from service.pagination import paginate, calculate_total_pages, PaginatedResponse
+from service.pagination import PaginatedResponse
 
 router = APIRouter(
     prefix="/posts",
@@ -103,7 +103,7 @@ Pagination parameters:
 def get_post_reactions(
     post_id: int,
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page_size: int = Query(10, ge=0, le=100),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
@@ -113,24 +113,8 @@ def get_post_reactions(
         db=db,
     )
 
-    total = query.count()
-
-    paginated_query = paginate(
+    return PaginatedResponse.from_query(
         query=query,
         page=page,
-        page_size=page_size,
+        page_size=page_size
     )
-
-    items = paginated_query.all()
-
-    result = {
-        "items": items,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": calculate_total_pages(
-            total=total,
-            page_size=page_size,
-        ),
-    }
-    return result

@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -11,6 +11,7 @@ from db import group_member
 from models.enums import GroupRole
 from models.user import DBUser
 from schemas.user import UserDisplay
+from service.pagination import PaginatedResponse
 
 router = APIRouter(prefix="/group/{group_id}", tags=["groups"])
 
@@ -18,18 +19,24 @@ router = APIRouter(prefix="/group/{group_id}", tags=["groups"])
 @router.get(
     "/members",
     status_code=status.HTTP_200_OK,
-    response_model=List[tuple[UserDisplay, GroupRole]],
+    response_model=PaginatedResponse[tuple[UserDisplay, GroupRole]],
 )
 def get_group_members(
     group_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     current_user: DBUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    group_members = group_member.get_group_members(
+    query = group_member.get_group_members(
         db=db, group_id=group_id, requesting_user_id=current_user.id
     )
 
-    return group_members
+    return PaginatedResponse.from_query(
+        query=query,
+        page=page,
+        page_size=page_size
+    )
 
 
 @router.get("/is_member/{user_id}", status_code=status.HTTP_200_OK)

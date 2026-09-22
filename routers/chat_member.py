@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -6,6 +6,7 @@ from db import chat_member
 from db.database import get_db
 from models.user import DBUser
 from schemas.chat_member import ChatMemberCreate, ChatMemberResponse
+from service.pagination import PaginatedResponse
 
 router = APIRouter(
     prefix="/chat-member",
@@ -59,7 +60,7 @@ def create_chat_member(
 @router.get(
     "/{chat_id}",
     summary="Get chat members",
-    response_model=list[ChatMemberResponse],
+    response_model=PaginatedResponse[ChatMemberResponse],
     responses={
         200: {
             "description": ("Successfully retrieved all members of the chat."),
@@ -84,9 +85,16 @@ def create_chat_member(
 )
 def get_chat_members_by_chat_id(
     chat_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
-    return chat_member.get_chat_members_by_chat_id(
-        chat_id,
-        db,
+    query = chat_member.get_chat_members_by_chat_id(
+        chat_id=chat_id, db=db,
+    )
+
+    return PaginatedResponse.from_query(
+        query=query,
+        page=page,
+        page_size=page_size
     )

@@ -65,9 +65,9 @@ def test_delete_friend_successfully(
 
     friends = response.json()
 
-    assert len(friends) == 1
+    assert len(friends["items"]) == 1
 
-    friendship_id = friends[0]["id"]
+    friendship_id = friends["items"][0]["id"]
 
     # Delete friendship
     response = client.delete(
@@ -82,7 +82,7 @@ def test_delete_friend_successfully(
     response = client.get("/friends/")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == []
+    assert response.json()["total"] == 0
 
     # Authenticate as User 2
     authenticated_user(
@@ -94,7 +94,7 @@ def test_delete_friend_successfully(
     response = client.get("/friends/")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == []
+    assert response.json()["total"] == 0
 
 
 def test_cannot_delete_someone_else_friendship(
@@ -159,7 +159,7 @@ def test_cannot_delete_someone_else_friendship(
 
     assert response.status_code == status.HTTP_200_OK
 
-    friendship_id = response.json()[0]["id"]
+    friendship_id = response.json()["items"][0]["id"]
 
     # Authenticate as User 3
     authenticated_user(

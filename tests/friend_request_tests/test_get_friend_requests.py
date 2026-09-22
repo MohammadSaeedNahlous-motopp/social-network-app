@@ -34,8 +34,8 @@ def test_get_pending_friend_requests(
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["status"] == "pending"
+    assert len(data["items"]) == 1
+    assert data["items"][0]["status"] == "pending"
 
 
 def test_get_pending_friend_requests_returns_empty_list(
@@ -51,4 +51,4 @@ def test_get_pending_friend_requests_returns_empty_list(
 
     assert response.status_code == status.HTTP_200_OK
 
-    assert response.json() == []
+    assert response.json()["total"] == 0

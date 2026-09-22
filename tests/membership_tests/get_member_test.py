@@ -129,12 +129,12 @@ def test_get_group_members(
     # Assert
     assert response.status_code == status.HTTP_200_OK
 
-    # list[tuple[UserDisplay, GroupRole]]
+    # PaginatedResponse[tuple[UserDisplay, GroupRole]]
     data = response.json()
 
-    assert len(data) == 4
+    assert data["total"] == 4
 
-    emails = {member[0]["email"] for member in data}
+    emails = {member[0]["email"] for member in data["items"]}
 
     assert emails == {
         owner.email,

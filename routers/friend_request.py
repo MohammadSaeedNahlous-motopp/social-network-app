@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -10,7 +10,7 @@ from schemas.friend_request import (
     FriendRequestDisplayBase,
 )
 from db import friend_request
-
+from service.pagination import PaginatedResponse
 
 router = APIRouter(
     prefix="/friend-requests",
@@ -20,7 +20,7 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[FriendRequestDisplayBase],
+    response_model=PaginatedResponse[FriendRequestDisplayBase],
     status_code=status.HTTP_200_OK,
     summary="Get pending friend requests",
     description=(
@@ -35,14 +35,20 @@ router = APIRouter(
     },
 )
 def get_user_pending_friend_requests(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
     query = friend_request.get_user_pending_friend_requests(
-        current_user.id,
-        db,
+        user_id=current_user.id, db=db
     )
-    return query.all()
+
+    return PaginatedResponse.from_query(
+        query=query,
+        page=page,
+        page_size=page_size
+    )
 
 
 @router.post(
