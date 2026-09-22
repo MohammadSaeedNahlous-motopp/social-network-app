@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -7,7 +7,7 @@ from db.database import get_db
 from models.enums import RequestStatus
 from models.user import DBUser
 from schemas.group_request import GroupRequestDisplayBase, GroupRequestBase
-
+from service.pagination import PaginatedResponse
 
 router = APIRouter(
     prefix="/group-requests",
@@ -17,7 +17,7 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[GroupRequestDisplayBase],
+    response_model=PaginatedResponse[GroupRequestDisplayBase],
     status_code=status.HTTP_200_OK,
     summary="Get pending group join requests",
     description=(
@@ -40,6 +40,8 @@ router = APIRouter(
 )
 def get_group_pending_group_requests(
     group_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
@@ -49,7 +51,11 @@ def get_group_pending_group_requests(
         db,
     )
 
-    return query.all()
+    return PaginatedResponse.from_query(
+        query=query,
+        page=page,
+        page_size=page_size
+    )
 
 
 @router.post(

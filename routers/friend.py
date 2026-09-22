@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from auth.oauth2 import get_current_user
@@ -6,7 +6,7 @@ from db import friend
 from db.database import get_db
 from models.user import DBUser
 from schemas.friend import FriendDisplayBase
-
+from service.pagination import PaginatedResponse
 
 router = APIRouter(
     prefix="/friends",
@@ -16,7 +16,7 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[FriendDisplayBase],
+    response_model=PaginatedResponse[FriendDisplayBase],
     status_code=status.HTTP_200_OK,
     summary="Get the authenticated user's friends",
     description=(
@@ -35,10 +35,18 @@ router = APIRouter(
     },
 )
 def get_friends(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     current_user: DBUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return friend.get_friends(current_user.id, db)
+    query = friend.get_friends(user_id=current_user.id, db=db)
+
+    return PaginatedResponse.from_query(
+        query=query,
+        page=page,
+        page_size=page_size
+    )
 
 
 @router.delete(

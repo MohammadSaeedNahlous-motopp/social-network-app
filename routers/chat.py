@@ -18,7 +18,7 @@ router = APIRouter(
 @router.get(
     "/",
     summary="Get user's chats",
-    response_model=list[ChatResponse],
+    response_model=PaginatedResponse[ChatResponse],
     responses={
         200: {
             "description": (
@@ -39,12 +39,19 @@ router = APIRouter(
     ),
 )
 def get_user_chats(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     current_user: DBUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return chat.get_user_chats(
-        current_user.id,
-        db,
+    chat_list = chat.get_user_chats(
+        user_id=current_user.id, db=db
+    )
+
+    return PaginatedResponse.from_list(
+        items=chat_list,
+        page=page,
+        page_size=page_size
     )
 
 
