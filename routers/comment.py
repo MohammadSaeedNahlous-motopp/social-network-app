@@ -68,7 +68,8 @@ def create_comment(
 def get_post_comments(
     post_id: int,
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_user)
 ):
     """Return visible comments for a post using load-more pagination."""
 
