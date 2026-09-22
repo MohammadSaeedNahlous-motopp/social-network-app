@@ -131,7 +131,7 @@ def edit_user(
                 detail="Email already registered!",
             )
 
-    for key, value in request.model_dump(exclude_unset=True).items():
+    for key, value in request.model_dump(exclude_unset=True, exclude_none=True).items():
         setattr(searched_user, key, value)
 
     if remove_profile_img:

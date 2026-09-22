@@ -124,7 +124,7 @@ async def handle_message(
 
         decrypted_chat_message = decrypt_chat_message(
             message,
-            member_user,
+            member_user.encrypted_private_key,
         )
 
         message_data = {
