@@ -35,6 +35,26 @@ class PaginatedResponse(BaseModel, Generic[T]):
             total_pages=total_pages,
         )
 
+    @classmethod
+    def from_list(cls, items: list[T], page: int, page_size: int):
+        page = page if page > 0 else 1
+        page_size = page_size if page_size > 0 else 0
+        total = len(items)
+
+        if page_size > 0:
+            total_pages = calculate_total_pages(total=total, page_size=page_size)
+            items = paginate_list(items_list=items, page=page, page_size=page_size).all()
+        else:
+            total_pages = 1 if total > 0 else 0
+
+        return cls(
+            items=items,
+            page=page,
+            page_size=page_size,
+            total=total,
+            total_pages=total_pages,
+        )
+
 
 
 def paginate(
