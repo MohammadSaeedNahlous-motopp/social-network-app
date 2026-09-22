@@ -60,15 +60,20 @@ class UserUpdate(BaseModel):
         gender: Gender | None = Form(None),
     ):
         form = await request.form()
-
         data = {}
 
+        # Mandatory fields
         if "name" in form:
+            if name is None or not name.strip():
+                raise ValueError("Name cannot be empty.")
             data["name"] = name
 
         if "email" in form:
+            if email is None:
+                raise ValueError("Email cannot be empty.")
             data["email"] = email
 
+        # Optional fields
         if "bio" in form:
             data["bio"] = bio or None
 
