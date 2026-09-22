@@ -9,6 +9,9 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key,
     load_pem_private_key,
 )
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # For every message generate a key
@@ -113,8 +116,8 @@ def decrypt_message(
     return plaintext.decode("utf-8")
 
 
-def decrypt_chat_message(message, user):
-    private_key = decrypt_private_key(user.encrypted_private_key)
+def decrypt_chat_message(message, encrypted_private_key):
+    private_key = decrypt_private_key(encrypted_private_key)
 
     encrypted_aes_key = base64.b64decode(message.encrypted_aes_key)
 

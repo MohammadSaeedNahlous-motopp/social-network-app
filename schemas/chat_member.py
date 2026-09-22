@@ -19,6 +19,6 @@ class ChatMemberResponse(BaseModel):
     id: int
     chat_id: int
     user_id: int
-    joined_at: datetime
+    created_at: datetime
     user: User
     model_config = ConfigDict(from_attributes=True)

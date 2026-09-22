@@ -12,12 +12,11 @@ from models.enums import ChatType
 from models.message import DBMessage
 from schemas.chat import ChatCreate
 from schemas.chat_member import ChatMemberCreate
-from sqlalchemy import func
-
-from service.permissions import can_see_chat
+from sqlalchemy import and_, func
 
 from service.encryption_methods import decrypt_chat_message
 from service.pagination import paginate
+from service.permissions import can_see_chat
 
 
 def create_chat(request: ChatCreate, db: Session):
@@ -130,9 +129,17 @@ def get_encrypted_chat_messages(chat_id: int, user_id: int, db: Session):
 
 def get_decrypted_chat_messages(messages, chat_id: int, user_id: int, db: Session):
 
-    result = []
-
     members = get_chat_members_by_chat_id(chat_id, db)
+
+    user_is_chat_member = any(member.user_id == user_id for member in members)
+
+    if not user_is_chat_member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User has no permissions to see the chat",
+        )
+
+    result = []
 
     for message in messages:
         recipient_id = next(
@@ -143,7 +150,7 @@ def get_decrypted_chat_messages(messages, chat_id: int, user_id: int, db: Sessio
 
         decrypted_message = decrypt_chat_message(
             message,
-            recipient,
+            recipient.encrypted_private_key,
         )
 
         result.append(
