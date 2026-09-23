@@ -138,6 +138,9 @@ def get_chat_messages(
     messages = chat.get_encrypted_chat_messages(chat_id, current_user.id, db)
     items_list = chat.get_decrypted_chat_messages(
         messages, chat_id, current_user.id, db
+    ).sort(
+            key=lambda message: message["created_at"],
+            reverse=True
     )
 
     return PaginatedResponse.from_list(items=items_list, page=page, page_size=page_size)

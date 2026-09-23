@@ -17,7 +17,7 @@ def get_user_pending_friend_requests(user_id: int, db: Session):
     pending_friend_requests = db.query(DBFriendRequest).filter(
         DBFriendRequest.receiver_id == user_id,
         DBFriendRequest.status == RequestStatus.pending,
-    )
+    ).order_by(DBFriendRequest.created_at.desc())
 
     return pending_friend_requests
 

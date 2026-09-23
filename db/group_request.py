@@ -34,7 +34,7 @@ def get_group_pending_join_requests(group_id: int, user_id: int, db: Session):
     pending_group_requests = db.query(DBGroupRequest).filter(
         DBGroupRequest.group_id == group_id,
         DBGroupRequest.status == RequestStatus.pending,
-    )
+    ).order_by(DBGroupRequest.created_at.desc())
 
     return pending_group_requests
 

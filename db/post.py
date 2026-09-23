@@ -146,6 +146,6 @@ def get_posts_by_user(
         get_user_post_visibility_filter(
             requesting_user_id=current_user_id, user_id=user_id, are_friends=are_friends
         )
-    )
+    ).order_by(DBPost.created_at.desc())
 
     return query
