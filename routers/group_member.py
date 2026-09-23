@@ -32,11 +32,7 @@ def get_group_members(
         db=db, group_id=group_id, requesting_user_id=current_user.id
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
 
 
 @router.get("/is_member/{user_id}", status_code=status.HTTP_200_OK)

@@ -44,11 +44,7 @@ def get_user_pending_friend_requests(
         user_id=current_user.id, db=db
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
 
 
 @router.post(

@@ -162,12 +162,12 @@ def change_friend_request_status(
         )
         new_friendship1 = DBFriend(
             user_id=searched_friend_request.receiver_id,
-            friend_id=searched_friend_request.sender_id ,
+            friend_id=searched_friend_request.sender_id,
         )
 
         db.add(new_friendship)
         db.add(new_friendship1)
-        
+
         db.delete(searched_friend_request)
 
     else:

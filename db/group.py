@@ -53,7 +53,12 @@ def create_group(
     db.refresh(new_group)
 
     if group_model.tags is not None and len(group_model.tags) > 0:
-        add_tags(tags=group_model.tags, group_id=new_group.id, current_user_id=owner_id, db=db)
+        add_tags(
+            tags=group_model.tags,
+            group_id=new_group.id,
+            current_user_id=owner_id,
+            db=db,
+        )
 
         db.refresh(new_group)
 
@@ -75,7 +80,9 @@ def get_all_groups(db: Session) -> Query[DBGroup]:
     return db.query(DBGroup)
 
 
-def get_groups(db: Session, request_model: group.GroupSearch, tags: list[int] | None = None) -> Query[DBGroup]:
+def get_groups(
+    db: Session, request_model: group.GroupSearch, tags: list[int] | None = None
+) -> Query[DBGroup]:
     """
     Return all groups that match the search criteria
     :param db: database session
@@ -102,8 +109,7 @@ def get_groups(db: Session, request_model: group.GroupSearch, tags: list[int] | 
         tag_ids = set(tags)
 
         query = (
-            query
-            .join(DBGroupTag, DBGroupTag.group_id == DBGroup.id)
+            query.join(DBGroupTag, DBGroupTag.group_id == DBGroup.id)
             .filter(DBGroupTag.tag_id.in_(tag_ids))
             .group_by(DBGroup.id)
             .having(func.count(DBGroupTag.tag_id) == len(tag_ids))

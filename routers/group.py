@@ -7,7 +7,8 @@ from fastapi import (
     status,
     responses,
     UploadFile,
-    File, Query,
+    File,
+    Query,
 )
 from sqlalchemy.orm import Session
 
@@ -51,12 +52,16 @@ async def create_group(
     return new_group
 
 
-@router.get("/search", status_code=status.HTTP_200_OK, response_model=PaginatedResponse[GroupView])
+@router.get(
+    "/search",
+    status_code=status.HTTP_200_OK,
+    response_model=PaginatedResponse[GroupView],
+)
 def get_searched_groups(
     request_model: GroupSearch = Depends(),
     page: int = Query(1, ge=1),
     page_size: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     tag_id_list: list[int] | None = (
         [int(tag.strip()) for tag in request_model.tag_ids.split(",")]
@@ -66,11 +71,7 @@ def get_searched_groups(
 
     query = group.get_groups(db=db, request_model=request_model, tags=tag_id_list)
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
 
 
 @router.get("/{group_id}", status_code=status.HTTP_200_OK, response_model=GroupView)
@@ -80,19 +81,17 @@ def get_group_by_id(group_id: int, db: Session = Depends(get_db)):
     return searched_group
 
 
-@router.get("/", status_code=status.HTTP_200_OK, response_model=PaginatedResponse[GroupView])
+@router.get(
+    "/", status_code=status.HTTP_200_OK, response_model=PaginatedResponse[GroupView]
+)
 def get_all_groups(
     page: int = Query(1, ge=1),
     page_size: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     query = group.get_all_groups(db)
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
 
 
 @router.put(

@@ -51,11 +51,7 @@ def get_group_pending_group_requests(
         db,
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
 
 
 @router.post(

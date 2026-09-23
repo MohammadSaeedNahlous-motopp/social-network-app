@@ -7,6 +7,7 @@ class TagBase(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class TagView(TagBase):
     id: int
     name: str

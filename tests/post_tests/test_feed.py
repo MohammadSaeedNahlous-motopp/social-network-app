@@ -19,9 +19,7 @@ def test_feed_contains_users_own_posts(
     db.commit()
     db.refresh(post)
 
-    response = client.get(
-        "/posts/feed?page=1&page_size=10"
-    )
+    response = client.get("/posts/feed?page=1&page_size=10")
 
     assert response.status_code == 200
 
@@ -57,24 +55,21 @@ def test_feed_contains_friends_posts(
         content="Post from my friend",
     )
 
-    db.add_all([
-        friendship,
-        friend_post,
-    ])
+    db.add_all(
+        [
+            friendship,
+            friend_post,
+        ]
+    )
     db.commit()
     db.refresh(friend_post)
 
-    response = client.get(
-        "/posts/feed?page=1&page_size=10"
-    )
+    response = client.get("/posts/feed?page=1&page_size=10")
 
     assert response.status_code == 200
 
     data = response.json()
 
-    post_ids = [
-        post["id"]
-        for post in data["items"]
-    ]
+    post_ids = [post["id"] for post in data["items"]]
 
     assert friend_post.id in post_ids

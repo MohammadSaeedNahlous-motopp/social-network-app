@@ -56,7 +56,6 @@ class PaginatedResponse(BaseModel, Generic[T]):
         )
 
 
-
 def paginate(
     query: Query,
     page: int,

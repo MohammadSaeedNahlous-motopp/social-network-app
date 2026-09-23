@@ -90,11 +90,8 @@ def get_chat_members_by_chat_id(
     db: Session = Depends(get_db),
 ):
     query = chat_member.get_chat_members_by_chat_id(
-        chat_id=chat_id, db=db,
+        chat_id=chat_id,
+        db=db,
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)

@@ -144,7 +144,7 @@ def revoke_session(access_token: str, db: Session):
     return session
 
 
-def revoke_all_sessions(user_id: int, db: Session):
+def revoke_all_sessions(user_id: int, db: Session, include_commit: bool = True):
     user_sessions = db.query(DBSession).filter(DBSession.user_id == user_id).all()
 
     now = datetime.now(timezone.utc)
@@ -153,6 +153,7 @@ def revoke_all_sessions(user_id: int, db: Session):
         if session.revoked_at is None:
             session.revoked_at = now
 
-    db.commit()
+    if include_commit:
+        db.commit()
 
     return True
