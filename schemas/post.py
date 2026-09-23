@@ -22,6 +22,7 @@ class PostResponse(BaseModel):
     title: str
     content: str
     score: int
+    reactions_count: int
     is_visible: bool
     created_at: datetime
     updated_at: datetime
