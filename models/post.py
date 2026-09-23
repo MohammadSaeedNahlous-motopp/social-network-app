@@ -8,9 +8,9 @@ from sqlalchemy import (
     String,
     Text,
     Boolean,
-    Enum,
+    Enum, select, func,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, column_property
 
 from db.database import Base
 from models.enums import PostVisibility
@@ -60,4 +60,11 @@ class DBPost(Base):
         "DBPostReaction",
         foreign_keys="DBPostReaction.post_id",
         back_populates="post",
+    )
+
+    reactions_count = column_property(
+        select(func.count(DBPostReaction.id))
+        .where(DBPostReaction.post_id == id)
+        .correlate_except(DBPostReaction)
+        .scalar_subquery()
     )

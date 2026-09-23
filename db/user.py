@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from auth import oauth2
 from db.hash import Hash
-from db.session import create_session
+from db.session import create_session, revoke_all_sessions
 from models.user import DBUser
 from schemas.user import UserBase, UserUpdate
 from service.key_pair_generator import generate_key_pair, encrypt_private_key
@@ -151,13 +151,31 @@ def edit_user_active_state(
 ):
     searched_user = get_user_by_id(db, user_id)
 
+    searched_user.is_active = not searched_user.is_active
+
+    if not searched_user.is_active:
+        revoke_all_sessions(user_id, db, False)
+    db.commit()
+    db.refresh(searched_user)
+
+    return {
+        "is_active": searched_user.is_active,
+    }
+
+
+def edit_user_active_state_to_active(
+    db: Session,
+    user_id: int,
+):
+    searched_user = get_user_by_id(db, user_id)
+
     if not searched_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found!",
         )
 
-    searched_user.is_active = not searched_user.is_active
+    searched_user.is_active = True
 
     db.commit()
     db.refresh(searched_user)

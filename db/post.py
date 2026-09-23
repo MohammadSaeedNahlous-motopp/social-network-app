@@ -37,37 +37,26 @@ def create_post(
 
     return new_post
 
+
 def get_feed(
     db: Session,
     user_id: int,
 ):
     """Return posts for the authenticated user's feed."""
 
-    friend_ids = (
-        db.query(DBFriend.friend_id)
-        .filter(DBFriend.user_id == user_id)
-    )
+    friend_ids = db.query(DBFriend.friend_id).filter(DBFriend.user_id == user_id)
 
-    group_ids = (
-        db.query(DBGroupMember.group_id)
-        .filter(DBGroupMember.user_id == user_id)
+    group_ids = db.query(DBGroupMember.group_id).filter(
+        DBGroupMember.user_id == user_id
     )
 
     query = db.query(DBPost).filter(
         DBPost.is_visible.is_(True),
         or_(
             # User's own personal posts
-            (
-                (DBPost.user_id == user_id)
-                & DBPost.group_id.is_(None)
-            ),
-
+            ((DBPost.user_id == user_id) & DBPost.group_id.is_(None)),
             # Friends' personal posts
-            (
-                DBPost.user_id.in_(friend_ids)
-                & DBPost.group_id.is_(None)
-            ),
-
+            (DBPost.user_id.in_(friend_ids) & DBPost.group_id.is_(None)),
             # Posts from groups the user belongs to
             DBPost.group_id.in_(group_ids),
         ),
@@ -157,6 +146,6 @@ def get_posts_by_user(
         get_user_post_visibility_filter(
             requesting_user_id=current_user_id, user_id=user_id, are_friends=are_friends
         )
-    )
+    ).order_by(DBPost.created_at.desc())
 
     return query

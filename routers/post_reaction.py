@@ -113,8 +113,4 @@ def get_post_reactions(
         db=db,
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)

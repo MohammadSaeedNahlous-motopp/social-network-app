@@ -135,11 +135,7 @@ def test_create_group_with_tags(
 
     assert {tag["id"] for tag in data["tags"]} == {1, 2, 5}
 
-    db_group = (
-        db.query(DBGroup)
-        .filter(DBGroup.name == "Python Developers")
-        .first()
-    )
+    db_group = db.query(DBGroup).filter(DBGroup.name == "Python Developers").first()
 
     assert db_group is not None
     assert {group_tag.tag_id for group_tag in db_group.tags} == {1, 2, 5}

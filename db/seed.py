@@ -44,11 +44,7 @@ def seed_group_roles(db: Session) -> None:
 
 def seed_tags(db: Session) -> None:
     for tag_data in TAGS:
-        existing_tag = (
-            db.query(DBTag)
-            .filter(DBTag.name == tag_data["name"])
-            .first()
-        )
+        existing_tag = db.query(DBTag).filter(DBTag.name == tag_data["name"]).first()
 
         if existing_tag is None:
             db.add(DBTag(**tag_data))

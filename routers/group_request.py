@@ -6,7 +6,7 @@ from db import group_request
 from db.database import get_db
 from models.enums import RequestStatus
 from models.user import DBUser
-from schemas.group_request import GroupRequestDisplayBase, GroupRequestBase
+from schemas.group_request import GroupRequestDisplayBase
 from service.pagination import PaginatedResponse
 
 router = APIRouter(
@@ -51,50 +51,7 @@ def get_group_pending_group_requests(
         db,
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
-
-
-@router.post(
-    "/create",
-    response_model=GroupRequestDisplayBase,
-    status_code=status.HTTP_201_CREATED,
-    summary="Create a group join request",
-    description=(
-        "Creates a request for the currently authenticated user to join "
-        "the specified group. The requesting user is automatically "
-        "determined from the authentication credentials and cannot be "
-        "provided by the client."
-    ),
-    response_description="The newly created group join request.",
-    responses={
-        201: {"description": "Group join request created successfully."},
-        400: {
-            "description": (
-                "The group join request could not be created because "
-                "the request data is invalid or a business rule prevents "
-                "creating the request."
-            )
-        },
-        401: {"description": "Authentication credentials are invalid or missing."},
-        404: {"description": "The specified group was not found."},
-    },
-)
-async def create_group_request(
-    request: GroupRequestBase,
-    db: Session = Depends(get_db),
-    current_user: DBUser = Depends(get_current_user),
-):
-    group_request_obj = await group_request.create_group_request(
-        request,
-        current_user.id,
-        db,
-    )
-
-    return group_request_obj
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
 
 
 @router.delete(

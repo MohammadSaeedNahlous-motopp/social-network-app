@@ -8,38 +8,24 @@ from models.user import DBUser
 from service.permissions import can_see_post, can_delete_post
 
 
-def get_comment(
-    db: Session,
-    comment_id: int
-) -> DBComment | None:
+def get_comment(db: Session, comment_id: int) -> DBComment | None:
     """Return a visible comment by its ID."""
 
     return (
         db.query(DBComment)
-        .filter(
-            DBComment.id == comment_id,
-            DBComment.is_visible.is_(True)
-        )
+        .filter(DBComment.id == comment_id, DBComment.is_visible.is_(True))
         .first()
     )
 
-def create_comment(
-    db: Session,
-    post_id: int,
-    request: CommentCreate,
-    user_id: int
-):
+
+def create_comment(db: Session, post_id: int, request: CommentCreate, user_id: int):
     """Create a comment when the user has permission to comment on the post."""
 
-    post = get_post(
-        db=db,
-        post_id=post_id
-    )
+    post = get_post(db=db, post_id=post_id)
 
     if post is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found."
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found."
         )
 
     if not can_see_post(requesting_user_id=user_id, post=post, db=db):
@@ -57,21 +43,13 @@ def create_comment(
                 detail="You must be a group member to comment on this post.",
             )
 
-    new_comment = DBComment(
-        user_id=user_id,
-        post_id=post_id,
-        content=request.content
-    )
+    new_comment = DBComment(user_id=user_id, post_id=post_id, content=request.content)
 
     db.add(new_comment)
     db.commit()
     db.refresh(new_comment)
 
-    user = (
-        db.query(DBUser)
-        .filter(DBUser.id == new_comment.user_id)
-        .first()
-    )
+    user = db.query(DBUser).filter(DBUser.id == new_comment.user_id).first()
 
     result = CommentResponse(
         id=new_comment.id,
@@ -81,7 +59,7 @@ def create_comment(
         content=new_comment.content,
         is_visible=new_comment.is_visible,
         created_at=new_comment.created_at,
-        updated_at=new_comment.updated_at
+        updated_at=new_comment.updated_at,
     )
 
     return result
@@ -103,26 +81,19 @@ def get_comments_by_post(
 
     if post is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found."
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found."
         )
 
     if not can_see_post(requesting_user_id=requesting_user_id, post=post, db=db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User does not have permission to view the post.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have permission to view the post.",
+        )
 
     comments = (
-        db.query(
-            DBComment,
-            DBUser.name
-        )
-        .join(
-            DBUser,
-            DBComment.user_id == DBUser.id
-        )
-        .filter(
-            DBComment.post_id == post_id,
-            DBComment.is_visible.is_(True)
-        )
+        db.query(DBComment, DBUser.name)
+        .join(DBUser, DBComment.user_id == DBUser.id)
+        .filter(DBComment.post_id == post_id, DBComment.is_visible.is_(True))
         .order_by(DBComment.created_at.asc())
         .offset(offset)
         .limit(limit + 1)
@@ -143,7 +114,7 @@ def get_comments_by_post(
             content=comment.content,
             is_visible=comment.is_visible,
             created_at=comment.created_at,
-            updated_at=comment.updated_at
+            updated_at=comment.updated_at,
         )
 
         results.append(result)
@@ -184,8 +155,10 @@ def delete_comment(
 
     is_comment_owner = comment.user_id == user_id
 
-    if (not can_delete_post(user_id=user_id, post=post, group_id=post.group_id, db=db)
-        and not is_comment_owner):
+    if (
+        not can_delete_post(user_id=user_id, post=post, group_id=post.group_id, db=db)
+        and not is_comment_owner
+    ):
         # Personal post
         if post.group_id is None:
             raise HTTPException(
@@ -209,4 +182,3 @@ def delete_comment(
     db.refresh(comment)
 
     return comment
-

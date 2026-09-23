@@ -96,7 +96,7 @@ def get_post_image(
         if not post.image_url:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Group background image not found",
+                detail="Post image not found"
             )
 
         return generate_file_response(Path(post.image_url))

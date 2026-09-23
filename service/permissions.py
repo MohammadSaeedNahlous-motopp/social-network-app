@@ -137,10 +137,10 @@ def can_see_user_membership_of_group_query_filter(
 
     return or_(
         DBGroup.is_public.is_(True),
-        exists().where(
+        exists(DBGroupMember).where(
             DBGroupMember.group_id == group_id,
             DBGroupMember.user_id == requesting_user_id,
-        ),
+        ).correlate(DBGroup),
     )
 
 

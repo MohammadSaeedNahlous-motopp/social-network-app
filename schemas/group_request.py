@@ -17,10 +17,6 @@ class Group(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class GroupRequestBase(BaseModel):
-    group_id: int
-
-
 class GroupRequestDisplayBase(BaseModel):
     id: int
     group: Group

@@ -66,6 +66,7 @@ async def create_post(
     )
     return result
 
+
 @router.get(
     "/feed",
     response_model=PaginatedResponse[PostResponse],
@@ -95,11 +96,7 @@ def get_feed(
         user_id=current_user.id,
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
 
 
 @router.get(
@@ -118,7 +115,11 @@ def get_feed(
         403: {"description": "User does not have permission to view the post."},
     },
 )
-def get_post(post_id: int, db: Session = Depends(get_db), current_user: DBUser = Depends(get_current_user)):
+def get_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: DBUser = Depends(get_current_user),
+):
     """Retrieve a visible post by its ID."""
 
     post = db_post.get_post(db, post_id)
@@ -129,7 +130,10 @@ def get_post(post_id: int, db: Session = Depends(get_db), current_user: DBUser =
         )
 
     if not can_see_post(requesting_user_id=current_user.id, post=post, db=db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User has no permission to view the post.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User has no permission to view the post.",
+        )
 
     return post
 
@@ -246,8 +250,4 @@ def get_user_posts(
         db=db, user_id=user_id, current_user_id=current_user.id
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)

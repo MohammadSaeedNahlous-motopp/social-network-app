@@ -22,12 +22,7 @@ def test_create_group_request(
         is_public=False,
     )
 
-    response = client.post(
-        "/group-requests/create",
-        json={
-            "group_id": group.id,
-        },
-    )
+    response = client.post(f"/group/{group.id}/join")
 
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -42,44 +37,16 @@ def test_create_group_request(
     assert data["status"] == RequestStatus.pending.value
 
 
-def test_create_group_request_public_group(
-    client,
-    authenticated_user,
-    create_test_group,
-):
-    user = authenticated_user()
-
-    group = create_test_group(
-        owner=user,
-        is_public=True,
-    )
-
-    response = client.post(
-        "/group-requests/create",
-        json={
-            "group_id": group.id,
-        },
-    )
-
-    assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json()["detail"] == "Group not found!"
-
-
 def test_create_group_request_group_not_found(
     client,
     authenticated_user,
 ):
     authenticated_user()
 
-    response = client.post(
-        "/group-requests/create",
-        json={
-            "group_id": 999999,
-        },
-    )
+    response = client.post(f"/group/{999999}/join")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json()["detail"] == "Group not found!"
+    assert response.json()["detail"] == "Group not found"
 
 
 def test_create_duplicate_pending_group_request(
@@ -94,21 +61,11 @@ def test_create_duplicate_pending_group_request(
         is_public=False,
     )
 
-    first_response = client.post(
-        "/group-requests/create",
-        json={
-            "group_id": group.id,
-        },
-    )
+    first_response = client.post(f"/group/{group.id}/join")
 
     assert first_response.status_code == status.HTTP_201_CREATED
 
-    second_response = client.post(
-        "/group-requests/create",
-        json={
-            "group_id": group.id,
-        },
-    )
+    second_response = client.post(f"/group/{group.id}/join")
 
     assert second_response.status_code == status.HTTP_400_BAD_REQUEST
     assert (
@@ -139,12 +96,7 @@ def test_create_group_request_already_member(
         role=member_role,
     )
 
-    response = client.post(
-        "/group-requests/create",
-        json={
-            "group_id": group.id,
-        },
-    )
+    response = client.post(f"/group/{group.id}/join")
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert (
@@ -165,28 +117,9 @@ def test_create_group_request_unauthenticated(
         is_public=False,
     )
 
-    response = client.post(
-        "/group-requests/create",
-        json={
-            "group_id": group.id,
-        },
-    )
+    response = client.post(f"/group/{group.id}/join")
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-
-
-def test_create_group_request_invalid_body(
-    client,
-    authenticated_user,
-):
-    authenticated_user()
-
-    response = client.post(
-        "/group-requests/create",
-        json={},
-    )
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 # ============================================================

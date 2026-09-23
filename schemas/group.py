@@ -38,9 +38,7 @@ class GroupBase(BaseModel):
 
         if "tags" in form:
             data["tags"] = (
-                [int(tag.strip()) for tag in tags.split(",")]
-                if tags
-                else None
+                [int(tag.strip()) for tag in tags.split(",")] if tags else None
             )
 
         return cls(**data)
@@ -92,7 +90,7 @@ class GroupUpdate(BaseModel):
 class GroupSearch(BaseModel):
     name: str | None = None
     description: str | None = None
-    tag_ids:  str | None = None
+    tag_ids: str | None = None
 
 
 class TagView(BaseModel):

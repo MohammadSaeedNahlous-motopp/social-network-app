@@ -65,11 +65,7 @@ def test_created_comment_is_saved_in_database(
 
     assert response.status_code == 201
 
-    comment = (
-        db.query(DBComment)
-        .filter(DBComment.post_id == post.id)
-        .first()
-    )
+    comment = db.query(DBComment).filter(DBComment.post_id == post.id).first()
 
     assert comment is not None
     assert comment.content == "Database test comment."
@@ -109,9 +105,7 @@ def test_get_comments_by_post(
     db.add_all([comment_1, comment_2])
     db.commit()
 
-    response = client.get(
-        f"/comments/posts/{post.id}?limit=10&offset=0"
-    )
+    response = client.get(f"/comments/posts/{post.id}?limit=10&offset=0")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -162,9 +156,7 @@ def test_get_comments_pagination(
 
     # First batch
     limit = 10
-    response = client.get(
-        f"/comments/posts/{post.id}?limit={limit}&offset=0"
-    )
+    response = client.get(f"/comments/posts/{post.id}?limit={limit}&offset=0")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -175,9 +167,7 @@ def test_get_comments_pagination(
     assert data["next_offset"] == limit
 
     # Second batch
-    response = client.get(
-        f"/comments/posts/{post.id}?limit={limit}&offset={limit}"
-    )
+    response = client.get(f"/comments/posts/{post.id}?limit={limit}&offset={limit}")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -188,18 +178,10 @@ def test_get_comments_pagination(
     assert data["next_offset"] is None
 
 
-def test_comment_owner_can_delete_own_comment(
-    client,
-    db,
-    authenticated_user
-):
+def test_comment_owner_can_delete_own_comment(client, db, authenticated_user):
     user = authenticated_user()
 
-    post = DBPost(
-        user_id=user.id,
-        title="Test post",
-        content="Test content"
-    )
+    post = DBPost(user_id=user.id, title="Test post", content="Test content")
 
     db.add(post)
     db.commit()
@@ -216,14 +198,10 @@ def test_comment_owner_can_delete_own_comment(
     db.commit()
     db.refresh(comment)
 
-    response = client.delete(
-        f"/comments/{comment.id}"
-    )
+    response = client.delete(f"/comments/{comment.id}")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "message": "Comment deleted successfully."
-    }
+    assert response.json() == {"message": "Comment deleted successfully."}
 
     db.refresh(comment)
 
@@ -249,9 +227,7 @@ def test_create_comment_post_not_found(
 
 def test_get_comments_post_not_found(client, authenticated_user):
     authenticated_user()
-    response = client.get(
-        "/comments/posts/999999?offset=0"
-    )
+    response = client.get("/comments/posts/999999?offset=0")
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json()["detail"] == "Post not found."

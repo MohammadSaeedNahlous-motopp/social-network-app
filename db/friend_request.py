@@ -17,7 +17,7 @@ def get_user_pending_friend_requests(user_id: int, db: Session):
     pending_friend_requests = db.query(DBFriendRequest).filter(
         DBFriendRequest.receiver_id == user_id,
         DBFriendRequest.status == RequestStatus.pending,
-    )
+    ).order_by(DBFriendRequest.created_at.desc())
 
     return pending_friend_requests
 
@@ -162,12 +162,12 @@ def change_friend_request_status(
         )
         new_friendship1 = DBFriend(
             user_id=searched_friend_request.receiver_id,
-            friend_id=searched_friend_request.sender_id ,
+            friend_id=searched_friend_request.sender_id,
         )
 
         db.add(new_friendship)
         db.add(new_friendship1)
-        
+
         db.delete(searched_friend_request)
 
     else:

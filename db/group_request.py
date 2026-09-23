@@ -13,7 +13,6 @@ from models.user import DBUser
 from models.group import DBGroup
 from models.friend import DBFriend
 from schemas.friend_request import FriendRequestBase
-from schemas.group_request import GroupRequestBase
 from schemas.notification import NotificationCreate
 from websocket.connection_manager import manager
 from service.permissions import (
@@ -34,13 +33,13 @@ def get_group_pending_join_requests(group_id: int, user_id: int, db: Session):
     pending_group_requests = db.query(DBGroupRequest).filter(
         DBGroupRequest.group_id == group_id,
         DBGroupRequest.status == RequestStatus.pending,
-    )
+    ).order_by(DBGroupRequest.created_at.desc())
 
     return pending_group_requests
 
 
-async def create_group_request(
-    request: GroupRequestBase,
+def create_group_request(
+    group_id: int,
     user_id: int,
     db: Session,
 ):
@@ -49,7 +48,7 @@ async def create_group_request(
     group = (
         db.query(DBGroup)
         .filter(
-            DBGroup.id == request.group_id,
+            DBGroup.id == group_id,
             DBGroup.is_public.is_(False),
         )
         .first()
@@ -66,7 +65,7 @@ async def create_group_request(
         db.query(DBGroupRequest)
         .filter(
             DBGroupRequest.sender_id == user_id,
-            DBGroupRequest.group_id == request.group_id,
+            DBGroupRequest.group_id == group_id,
             DBGroupRequest.status == RequestStatus.pending,
         )
         .first()
@@ -79,7 +78,7 @@ async def create_group_request(
         )
 
     # Check for an existing membership
-    already_group_member = get_group_member_role(db, request.group_id, user_id)
+    already_group_member = get_group_member_role(db, group_id, user_id)
 
     if already_group_member is not None:
         raise HTTPException(
@@ -89,7 +88,7 @@ async def create_group_request(
 
     new_group_request = DBGroupRequest(
         sender_id=user_id,
-        group_id=request.group_id,
+        group_id=group_id,
     )
 
     db.add(new_group_request)

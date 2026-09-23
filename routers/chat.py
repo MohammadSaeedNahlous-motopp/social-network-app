@@ -44,15 +44,9 @@ def get_user_chats(
     current_user: DBUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    chat_list = chat.get_user_chats(
-        user_id=current_user.id, db=db
-    )
+    chat_list = chat.get_user_chats(user_id=current_user.id, db=db)
 
-    return PaginatedResponse.from_list(
-        items=chat_list,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_list(items=chat_list, page=page, page_size=page_size)
 
 
 @router.post(
@@ -144,13 +138,12 @@ def get_chat_messages(
     messages = chat.get_encrypted_chat_messages(chat_id, current_user.id, db)
     items_list = chat.get_decrypted_chat_messages(
         messages, chat_id, current_user.id, db
+    ).sort(
+            key=lambda message: message["created_at"],
+            reverse=True
     )
 
-    return PaginatedResponse.from_list(
-        items=items_list,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_list(items=items_list, page=page, page_size=page_size)
 
 
 @router.get(

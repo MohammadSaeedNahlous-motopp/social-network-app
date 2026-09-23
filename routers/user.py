@@ -65,6 +65,21 @@ async def edit_user(
 
 
 @router.patch(
+    "/toggle-to-active/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Change the current user's active status to active (For Demo & Testing Only!)",
+    description=("Change the active status of the user to acive "),
+    response_description="The user's new active status.",
+    responses={
+        200: {"description": "User active status updated successfully."},
+        404: {"description": "The user could not be found."},
+    },
+)
+def edit_user_active_state(user_id: int, db: Session = Depends(get_db)):
+    return user.edit_user_active_state_to_active(db, user_id)
+
+
+@router.patch(
     "/toggle-active",
     status_code=status.HTTP_200_OK,
     summary="Toggle the current user's active status",
@@ -98,8 +113,4 @@ def get_user_groups(
         db=db, user_id=user_id, current_user_id=current_user.id
     )
 
-    return PaginatedResponse.from_query(
-        query=query,
-        page=page,
-        page_size=page_size
-    )
+    return PaginatedResponse.from_query(query=query, page=page, page_size=page_size)
