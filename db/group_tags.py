@@ -101,3 +101,5 @@ def remove_tags(tags: list[int], group_id: int, current_user_id: int, db: Sessio
         DBGroupTag.group_id == group_id,
         DBGroupTag.tag_id.in_(tags_to_remove),
     ).delete()
+
+    db.commit()
