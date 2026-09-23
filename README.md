@@ -24,18 +24,19 @@ The project provides API functionality for user authentication, user management,
 
 ## Tech Stack
 
-| Technology | Purpose |
-|---|---|
-| [FastAPI](https://fastapi.tiangolo.com/) | Web framework and REST API |
-| [Uvicorn](https://www.uvicorn.org/) | ASGI server |
-| [SQLAlchemy](https://www.sqlalchemy.org/) | Database ORM |
-| [Pydantic](https://docs.pydantic.dev/) | Data validation and schemas |
-| [python-jose](https://python-jose.readthedocs.io/) | JWT handling |
-| [pwdlib](https://frankie567.github.io/pwdlib/) | Password hashing |
-| [Pillow](https://python-pillow.org/) | Image processing |
-| [pytest](https://docs.pytest.org/) | Automated testing |
-| [pytest-cov](https://pytest-cov.readthedocs.io/) | Test coverage |
-| [Ruff](https://docs.astral.sh/ruff/) | Linting and code quality |
+| Technology                                                  | Purpose |
+|-------------------------------------------------------------|---|
+| [FastAPI](https://fastapi.tiangolo.com/)                    | Web framework and REST API |
+| [Uvicorn](https://www.uvicorn.org/)                         | ASGI server |
+| [SQLAlchemy](https://www.sqlalchemy.org/)                   | Database ORM |
+| [SQLite](https://www.sqlite.org/)                           | Development database |
+| [Pydantic](https://docs.pydantic.dev/)                      | Data validation and schemas |
+| [python-jose](https://python-jose.readthedocs.io/)          | JWT handling |
+| [pwdlib](https://frankie567.github.io/pwdlib/)              | Password hashing |
+| [Pillow](https://python-pillow.org/)                        | Image processing |
+| [pytest](https://docs.pytest.org/)                          | Automated testing |
+| [pytest-cov](https://pytest-cov.readthedocs.io/)            | Test coverage |
+| [Ruff](https://docs.astral.sh/ruff/)                        | Linting and code quality |
 | [python-dotenv](https://github.com/theskumar/python-dotenv) | Environment configuration |
 
 The dependencies above are based on the project's current `requirements.txt`.
@@ -60,13 +61,24 @@ social-network-app/
 │
 ├── routers/
 │   ├── authentication.py
-│   ├── user.py 
-│   ├── post_group.py
+│   ├── user.py
 │   ├── post.py
+│   ├── post_group.py
 │   ├── friend_request.py
 │   ├── friend.py
 │   ├── group.py
-│   └── group_member.py
+│   ├── group_member.py
+│   ├── chat.py
+│   ├── message.py
+│   ├── chat_member.py
+│   ├── comment.py
+│   ├── images.py
+│   ├── group_request.py
+│   ├── post_reaction.py
+│   └── tag.py
+│
+├── websocket/
+│   └── chat.py
 │
 ├── schemas/
 │   └── ...
@@ -91,7 +103,7 @@ social-network-app/
 └── requirements.txt
 ```
 
-The project separates API endpoints from database models, schemas, and service logic. The `routers` package currently contains dedicated modules for authentication, users, posts, friend requests, friends, groups, and group members.
+The project separates API endpoints from database models, schemas, and service logic. The `routers` package contains dedicated modules for authentication, users, posts, friend requests, friends, groups, group members, chats, messages, comments, images, group requests, post reactions, and tags.
 
 The `tests` directory follows a similar feature-oriented organization, with dedicated test modules for authentication, users, friendships, friend requests, groups, memberships, posts, and image services.
 
@@ -120,6 +132,10 @@ Contains FastAPI route handlers. Each module groups endpoints belonging to a par
 #### `service/`
 
 Contains reusable business logic that should not be tightly coupled to individual API route handlers.
+
+#### `websocket/`
+
+Contains WebSocket functionality used for real-time communication.
 
 #### `tests/`
 
@@ -199,10 +215,10 @@ On Windows, you can create `.env` manually by copying `.example.env`.
 The current example configuration contains:
 
 ```env
-AUTH_SECRET_KEY=
+MASTER_KEY= python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
-Set `AUTH_SECRET_KEY` to a secure, randomly generated value before running the application. The example environment file is intentionally provided without a secret value.
+Set `MASTER_KEY` to a secure, randomly generated value before running the application. The example environment file is intentionally provided without a secret value.
 
 > **Important:** Never commit your real `.env` file or authentication secrets to the repository.
 
@@ -320,6 +336,30 @@ Membership-related operations are implemented separately in:
 routers/group_member.py
 ```
 
+### Chats and Messages
+
+The application supports chats, chat members, messages, and real-time communication.
+
+### Comments
+
+Users can create and manage comments on posts.
+
+### Images
+
+The application supports image upload and processing for supported features.
+
+### Group Requests
+
+Users can send and manage requests related to group membership.
+
+### Post Reactions
+
+Users can react to posts.
+
+### Tags
+
+Posts can use tags for categorization.
+
 This separation keeps group management and membership operations independent at the API level.
 
 ## Testing
@@ -332,10 +372,10 @@ Run the complete test suite with:
 python -m pytest -v
 ```
 
-The repository also includes test coverage support:
+To run the tests with coverage information:
 
 ```bash
-pytest --cov
+pytest --cov=. --cov-report=term-missing
 ```
 
 Tests are organized by feature, including authentication, users, posts, friendships, friend requests, groups, memberships, and image services.
@@ -383,7 +423,7 @@ development
     │
     ├── feature/<feature-name>
     │
-    └── bugfix/<bug-name>
+    └── fix/<bug-name>
              │
              ▼
         Pull Request
@@ -464,6 +504,13 @@ The repository contains a GitHub Actions workflow under:
 
 The workflow is used to automate project testing through GitHub Actions.
 
+The workflow is triggered when:
+
+- changes are pushed to the `development` branch
+- a pull request is created or updated
+
+The workflow installs the project dependencies and runs the test suite with coverage. It also requires a minimum test coverage of **75%**.
+
 Running the test suite locally before creating a Pull Request helps identify issues before they reach the CI pipeline.
 
 ## Development Notes
@@ -517,10 +564,10 @@ When creating a new branch, use one of the following prefixes to specify the pur
 
 For example:
 
-feature/add-comments  
-fix/user-registration-error  
-hotfix/fix-production-authentication  
-docs/update-installation-guide  
-chore/update-dependencies  
-refactor/authentication-service  
-test/add-group-tests  
+`feature/add-comments`  
+`fix/user-registration-error`  
+`hotfix/fix-production-authentication`  
+`docs/update-installation-guide`  
+`chore/update-dependencies`  
+`refactor/authentication-service`  
+`test/add-group-tests`  
