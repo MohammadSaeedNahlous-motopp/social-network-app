@@ -1,16 +1,16 @@
 import pytest
 from fastapi import status
 
-from models.enums import GroupRole
+from models.enums import GroupRole, RequestStatus
 from models.group_member import DBGroupMember
 from tests.conftest import create_test_user
 
 
 @pytest.mark.parametrize(
-    "is_public, expected_status",
+    "is_public",
     [
-        (True, status.HTTP_201_CREATED),
-        (False, status.HTTP_501_NOT_IMPLEMENTED),
+        True,
+        False,
     ],
 )
 def test_join_group(
@@ -18,9 +18,9 @@ def test_join_group(
     authenticated_user,
     create_test_user,
     create_test_group,
+    get_test_group_role,
     db,
     is_public,
-    expected_status,
 ):
     # Arrange
     user = authenticated_user(
@@ -40,13 +40,15 @@ def test_join_group(
     response = client.post(f"/group/{group.id}/join")
 
     # Assert
-    assert response.status_code == expected_status
+    assert response.status_code == status.HTTP_201_CREATED
 
-    if expected_status == status.HTTP_201_CREATED:
-        data = response.json()
+    data = response.json()
 
-        assert data["email"] == user.email
-        assert data["name"] == user.name
+    if is_public:
+
+        assert data["group_id"] == group.id
+        assert data["user_id"] == user.id
+        assert data["role"] == GroupRole.member
 
         membership = (
             db.query(DBGroupMember)
@@ -60,11 +62,10 @@ def test_join_group(
         assert membership is not None
         assert membership.role.name == GroupRole.member
 
-    elif response.status_code == status.HTTP_501_NOT_IMPLEMENTED:
-        assert response.json()["detail"] == (
-            "Join request for private groups is not implemented"
-        )
-
+    else:
+        assert data["group"]["id"] == group.id
+        assert data["sender"]["id"] == user.id
+        assert data["status"] == RequestStatus.pending
 
 def test_join_group_already_member(
     client,
