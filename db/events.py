@@ -17,7 +17,7 @@ def collect_deleted_files(session, flush_context):
 
         for column in mapper.columns:
             # Only handle columns explicitly marked as file fields.
-            if not column.info.get("file_field"):
+            if not getattr(column, "info", {}).get("file_field"):
                 continue
 
             # Get the change history for this specific column.
