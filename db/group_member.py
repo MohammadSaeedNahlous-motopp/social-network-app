@@ -8,6 +8,7 @@ from models.enums import GroupRole
 from models.group_member import DBGroupMember
 
 from models.group import DBGroup
+from models.group_request import DBGroupRequest
 from models.group_role import DBGroupRole
 
 from models.user import DBUser
@@ -93,14 +94,12 @@ def get_group_member_role(db: Session, group_id: int, user_id: int) -> GroupRole
     return result
 
 
-def join_group(db: Session, group_id: int, user_id: int) -> DBGroupMember:
+def join_group(db: Session, group_id: int, user_id: int) -> DBGroupMember | DBGroupRequest:
     searched_group = get_group_by_id(db, group_id)
 
     if not searched_group.is_public:
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Join request for private groups is not implemented",
-        )
+        from db.group_request import create_group_request
+        return create_group_request(group_id=group_id, user_id=user_id, db=db)
 
     # Check if user is already a member
     existing_membership = get_group_member_role(db, group_id, user_id)
